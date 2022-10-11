@@ -1,0 +1,44 @@
+{
+  "name": "webmiss/php",
+  "type": "project",
+  "keywords": ["webmis", "php"],
+  "description": "The Webmis Project",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "webmis",
+      "email": "klingsoul@163.com"
+    }
+  ],
+  "require": {
+    "php": ">=7.1",
+    "illuminate/routing": "10.x-dev",
+    "illuminate/events": "10.x-dev",
+    "firebase/php-jwt": "^6.2.0",
+    "textalk/websocket": "^1.4.2",
+    "khanamiryan/qrcode-detector-decoder": "^1.0.5.2",
+    "cboden/ratchet": "^0.4.4",
+    "aliyuncs/oss-sdk-php": "^2.5.0"
+    
+  },
+  "autoload": {
+    "psr-4": {
+      "Config\\": "config/",
+      "Library\\": "library/",
+      "Library\\Aliyun\\": "library/aliyun/",
+      "Library\\Baidu\\": "library/baidu/",
+      "Library\\Google\\": "library/google/",
+      "Library\\Tencent\\": "library/tencent/",
+      "Middleware\\": "middleware/",
+      "Model\\": "model/",
+      "App\\Home\\": "modules/home/",
+      "App\\Admin\\": "modules/admin/",
+      "App\\Api\\": "modules/api/",
+      "Router\\": "router/",
+      "Service\\": "service/",
+      "Task\\": "task/",
+      "Util\\": "util/"
+    }
+  },
+  "minimum-stability": "dev"
+}
