@@ -102,6 +102,10 @@ class Model extends Base {
   function Table(string $table): void {
     $this->table = $table;
   }
+  /* 分区 */
+  function Partition(...$partition): void {
+    $this->table .= ' PARTITION('.implode(',', $partition).')';
+  }
   /* 关联-INNER */
   function Join(string $table, string $on): void {
     $this->table .= ' INNER JOIN ' . $table . ' ON ' . $on;
