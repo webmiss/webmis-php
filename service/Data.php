@@ -4,6 +4,8 @@ namespace Service;
 use Config\Env;
 use Library\Redis;
 
+use Model\Model;
+
 /* 数据类 */
 class Data extends Base {
 
@@ -40,6 +42,37 @@ class Data extends Base {
   /* 图片地址 */
   static function Img(string $img): string {
     return $img?Env::$base_url.$img:'';
+  }
+
+  /* 分区-获取ID */
+  static function PartitionID(string $date, string $table, string $column='utime'){
+    $utime = strtotime($date);
+    $m = new Model();
+    $m->Table($table);
+    $m->Columns('id', $column);
+    $m->Where($column.' < ?', $utime);
+    $m->Order($column.' DESC, id DESC');
+    $one = $m->FindFirst();
+    $one['date'] = $date;
+    return $one;
+  }
+
+  /* 分区-获取名称 */
+  static function PartitionName(int $stime, int $etime){
+    $all = ['p2208', 'p2209', 'plast'];
+    $p1 = array_search(self::__getPartitionTime($stime), $all);
+    $p2 = array_search(self::__getPartitionTime($etime), $all);
+    $len = $p2-$p1+1;
+    return implode(',', array_slice($all, $p1, $len));
+  }
+  private static function __getPartitionTime(int $t){
+    $name = '';
+    switch(true){
+      case $t<1661961600 : $name='p2208'; break;
+      case $t>=1661961600 && $t<1664553600 : $name='p2209'; break;
+      case $t>=1664553600 : $name='plast'; break;
+    }
+    return $name;
   }
 
 }
