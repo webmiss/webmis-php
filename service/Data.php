@@ -12,8 +12,9 @@ class Data extends Base {
   const max8bit = 8;      //随机数位数
   const max10bit = 10;    //机器位数
   const max12bit = 12;    //序列数位数
+  // 分区名称
+  static public $partition = ['p2208', 'p2209', 'plast'];
   
-
   /* 薄雾算法 */
   static function Mist(string $redisName) {
     // 自增ID
@@ -45,12 +46,12 @@ class Data extends Base {
   }
 
   /* 分区-获取ID */
-  static function PartitionID(string $date, string $table, string $column='utime'){
-    $utime = strtotime($date);
+  static function PartitionID(string $date, string $table, string $column='ctime'){
+    $time = strtotime($date);
     $m = new Model();
     $m->Table($table);
     $m->Columns('id', $column);
-    $m->Where($column.' < ?', $utime);
+    $m->Where($column.' < ?', $time);
     $m->Order($column.' DESC, id DESC');
     $one = $m->FindFirst();
     $one['date'] = $date;
@@ -59,11 +60,10 @@ class Data extends Base {
 
   /* 分区-获取名称 */
   static function PartitionName(int $stime, int $etime){
-    $all = ['p2208', 'p2209', 'plast'];
-    $p1 = array_search(self::__getPartitionTime($stime), $all);
-    $p2 = array_search(self::__getPartitionTime($etime), $all);
+    $p1 = array_search(self::__getPartitionTime($stime), self::$partition);
+    $p2 = array_search(self::__getPartitionTime($etime), self::$partition);
     $len = $p2-$p1+1;
-    return implode(',', array_slice($all, $p1, $len));
+    return implode(',', array_slice(self::$partition, $p1, $len));
   }
   private static function __getPartitionTime(int $t){
     $name = '';
@@ -73,6 +73,15 @@ class Data extends Base {
       case $t>=1664553600 : $name='plast'; break;
     }
     return $name;
+  }
+
+  /* 分区-SKU定位 */
+  static function PartitionSku(string $sku_id){
+    $sku = substr($sku_id, 0, 4);
+    $last = substr(date('Ym'), 2, 4);
+    if($sku==$last) return 'plast';
+    elseif(in_array('p'.$sku, self::$partition)) return 'p'.$sku;
+    else implode(',', self::$partition);
   }
 
 }
