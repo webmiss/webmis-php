@@ -10,7 +10,7 @@ $ composer install
 
 ## 运行
 ```bash
-# Linux
+# Linux、MacOS
 ./bash serve
 # Windows
 .\cmd serve
