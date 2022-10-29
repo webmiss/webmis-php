@@ -27,7 +27,6 @@
       "Library\\": "library/",
       "Library\\Aliyun\\": "library/aliyun/",
       "Library\\Baidu\\": "library/baidu/",
-      "Library\\Google\\": "library/google/",
       "Library\\Tencent\\": "library/tencent/",
       "Middleware\\": "middleware/",
       "Model\\": "model/",
