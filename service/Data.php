@@ -12,8 +12,13 @@ class Data extends Base {
   const max8bit = 8;      //随机数位数
   const max10bit = 10;    //机器位数
   const max12bit = 12;    //序列数位数
-  // 分区名称
-  static public $partition = ['p2208', 'p2209', 'plast'];
+
+  // 分区时间
+  static public $partition = [
+    'p2208'=> 1661961600,
+    'p2209'=> 1664553600,
+    'plast'=> 1664553600,
+  ];
   
   /* 薄雾算法 */
   static function Mist(string $redisName) {
@@ -45,7 +50,10 @@ class Data extends Base {
     return $img?Env::$base_url.$img:'';
   }
 
-  /* 分区-获取ID */
+  /*
+  * 分区-获取ID
+  * $p2209 = Data::PartitionID('2022-10-01 00:00:00', 'logs')
+  */
   static function PartitionID(string $date, string $table, string $column='ctime'){
     $time = strtotime($date);
     $m = new Model();
@@ -55,33 +63,39 @@ class Data extends Base {
     $m->Order($column.' DESC, id DESC');
     $one = $m->FindFirst();
     $one['date'] = $date;
+    $one['time'] = $time;
     return $one;
   }
 
   /* 分区-获取名称 */
   static function PartitionName(int $stime, int $etime){
-    $p1 = array_search(self::__getPartitionTime($stime), self::$partition);
-    $p2 = array_search(self::__getPartitionTime($etime), self::$partition);
+    $p1 = self::__getPartitionTime($stime);
+    $p2 = self::__getPartitionTime($etime);
+    $arr = array_keys(self::$partition);
+    $p1 = array_search($p1, $arr);
+    $p2 = array_search($p2, $arr);
     $len = $p2-$p1+1;
-    return implode(',', array_slice(self::$partition, $p1, $len));
+    return implode(',', array_slice($arr, $p1, $len));
   }
-  private static function __getPartitionTime(int $t){
-    $name = '';
-    switch(true){
-      case $t<1661961600 : $name='p2208'; break;
-      case $t>=1661961600 && $t<1664553600 : $name='p2209'; break;
-      case $t>=1664553600 : $name='plast'; break;
+  private static function __getPartitionTime(int $time){
+    foreach(self::$partition as $name=>$t){
+      if($time<$t) return $name;
     }
-    return $name;
+    return array_key_last(self::$partition);
   }
 
   /* 分区-SKU定位 */
   static function PartitionSku(string $sku_id){
     $sku = substr($sku_id, 0, 4);
-    $last = substr(date('Ym'), 2, 4);
-    if($sku==$last) return 'plast';
-    elseif(in_array('p'.$sku, self::$partition)) return 'p'.$sku;
-    else implode(',', self::$partition);
+    $now = substr(date('Ym'), 2, 4);
+    $last = substr(date('Ym', strtotime('-1 month')), 2, 4);
+    if(isset(self::$partition['p'.$sku])){
+      return 'p'.$sku;
+    }elseif($sku==$now || $sku==$last){
+      return array_key_last(self::$partition);
+    }else{
+      return implode(',', array_keys(self::$partition));
+    }
   }
 
 }

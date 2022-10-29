@@ -7,8 +7,9 @@ class Base {
   /* 输出到控制台 */
   static function Print(...$content): void {
     foreach($content as $val){
-      echo json_encode($val, JSON_UNESCAPED_UNICODE);
+      echo json_encode($val, JSON_UNESCAPED_UNICODE).' ';
     }
+    echo "\n";
   }
 
   /* 异常错误 */
