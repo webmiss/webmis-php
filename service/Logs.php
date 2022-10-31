@@ -13,7 +13,7 @@ class Logs extends Base {
   }
 
   /* 生产者 */
-  static function Logs(array $data) {
+  static function Log(array $data) {
     $redis = new Redis();
     $redis->RPush('logs', json_encode($data));
     $redis->Close();
