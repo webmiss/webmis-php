@@ -4,7 +4,6 @@ namespace Library;
 use Service\Base;
 use Config\Env;
 use Util\Base64;
-use Library\Aliyun\Oss;
 
 /* 上传类 */
 class Upload extends Base {
@@ -70,29 +69,6 @@ class Upload extends Base {
       return '';
     }
     return $filename;
-  }
-
-  /* OSS-签名直传 */
-  static function OssPolicy(string $ext, int $expireTime=0) {
-    // 类型
-    $extImg = ['jpg', 'png', 'gif'];
-    $extVod = ['mp4'];
-    // 目录
-    $dir = 'tmp/';
-    if(in_array($ext, $extImg)) $dir = 'img/';
-    elseif(in_array($ext, $extVod)) $dir = 'vod/';
-    // 文件名
-    $file = !empty($ext)?self::GetFileName().'.'.$ext:self::GetFileName();
-    return Oss::Policy($dir, $file, $expireTime);
-  }
-
-  /* OSS-签名验证 */
-  static function OssPolicyVerify(array $param): bool {
-    $dir = isset($param['dir'])?(string)$param['dir']:'';
-    $file = isset($param['file'])?(string)$param['file']:'';
-    $expire = isset($param['expire'])?(string)$param['expire']:'';
-    $sign = isset($param['sign'])?(string)$param['sign']:'';
-    return Oss::PolicyVerify($dir, $file, $expire, $sign);
   }
 
   /* 图片回收 */

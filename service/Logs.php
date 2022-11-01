@@ -8,7 +8,7 @@ use Library\Redis;
 class Logs extends Base {
 
   /* 文件 */
-  static function File(string $file='', $content=''){
+  static function File(string $file='', string $content=''){
     FileEo::WriterEnd($file, json_encode($content)."\n");
   }
 

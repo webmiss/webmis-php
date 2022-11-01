@@ -16,12 +16,6 @@ class Home {
       $router->get('/', "Index@Index");
       $router->get('/vcode', "Index@Vcode");
       $router->get('/index/qrcode/{name}', "Index@Qrcode");
-      // 回调
-      $router->post('/oss_callback', "Index@OssCallback");
-      // YouTube
-      $router->get('/youtube', "Index@YouTubeToken");
-      $router->get('/youtube/oauth', "Index@YouTubeOauth");
-      $router->get('/youtube/send', "Index@YouTubeMessage");
     });
     
   }

@@ -55,33 +55,41 @@ class Data extends Base {
   * $p2209 = Data::PartitionID('2022-10-01 00:00:00', 'logs')
   */
   static function PartitionID(string $date, string $table, string $column='ctime'){
-    $time = strtotime($date);
+    $t = strtotime($date);
     $m = new Model();
     $m->Table($table);
     $m->Columns('id', $column);
-    $m->Where($column.' < ?', $time);
+    $m->Where($column.' < ?', $t);
     $m->Order($column.' DESC, id DESC');
     $one = $m->FindFirst();
     $one['date'] = $date;
-    $one['time'] = $time;
+    $one['time'] = $t;
     return $one;
   }
 
-  /* 分区-获取名称 */
+  /*
+  * 分区-获取名称
+  * Data::PartitionName(1661961600, 1664553600)
+  */
   static function PartitionName(int $stime, int $etime){
     $p1 = self::__getPartitionTime($stime);
     $p2 = self::__getPartitionTime($etime);
-    $arr = array_keys(self::$partition);
-    $p1 = array_search($p1, $arr);
-    $p2 = array_search($p2, $arr);
-    $len = $p2-$p1+1;
-    return implode(',', array_slice($arr, $p1, $len));
+    $arr = [];
+    $start = false;
+    foreach(self::$partition as $k=>$v){
+      if($k==$p1) $start=true;
+      if($start) $arr[] = $k;
+      if($k==$p2) break;
+    }
+    return implode(',', $arr);
   }
   private static function __getPartitionTime(int $time){
-    foreach(self::$partition as $name=>$t){
-      if($time<$t) return $name;
+    $name = '';
+    foreach(self::$partition as $k=>$v){
+      if($time<$v) return $k;
+      $name = $k;
     }
-    return array_key_last(self::$partition);
+    return $name;
   }
 
   /* 分区-SKU定位 */
