@@ -119,7 +119,7 @@ class SysUser extends Base {
       $conn->beginTransaction();
       // 用户
       $m1 = new User();
-      $m1->Values(['id'=>$uid, 'tel'=>$tel, 'password'=>md5($passwd)]);
+      $m1->Values(['id'=>$uid, 'tel'=>$tel, 'password'=>md5($passwd), 'rtime'=>time()]);
       list($sql, $args) = $m1->InsertSQL();
       $m->Exec($conn, $sql, $args);
       // 详情
@@ -172,8 +172,8 @@ class SysUser extends Base {
     $m->Columns('id');
     $m->Where('tel=?', $tel);
     $user = $m->FindFirst();
-    if(empty($user)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'该用户不存在!']);
+    if(!empty($user) && $user['id']!=$uid){
+      return self::GetJSON(['code'=>4000, 'msg'=>'该用户已存在!']);
     }
     // 模型
     $uData = ['tel'=>$tel];
