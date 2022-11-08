@@ -3,6 +3,9 @@ namespace Service;
 
 class Base {
 
+  static float $t1 = 0;   //开始时间
+  static float $t2 = 0;   //结束时间
+
   /* 返回JSON */
   static function GetJSON(array $data=[]): string {
     return json_encode($data);
@@ -44,6 +47,17 @@ class Base {
   /* 异常错误 */
   static function Error($msg) {
     throw new \InvalidArgumentException($msg);
+  }
+
+  /* 测试速度 */
+  static function MicroBegin(...$content){
+    self::$t1 = microtime(true);
+    if($content) self::Print(...$content);
+  }
+  static function MicroEnd(...$content){
+    self::$t2 = microtime(true);
+    $t = (int)((self::$t2-self::$t1)*100000)/100;
+    self::Print('[time]', date('Y/m/d - H:i:s'), '|', $t.'ms', '|', ...$content);
   }
   
 }
