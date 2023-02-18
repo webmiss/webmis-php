@@ -46,11 +46,7 @@ class User extends Base {
     $perm = $data['role_perm'];
     if($data['perm']) $perm=$data['perm'];
     if(!$perm) return self::GetJSON(['code'=>4000,'msg'=>'该用户不允许登录!']);
-    $redis = new Redis();
-    $key = Env::$api_token_prefix.'_perm_'.$data['id'];
-    $redis->Set($key, $perm);
-    $redis->Expire($key, Env::$api_token_time);
-    $redis->Close();
+    ApiToken::savePerm($data['id'], $perm);
     // 登录时间
     $model->Table('user');
     $model->Set(['ltime'=>time()]);

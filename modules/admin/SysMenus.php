@@ -222,7 +222,7 @@ class SysMenus extends Base {
     // 全部菜单
     self::_getMenus();
     // 用户权限
-    self::$permAll = AdminToken::Perm($token);
+    self::$permAll = AdminToken::getPerm($token);
     // 返回
     return self::GetJSON(['code'=>0, 'msg'=>'成功', 'menus'=>self::_getMenusPerm('0')]);
   }

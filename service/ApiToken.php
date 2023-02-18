@@ -6,7 +6,7 @@ use Library\Safety;
 use Library\Redis;
 use Model\ApiMenu;
 
-/* 后台Token */
+/* Token-验证 */
 class ApiToken extends Base {
 
   /* 验证 */
@@ -45,7 +45,7 @@ class ApiToken extends Base {
     if(empty($menuData)) return '菜单验证无效!';
     // 验证-菜单
     $id = (string)$menuData['id'];
-    $permData = self::perm($token);
+    $permData = self::getPerm($token);
     if(!isset($permData[$id])) return '无权访问菜单!';
     // 验证-动作
     $actionVal = (int)$permData[$id];
@@ -57,13 +57,22 @@ class ApiToken extends Base {
         break;
       }
     }
-    self::Print($actionVal, $permVal);
     if(($actionVal&$permVal)==0) return '无权访问动作!';
     return '';
   }
+
+  /* 权限-保存 */
+  static function savePerm($uid, string $perm): bool {
+    $redis = new Redis();
+    $key = Env::$api_token_prefix.'_perm_'.$uid;
+    $redis->Set($key, $perm);
+    $redis->Expire($key, Env::$api_token_time);
+    $redis->Close();
+    return true;
+  }
   
-  /* 权限数组 */
-  static function Perm(string $token): array {
+  /* 权限-拆分 */
+  static function getPerm(string $token): array {
     $permAll = [];
     // Token
     $tData = Safety::Decode($token);
