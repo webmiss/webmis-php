@@ -4,14 +4,11 @@ namespace App\Admin;
 use Service\Base;
 use Service\Data;
 use Service\AdminToken;
-use Library\FileEo;
-use Library\Upload;
+use Library\Aliyun\Oss;
 use Model\UserInfo as UserInfoM;
 use Util\Util;
 
 class UserInfo extends Base {
-
-  private static $ImgDir = 'upload/user/img/';
 
   /* 列表 */
 	static function List(){
@@ -75,23 +72,26 @@ class UserInfo extends Base {
     $msg = AdminToken::Verify($token, '');
     if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
     if(empty($base64)) return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
-    // 上传
-    $img = Upload::Base64(['path'=>self::$ImgDir, 'base64'=>$base64]);
-    if(empty($img)) return self::GetJSON(['code'=>5000, 'msg'=>'上传失败!']);
-    // 数据
-    $tData = AdminToken::Token($token);
-    $model = new UserInfoM();
-    $model->Columns('img');
-    $model->Where('uid=?', $tData->uid);
-    $imgData = $model->FindFirst();
-    $model->Set(['img'=>self::$ImgDir.$img]);
-    $model->Where('uid=?', $tData->uid);
-    if(!$model->Update()) return self::GetJSON(['code'=>5000, 'msg'=>'上传失败!']);
-    // 清理
-    $rmImg = (string)$imgData['img'];
-    FileEo::RemoveAll($rmImg);
+    // 限制格式
+    $extAll = [
+      'data:image/jpeg;base64' => 'jpg',
+      'data:image/png;base64' => 'png',
+    ];
+    $ct = explode(',', $base64);
+    $ext = $extAll[$ct[0]];
+    if(!$ext) return self::GetJSON(['code'=>400, 'msg'=>'只能上传JPG、PNG格式图片!']);
+    // OSS
+    $admin = AdminToken::Token($token);
+    $file = 'user/img/'.$admin->uid.'.jpg';
+    $res = Oss::PutObject($file, $ct[1]);
+    if(!$res) return self::GetJSON(['code'=>5000, 'msg'=>'上传失败!']);
+    // 保存图片
+    $m = new UserInfoM();
+    $m->Set(['img'=>$file]);
+    $m->Where('uid=?', $admin->uid);
+    if(!$m->Update()) return self::GetJSON(['code'=>5000, 'msg'=>'请重新上传!']);
     // 返回
-    return self::GetJSON(['code'=>0,'msg'=>'成功', 'img'=>Data::Img(self::$ImgDir.$img)]);
+    return self::GetJSON(['code'=>0,'msg'=>'成功', 'img'=>Data::Img($file)]);
   }
 
 }

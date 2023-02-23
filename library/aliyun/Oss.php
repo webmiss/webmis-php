@@ -3,17 +3,87 @@ namespace Library\Aliyun;
 
 use Config\Aliyun;
 use Service\Base;
-use OSS\OssClient;
-use OSS\Core\OssException;
+use Library\Curl;
+use Util\Util;
 
 /* 对象存储 */
 class Oss extends Base {
 
-  static $OssConn = null;               //连接
-  static string $AccessKeyId = '';      //RAM: AccessKeyId
-  static string $AccessKeySecret = '';  //RAM: AccessKeySecret
-  static string $Endpoint = '';         //地域节点
-  static string $Bucket = '';           //Bucket名称
+  /* 公共参数 */
+  static function GetParam(string $file): array {
+    $cfg = Aliyun::OSS();
+    return [
+      'url'=> 'http://'.$cfg['Bucket'].'.'.$cfg['Endpoint'].'/'.$file,
+      'resource'=> '/'.$cfg['Bucket'].'/'.$file,
+      'date'=> gmdate("D, d M Y H:i:s T"),
+    ];
+  }
+
+  /* 上传 */
+  static function PutObject(string $file, string $content, string $content_type='', array $oss_headers=[]): bool {
+    // 参数
+    $method = 'PUT';
+    $param = self::GetParam($file);
+    $authorization = self::Authorization($method, '', $content_type, $param['date'], $oss_headers, $param['resource']);
+    $headers = array_merge([
+      "Date"=> $param['date'],
+      "Content-Type"=> $content_type,
+      'Authorization'=> $authorization,
+    ], $oss_headers);
+    // 请求
+    $res = Curl::Request($param['url'], base64_decode($content), $method, $headers, 'xml');
+    return !$res?true:false;
+  }
+
+  /* 删除-单个 */
+  static function DeleteObject(string $file, array $oss_headers=[]): bool {
+    // 参数
+    $method = 'DELETE';
+    $param = self::GetParam($file);
+    $authorization = self::Authorization($method, '', '', $param['date'], $oss_headers, $param['resource']);
+    $headers = array_merge([
+      "Date"=> $param['date'],
+      "Content-Type"=> '',
+      'Authorization'=> $authorization,
+    ], $oss_headers);
+    // 请求
+    $res = Curl::Request($param['url'], '', $method, $headers, 'xml');
+    return !$res?true:false;
+  }
+
+  /* 签名 */
+  static function Authorization($method, $content_md5, $content_type, $date, $oss_headers, $resource){
+    $cfg = Aliyun::RAM();
+    $headers = '';
+    foreach($oss_headers as $k=>$v) $headers .=$k.':'.$v."\n";
+    $str = $method."\n".$content_md5."\n".$content_type."\n".$date."\n".$headers.$resource;
+    $signature = base64_encode(hash_hmac('sha1', $str, $cfg['AccessKeySecret'], true));
+    return "OSS " . $cfg['AccessKeyId'] . ":" . $signature;
+  }
+
+  /* 签名直传 */
+  static function PolicySign(int $expireTime, int $maxSize=0): array {
+    // 配置
+    $cfg = Aliyun::RAM();
+    $conditions = [];
+    // 限制大小
+    $conditions[] = ['content-length-range', 0, $maxSize];
+    // 超时时间
+    $now = time();
+    $expire = $now + $expireTime;
+    $expiration = Util::GmtISO8601($expire);
+    // 签名数据
+    $policyStr = json_encode(['expiration'=>$expiration, 'conditions'=>$conditions]);
+    $policy = base64_encode($policyStr);
+    $signature = base64_encode(hash_hmac('sha1', $policy, $cfg['AccessKeySecret'], true));
+    // 返回
+    return [
+      'accessid'=> $cfg['AccessKeyId'],
+      'policy'=> $policy,
+      'signature'=> $signature,
+      'expire'=> $expire,
+    ];
+  }
 
   /* 签名直传 */
   static function Policy(string $dir, string $file, int $expireTime=0, int $maxSize=0): array {
@@ -23,7 +93,7 @@ class Oss extends Base {
     if($expireTime==0) $expireTime = $cfg['ExpireTime'];
     if($maxSize==0) $maxSize = $cfg['MaxSize'];
     // 数据
-    $res = Signature::PolicySign($expireTime, $maxSize);
+    $res = self::PolicySign($expireTime, $maxSize);
     $res['host'] = 'https://'.$cfg['Bucket'].'.'.$cfg['Endpoint'];
     $res['dir'] = $dir;
     $res['file'] = $file;
@@ -56,131 +126,6 @@ class Oss extends Base {
     $etime = (int)$expire;
     if($now > $etime) return false;
     return true;
-  }
-
-  /* 初始化 */
-  static function Init() {
-    if(!extension_loaded('iconv')) self::Error('请开启 iconv 扩展!');
-    // 配置
-    $ramCfg = Aliyun::RAM();
-    $ossCfg = Aliyun::OSS();
-    if(self::$AccessKeyId=='') self::$AccessKeyId = $ramCfg['AccessKeyId'];
-    if(self::$AccessKeySecret=='') self::$AccessKeySecret = $ramCfg['AccessKeySecret'];
-    if(self::$Endpoint=='') self::$Endpoint = $ossCfg['Endpoint'];
-    if(self::$Bucket=='') self::$Bucket = $ossCfg['Bucket'];
-    // 连接
-    if(!self::$OssConn){
-      try {
-        self::$OssConn = new OssClient(self::$AccessKeyId, self::$AccessKeySecret, self::$Endpoint);
-      } catch (OssException $e) {
-        self::Print('[OSS] Conn:', $e->getMessage());
-        self::$OssConn = null;
-      }
-    }
-    return self::$OssConn;
-  }
-
-  /* 列表 */
-  static function ListObject($path): array {
-    $res = ['folder'=>[], 'file'=>[]];
-    // 连接
-    $conn = self::Init();
-    if($conn==null) return $res;
-    // 数据
-    try {
-      $listObjectInfo = $conn->listObjects(self::$Bucket, ['prefix'=> $path, 'delimiter'=> '/']);
-    } catch (OssException $e) {
-      self::Print('[OSS] List:', $e->getMessage());
-      return $res;
-    }
-    // 文件夹
-    $prefixList = $listObjectInfo->getPrefixList();
-    foreach($prefixList as $val){
-      $res['folder'][] = $val->getPrefix();
-    }
-    // 文件
-    $objectList = $listObjectInfo->getObjectList();
-    foreach($objectList as $val){
-      $res['file'][] = $val->getKey();
-    }
-    return $res;
-  }
-
-  /* 上传 */
-  static function PutObject($file, $content, $options=null): bool {
-    // 连接
-    $conn = self::Init();
-    if($conn==null) return false;
-    try {
-      $conn->putObject(self::$Bucket, $file, $content, $options);
-      return true;
-    } catch (OssException $e) {
-      self::Print('[OSS] Put:', $e->getMessage());
-      return false;
-    }
-  }
-
-  /* 删除-单个 */
-  static function DeleteObject(string $file): bool {
-    if(empty($file)) return false;
-    // 连接
-    $conn = self::Init();
-    if($conn==null) return false;
-    // 执行
-    try {
-      $conn->deleteObject(self::$Bucket, $file);
-      return true;
-    } catch (OssException $e) {
-      self::Print('[OSS] Del:', $e->getMessage());
-      return false;
-    }
-  }
-
-  /* 删除-多个 */
-  static function DeleteObjects(array $files): bool {
-    if(empty($files)) return false;
-    // 连接
-    $conn = self::Init();
-    if($conn==null) return false;
-    // 执行
-    try {
-      $conn->deleteObjects(self::$Bucket, $files);
-      return true;
-    } catch (OssException $e) {
-      self::Print('[OSS] Dels:', $e->getMessage());
-      return false;
-    }
-  }
-
-  /* 删除-文件夹&文件 */
-  static function DeleteObjectAll(string $path): bool {
-    if(empty($path)) return false;
-    // 连接
-    $conn = self::Init();
-    if($conn==null) return false;
-    try {
-      // 文件
-      $last = substr($path, -1);
-      if($last != '/'){
-        // 执行
-        $conn->deleteObject(self::$Bucket, $path);
-        return true;
-      }
-      // 文件夹
-      $nextMarker = '';
-      $objects = [];
-      while (true) {
-        $listObjectInfo = $conn->listObjects(self::$Bucket, ['marker'=>$nextMarker, 'prefix'=>$path, 'delimiter'=>'']);
-        $nextMarker = $listObjectInfo->getNextMarker();
-        $listObject = $listObjectInfo->getObjectList();
-        foreach($listObject as $val) $objects[] = $val->getKey();
-        if($listObjectInfo->getIsTruncated() !== "true") break;
-      }
-      return self::DeleteObjects($objects);
-    } catch (OssException $e) {
-      self::Print('[OSS] DelAll:', $e->getMessage());
-      return false;
-    }
   }
 
 }

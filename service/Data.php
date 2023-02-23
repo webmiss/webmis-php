@@ -47,7 +47,7 @@ class Data extends Base {
 
   /* 图片地址 */
   static function Img(string $img): string {
-    return $img?Env::$base_url.$img:'';
+    return $img?Env::$img_url.$img:'';
   }
 
   /*

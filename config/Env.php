@@ -10,6 +10,7 @@ class Env {
   static $base_url = 'https://php.webmis.vip/';
   // static $base_url = 'http://localhost/php/public/';
   static $root_dir = 'public/';                             //根目录
+  static $img_url = 'https://img.webmis.vip';               //图片目录
   /* Token */
   static $admin_token_prefix = 'Admin';                     //前缀
   static $admin_token_time = 2*3600;                        //有效时长(2小时)
