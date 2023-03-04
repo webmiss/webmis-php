@@ -83,4 +83,19 @@ class Util extends Base {
     return $data;
   }
 
+  /* Aarray Sort */
+  static function AarraySort($arr, $key, $sort=SORT_DESC){
+    $tmp = [];
+    foreach($arr as $k=>$v){
+      $tmp[$k] = $v[$key];
+    }
+    array_multisort($tmp, $sort, $arr);
+    return $arr;
+  }
+
+  /* Trim */
+  static function Trim(string $str): string {
+    return preg_replace('/(\s|\&nbsp\;||\xc2\xa0)/', '', $str);
+  }
+
 }

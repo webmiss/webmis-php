@@ -91,7 +91,7 @@ class UserInfo extends Base {
     $m->Where('uid=?', $admin->uid);
     if(!$m->Update()) return self::GetJSON(['code'=>5000, 'msg'=>'请重新上传!']);
     // 返回
-    return self::GetJSON(['code'=>0,'msg'=>'成功', 'img'=>Data::Img($file)]);
+    return self::GetJSON(['code'=>0,'msg'=>'成功', 'img'=>Data::Img($file, false)]);
   }
 
 }
