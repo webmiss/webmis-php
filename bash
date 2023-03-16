@@ -23,16 +23,16 @@ elif [ "$s" == "install" ]; then
 # Socket-运行
 elif [ "$s" == "socket" ]; then
   {
-    php $cli socket start
+    php $cli Socket start
   } || {
     echo "> 请安装'php'"
   }
 # Socket-启动
 elif [ "$s" == "socketStart" ]; then
-  php $cli socket start &
+  php $cli Socket start &
 # Socket-停止
 elif [ "$s" == "socketStop" ]; then
-  ps -aux | grep "$cli socket start" | grep -v grep | awk {'print $2'} | xargs kill
+  ps -aux | grep "$cli Socket start" | grep -v grep | awk {'print $2'} | xargs kill
 else
   echo "----------------------------------------------------"
   echo "[use] ./bash <command>"
