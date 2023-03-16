@@ -10,8 +10,8 @@ use Config\Socket as cfg;
 class Socket {
 
   /* 发送 */
-  static function Send($type, $data){
-    $url = cfg::$type.'://'.cfg::$host.':'.cfg::$port.'/?type='.$type.'&token='.Env::$key;
+  static function Send($channel, $data){
+    $url = cfg::$type.'://'.cfg::$host.':'.cfg::$port.'/?channel='.$channel.'&token='.Env::$key;
     $ws = new Client($url);
     $ws->send(json_encode($data));
   }
