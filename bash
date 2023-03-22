@@ -29,7 +29,7 @@ elif [ "$s" == "socket" ]; then
   }
 # Socket-启动
 elif [ "$s" == "socketStart" ]; then
-  php $cli Socket start &
+  nohup php $cli Socket start &
 # Socket-停止
 elif [ "$s" == "socketStop" ]; then
   ps -aux | grep "$cli Socket start" | grep -v grep | awk {'print $2'} | xargs kill

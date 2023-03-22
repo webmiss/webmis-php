@@ -112,36 +112,17 @@ class SysUser extends Base {
     if(!empty($user)) {
       return self::GetJSON(['code'=>4000, 'msg'=>'该用户已存在!']);
     }
-    // 新增
-    $uid = Data::Mist('ID');
-    $conn = $m->DBConn();
-    try{
-      $conn->beginTransaction();
-      // 用户
-      $m1 = new User();
-      $m1->Values(['id'=>$uid, 'tel'=>$tel, 'password'=>md5($passwd), 'rtime'=>time()]);
-      list($sql, $args) = $m1->InsertSQL();
-      $m->Exec($conn, $sql, $args);
-      // 详情
-      $m2 = new UserInfo();
-      $m2->Values(['uid'=>$uid]);
-      list($sql, $args) = $m2->InsertSQL();
-      $m->Exec($conn, $sql, $args);
-      // 权限-System
-      $m3 = new SysPerm();
-      $m3->Values(['uid'=>$uid, 'role'=>1, 'utime'=>time()]);
-      list($sql, $args) = $m3->InsertSQL();
-      $m->Exec($conn, $sql, $args);
-      // 权限-Api
-      $m4 = new ApiPerm();
-      $m4->Values(['uid'=>$uid, 'role'=>1, 'utime'=>time()]);
-      list($sql, $args) = $m4->InsertSQL();
-      $m->Exec($conn, $sql, $args);
-      // 提交
-      $conn->commit();
+    // 用户
+    $m1 = new User();
+    $m1->Values(['tel'=>$tel, 'password'=>md5($passwd), 'rtime'=>time()]);
+    $m1->Insert();
+    $uid = $m1->GetID();
+    // 用户信息
+    $m2 = new UserInfo();
+    $m2->Values(['uid'=>$uid]);
+    if($m2->Insert()){
       return self::GetJSON(['code'=>0,'msg'=>'成功']);
-    } catch (\Exception $e) {
-      $conn->rollBack();
+    }else{
       return self::GetJSON(['code'=>5000,'msg'=>'添加失败!']);
     }
   }
@@ -281,45 +262,58 @@ class SysUser extends Base {
   private static function _permSys($uid, $role, $perm) {
     // 数据
     $uData = ['perm'=>$perm, 'role'=>$role, 'utime'=>time()];
-    // 模型
+    // 是否存在
     $m = new SysPerm();
-    $m->Set($uData);
+    $m->Columns('uid');
     $m->Where('uid=?', $uid);
-    if($m->Update()){
-      // 角色权限
-      if(empty($perm)){
-        $m1 = new SysRole();
-        $m1->Columns('perm');
-        $m1->Where('id=?', $role);
-        $data = $m1->FindFirst();
-        $perm = isset($data['perm'])?$data['perm']:'';
-      }
-      // 更新权限
-      return self::_setPerm(Env::$admin_token_prefix.'_perm_'.$uid, $perm);
+    $one = $m->FindFirst();
+    if($one){
+      $m->Set($uData);
+      $m->Where('uid=?', $uid);
+      $m->Update();
+    }else{
+      $uData['uid'] = $uid;
+      $uData['utime'] = time();
+      $m->Values($uData);
+      $m->Insert();
     }
-    return false;
+    // 角色权限
+    if(empty($perm)){
+      $m1 = new SysRole();
+      $m1->Columns('perm');
+      $m1->Where('id=?', $role);
+      $data = $m1->FindFirst();
+      $perm = isset($data['perm'])?$data['perm']:'';
+    }
+    // 更新权限
+    return self::_setPerm(Env::$admin_token_prefix.'_perm_'.$uid, $perm);
   }
   // 权限-System
   private static function _permApi($uid, $role, $perm) {
     // 数据
     $uData = ['perm'=>$perm, 'role'=>$role, 'utime'=>time()];
-    // 模型
+    // 是否存在
     $m = new ApiPerm();
-    $m->Set($uData);
+    $m->Columns('uid');
     $m->Where('uid=?', $uid);
-    if($m->Update()){
-      // 角色权限
-      if(empty($perm)){
-        $m1 = new ApiRole();
-        $m1->Columns('perm');
-        $m1->Where('id=?', $role);
-        $data = $m1->FindFirst();
-        $perm = isset($data['perm'])?$data['perm']:'';
-      }
-      // 更新权限
-      return self::_setPerm(Env::$api_token_prefix.'_perm_'.$uid, $perm);
+    $one = $m->FindFirst();
+    if($one){
+      $m->Set($uData);
+      $m->Update();
+    }else{
+      $uData['uid'] = $uid;
+      $uData['utime'] = time();
+      $m->Values($uData);
+      $m->Insert();
     }
-    return false;
+    // 角色权限
+    if(empty($perm)){
+      $m1 = new ApiRole();
+      $m1->Columns('perm');
+      $m1->Where('id=?', $role);
+      $data = $m1->FindFirst();
+      $perm = isset($data['perm'])?$data['perm']:'';
+    }
   }
   // 更新权限
   private static function _setPerm(string $key, string $perm): bool {

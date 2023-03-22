@@ -6,6 +6,8 @@ use Service\ApiToken;
 use Service\AdminToken;
 use Util\Util;
 
+use Model\UserMsg;
+
 use Ratchet\WebSocket\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
 
@@ -24,7 +26,29 @@ class Socket implements MessageComponentInterface {
   function getMsg(string $uid, array $msg) {
     // 群发
     if($uid=='0' && !isset($msg['to'])) return $this->sendAll($msg);
-    // 单发
+    // 时间
+    $time = time();
+    if(!isset($msg['time'])) $msg['time']=date('Y-m-d H:i:s', $time);
+    // 保存
+    $m = new UserMsg();
+    $m->Values([
+      'gid'=> $msg['gid'],
+      'uid'=> $msg['to'],
+      'fid'=> $uid,
+      'ctime'=> $time,
+      'utime'=> $time,
+      'is_new'=> json_encode([$uid]),
+      'title'=> $msg['title'],
+      'content'=> $msg['msg'],
+    ]);
+    if($m->Insert()){
+      $msg['code'] = 0;
+      $msg['id'] = $m->GetID();
+    }else{
+      $msg['code'] = 500;
+      $msg['id'] = 0;
+    }
+    // 发送
     return $this->send($msg);
   }
 
@@ -32,8 +56,17 @@ class Socket implements MessageComponentInterface {
   function router(string $uid, $msg, $from): void {
     $data = json_decode($msg, true);
     if($data['type']=='msg'){
+      // 消息
       $this->getMsg($uid, $data);
+    }elseif($data['type']=='online'){
+      // 是否在线
+      $list = [];
+      foreach ($data['ids'] as $id) {
+        $list[(string)$id] = in_array($id, array_keys($this->uids));
+      }
+      $from->send(json_encode(['code'=>0, 'type'=>'online', 'data'=>$list]));
     }else{
+      // 心跳包
       $from->send(json_encode(['code'=>0, 'type'=>'', 'msg'=>'成功']));
     }
   }
@@ -43,6 +76,7 @@ class Socket implements MessageComponentInterface {
     foreach ($this->clients as $conn) {
       $conn->send(json_encode($data));
     }
+    return;
   }
 
   /* 单发 */
@@ -50,7 +84,7 @@ class Socket implements MessageComponentInterface {
     if(!isset($data['to']) || !isset($this->uids[$data['to']])) return;
     $id = $this->uids[$data['to']];
     foreach ($this->clients as $conn) {
-      if($conn->resourceId==$id) $conn->send(json_encode($data));
+      if($conn->resourceId==$id) return $conn->send(json_encode($data));
     }
   }
 
