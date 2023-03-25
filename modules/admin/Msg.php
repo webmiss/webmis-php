@@ -9,8 +9,18 @@ use Model\UserInfo;
 use Model\UserMsg;
 
 use Util\Util;
+use Library\Socket;
 
+/* 消息 */
 class Msg extends Base {
+
+  /* Socket */
+  static function Socket(){
+    $uid = $_GET['uid'];
+    $msg = $_GET['msg'];
+    if(empty($uid) || empty($msg)) return;
+    Socket::Send('admin', ['gid'=>1, 'to'=>$uid, 'fid'=>0, 'type'=>'msg', 'title'=>'系统消息', 'msg'=>$msg]);
+  }
 
   /* 列表 */
 	static function List() {
@@ -40,7 +50,7 @@ class Msg extends Base {
         $gid[] = $g_id;
         $tmp['g'.$g_id]['gid'] = $g_id;
         $tmp['g'.$g_id]['fid'] = $g_id;
-        $tmp['g'.$g_id]['num'] += $n;
+        $tmp['g'.$g_id]['num'] = isset($tmp['g'.$g_id]['num'])?$tmp['g'.$g_id]['num']+$n:$n;
         $tmp['g'.$g_id]['time'] = $v['time'];
         $tmp['g'.$g_id]['msg'] = $v['content'];
         $tmp['g'.$g_id]['list'][] = $v;
@@ -51,7 +61,7 @@ class Msg extends Base {
         $fid[] = $v['fid'];
         $tmp['u'.$u_id]['gid'] = 0;
         $tmp['u'.$u_id]['fid'] = $u_id;
-        $tmp['u'.$u_id]['num'] = $n;
+        $tmp['u'.$u_id]['num'] = isset($tmp['u'.$u_id]['num'])?$tmp['u'.$u_id]['num']+$n:$n;
         $tmp['u'.$u_id]['time'] = $v['time'];
         $tmp['u'.$u_id]['msg'] = $v['content'];
         $tmp['u'.$u_id]['list'][] = $v;

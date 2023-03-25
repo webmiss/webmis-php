@@ -6,7 +6,7 @@ use Service\AdminToken;
 use Library\Baidu\TongJi;
 use Util\Util;
 
-
+/* 控制台 */
 class Index extends Base {
 
   static private $site_id = '17669804';

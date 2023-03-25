@@ -19,6 +19,11 @@ class Admin {
       // 登录
       $router->post('/admin/user/login', "User@Login");
       $router->post('/admin/user/token', "User@Token");
+      // 消息
+      $router->get('/admin/msg/socket', "Msg@Socket");
+      $router->post('/admin/msg/list', "Msg@List");
+      $router->post('/admin/msg/sea', "Msg@Sea");
+      $router->post('/admin/msg/read', "Msg@Read");
       // 个人资料
       $router->post('/admin/user_info/list', "UserInfo@List");
       $router->post('/admin/user_info/edit', "UserInfo@Edit");
