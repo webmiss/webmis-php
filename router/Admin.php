@@ -45,6 +45,7 @@ class Admin {
       $router->post('/admin/sys_user/state', "SysUser@State");
       $router->post('/admin/sys_user/perm', "SysUser@Perm");
       $router->post('/admin/sys_user/info', "SysUser@Info");
+      $router->post('/admin/sys_user/export', "SysUser@Export");
       // API菜单
       $router->post('/admin/api_menus/list', "ApiMenus@List");
       $router->post('/admin/api_menus/add', "ApiMenus@Add");
@@ -65,6 +66,7 @@ class Admin {
       $router->post('/admin/sys_menus/edit', "SysMenus@Edit");
       $router->post('/admin/sys_menus/del', "SysMenus@Del");
       $router->post('/admin/sys_menus/perm', "SysMenus@Perm");
+      $router->post('/admin/sys_menus/export', "SysMenus@Export");
       $router->post('/admin/sys_menus/getMenusAll', "SysMenus@GetMenusAll");
       $router->post('/admin/sys_menus/getMenusPerm', "SysMenus@GetMenusPerm");
       // 系统角色
