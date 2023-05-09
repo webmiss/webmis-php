@@ -20,53 +20,29 @@ class SysMenus extends Base {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
-    $data = self::JsonName($json, 'data');
-    $page = self::JsonName($json, 'page');
-    $limit = self::JsonName($json, 'limit');
-    $order = self::JsonName($json, 'order');
     // 验证
     $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
     if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    if(empty($data) || empty($page) || empty($limit)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
-    }
-    // 条件
-    $param = json_decode($data);
-    $where = self::getWhere($param);
     // 统计
     $m = new SysMenu();
-    $m->Columns('count(*) AS num');
-    $m->Where($where);
+    $m->Columns('count(*) AS total');
     $total = $m->FindFirst();
-    // 查询
-    $m->Columns('id', 'fid', 'title', 'en', 'ico', 'sort', 'url', 'controller', 'action', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
-    $m->Where($where);
-    $m->Order($order?:'fid DESC,sort,id DESC');
-    $m->Page($page, $limit);
-    $list = $m->Find();
-    // 数据
-    foreach ($list as $key => $val) {
-      $list[$key]['action'] = $val['action']!=''?json_decode($val['action'], true):'';
-    }
+    // 全部菜单
+    self::_getMenus();
     // 返回
-    return self::GetJSON(['code'=>0,'msg'=>'成功','list'=>$list,'total'=>(int)$total['num']]);
+    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'total'=>(int)$total['total'], 'list'=>self::_getMenusList('0')]);
   }
-  /* 搜索条件 */
-  static private function getWhere(object $param): string {
-    $where = [];
-    // FID
-    $fid = isset($param->fid)?trim($param->fid):'';
-    if($fid!='') $where[] = 'fid="'.$fid.'"';
-    // 名称
-    $title = isset($param->title)?trim($param->title):'';
-    if($title) $where[] = 'title LIKE "%'.$title.'%"';
-    // 英文
-    $en = isset($param->en)?trim($param->en):'';
-    if($en) $where[] = 'en LIKE "%'.$en.'%"';
-    // URL
-    $url = isset($param->url)?trim($param->url):'';
-    if($url) $where[] = 'url LIKE "%'.$url.'%"';
-    return implode(' AND ', $where);
+  // 递归菜单
+  private static function _getMenusList(string $fid) {
+    $data = [];
+    $M = isset(self::$menus[$fid])?self::$menus[$fid]:[];
+    foreach($M as $val){
+      $val['action'] = $val['action']!=''?json_decode($val['action'], true):'';
+      $menu = self::_getMenusList($val['id']);
+      $val['children'] = !empty($menu)?$menu:[];
+      $data[] = $val;
+    }
+    return $data;
   }
 
   /* 添加 */
@@ -199,24 +175,15 @@ class SysMenus extends Base {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
-    $data = self::JsonName($json, 'data');
-    $order = self::JsonName($json, 'order');
     // 验证
     $msg = AdminToken::Verify($token, '');
     if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    if(empty($data)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
-    }
-    // 条件
-    $param = json_decode($data);
-    $where = self::getWhere($param, $token);
     // 查询
     $m = new SysMenu();
     $m->Columns('id', 'fid', 'title', 'en', 'ico', 'sort', 'url', 'controller', 'action', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
-    $m->Where($where);
-    $m->Order($order?:'fid DESC,sort,id DESC');
+    $m->Order('id');
     $list = $m->Find();
-    // 导入文件
+    // 导出文件
     $admin = AdminToken::Token($token);
     self::$export_filename = 'SysMenus_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
     $html = Export::ExcelTop();
@@ -318,7 +285,7 @@ class SysMenus extends Base {
   /* 全部菜单 */
   private static function _getMenus() {
     $model = new SysMenu();
-    $model->Columns('id', 'fid', 'title', 'en', 'url', 'ico', 'controller', 'action');
+    $model->Columns('id', 'fid', 'title', 'en', 'url', 'ico', 'controller', 'action', 'sort', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
     $model->Order('sort, id');
     $data = $model->Find();
     foreach($data as $val){

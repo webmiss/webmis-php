@@ -402,7 +402,7 @@ class SysUser extends Base {
     $m->Where($where);
     $m->Order($order?:'a.id DESC');
     $list = $m->Find();
-    // 导入文件
+    // 导出文件
     $admin = AdminToken::Token($token);
     self::$export_filename = 'SysUser_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
     $html = Export::ExcelTop();
