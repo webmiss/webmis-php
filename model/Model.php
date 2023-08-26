@@ -17,6 +17,7 @@ class Model extends Base {
   private $columns = '';         //字段
   private $where = '';           //条件
   private $group = '';           //分组
+  private $having = '';          //筛选
   private $order = '';           //排序
   private $limit = '';           //限制
   private $args = [];            //参数
@@ -147,6 +148,10 @@ class Model extends Base {
   function Group(...$group): void {
     $this->group = implode(',', $group);
   }
+  /* 筛选 */
+  function Having($having): void {
+    $this->having = $having;
+  }
 
   /* 分页 */
   function Page(int $page, int $limit): void {
@@ -173,6 +178,10 @@ class Model extends Base {
     if($this->group != ''){
       $this->sql .= ' GROUP BY '.$this->group;
       $this->group = '';
+    }
+    if($this->having != ''){
+      $this->sql .= ' HAVING '.$this->having;
+      $this->having = '';
     }
     if($this->order != ''){
       $this->sql .= ' ORDER BY '.$this->order;
@@ -206,7 +215,7 @@ class Model extends Base {
   }
   /* 查询-单条 */
   function FindFirst() {
-    $this->limit = '0,1';
+    $this->limit = '1';
     list($sql, $args) = $this->SelectSQL();
     $conn = $this->DBConn();
     $stmt = $this->Exec($conn, $sql, $args);

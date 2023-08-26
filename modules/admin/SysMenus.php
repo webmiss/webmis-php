@@ -66,7 +66,7 @@ class SysMenus extends Base {
     // 模型
     $m = new SysMenu();
     $m->Values([
-      'fid'=> isset($param->fid)?trim($param->fid):0,
+      'fid'=> isset($param->fid)&&!empty($param->fid)?trim($param->fid):0,
       'title'=> $title,
       'en'=> isset($param->en)?trim($param->en):'',
       'url'=> isset($param->url)?trim($param->url):'',
@@ -104,7 +104,7 @@ class SysMenus extends Base {
     // 模型
     $m = new SysMenu();
     $m->Set([
-      'fid'=> isset($param->fid)?trim($param->fid):0,
+      'fid'=> isset($param->fid)&&!empty($param->fid)?trim($param->fid):0,
       'title'=> $title,
       'en'=> isset($param->en)?trim($param->en):'',
       'url'=> isset($param->url)?trim($param->url):'',
@@ -129,16 +129,13 @@ class SysMenus extends Base {
     $data = self::JsonName($json, 'data');
     // 验证
     $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
     if(empty($data)) {
       return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
     }
-    // 数据
-    $param = json_decode($data);
-    $ids = implode(',',$param);
     // 模型
     $m = new SysMenu();
-    $m->Where('id in('.$ids.')');
+    $m->Where('id=?', $data);
     if($m->Delete()) {
       return self::GetJSON(['code'=>0,'msg'=>'成功']);
     } else {

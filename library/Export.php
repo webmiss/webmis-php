@@ -27,14 +27,15 @@ class Export extends Base {
     // 参数
     $param = array_merge([
       'borderColor'=>'#E2E4E8',      //边框颜色
-      'titleColor'=> '#828488',      //标题颜色
-      'titleBgColor'=> '#ECF0F1',    //标题背景
+      'titleColor'=> '#020408',      //标题颜色
+      'titleBgColor'=> '#F2F4F8',    //标题背景
     ],$param);
     // 内容
     $html = '<html>';
     $html .= '<style type="text/css">';
-    $html .= 'table td{height: 32px; border: '.$param['borderColor'].' 1px solid;}';
-    $html .= '.title{background-color: '.$param['titleBgColor'].'; color: '.$param['titleColor'].'; font-weight: bold; text-align: center;}';
+    $html .= 'table{font-family:Microsoft YaHei,微软雅黑,SimHei,helvetica,arial,verdana,tahoma,sans-serif;}';
+    $html .= 'table td{height: 32px; padding: 10px; text-align: center; border: '.$param['borderColor'].' 1px solid;}';
+    $html .= '.title{background-color: '.$param['titleBgColor'].'; color: '.$param['titleColor'].'; font-weight: bold;}';
     $html .= '</style>';
     $html .= '<table>';
     return $html;
