@@ -3,6 +3,7 @@ namespace Library;
 
 use Service\Base;
 use Library\FileEo;
+use Mpdf\Mpdf;
 
 /* 导出 */
 class Export extends Base {
@@ -59,6 +60,32 @@ class Export extends Base {
     $html = '</table>';
     $html .= '</html>';
     return $html;
+  }
+
+  /* 导出PDF */
+  static function PdfHmtl(string $path='upload/tmp/', string $filename='', string $html='', array $config=[]){
+    // 参数
+    $config = array_merge([
+      'mode'=> 'UTF-8',               //编码
+      'format'=> 'A4',                //纸张大小
+      'default_font'=> '微软雅黑',    //字体
+      'default_font_size'=> '14',     //文本大小
+      'margin_top'=> '10',            //上边距
+      'margin_bottom'=> '10',         //下边距
+      'margin_left'=> '15',           //左边距
+      'margin_right'=> '15',          //右边距
+    ], $config);
+    // 配置
+    $pdf = new Mpdf($config);
+    $pdf->autoScriptToLang = true;
+    $pdf->autoLangToFont  = true;
+    $pdf->WriteHTML($html);
+    if(!$filename) return $pdf->Output();
+    // 保存
+    if(!FileEo::Mkdir($path)) return '无法访问目录"'.$path.'"';
+    $file = $path.$filename;
+    $pdf->Output($file, 'f');
+    return $file;
   }
 
 }

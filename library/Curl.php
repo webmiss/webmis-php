@@ -7,7 +7,7 @@ use Service\Base;
 class Curl extends Base {
 
   /* GET、POST、PUT、HEAD、DELETE */
-  static function Request(string $url, string $data='', string $method='GET', array $headers=[], string $resType='json') {
+  static function Request(string $url, $data, string $method='GET', array $headers=[], string $resType='json') {
     // 请求头
     $headerArr = [];
     foreach($headers as $k=>$v){
@@ -19,15 +19,13 @@ class Curl extends Base {
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
     curl_setopt($ch,CURLOPT_HTTPHEADER,$headerArr);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);//暂时关闭ssl申请
     // 数据
-    if($method!='GET'){
-      curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-    }
-    $text = curl_exec($ch);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+    $res = curl_exec($ch);
     curl_close($ch);
     // 结果
-    if($resType=='json') $res = !empty($text)?json_decode($text):null;
-    else $res = $text;
+    if($resType=='json') $res=!empty($res)?json_decode($res):null;
     return $res;
   }
 

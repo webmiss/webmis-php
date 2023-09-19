@@ -142,14 +142,14 @@ class FileEo extends Base {
   }
 
   /* 写入 */
-  static function Writer(string $file='', string $content): bool {
+  static function Writer(string $file='', $content=''): bool {
     $file = self::$Root.$file;
     self::MkdirFile($file);
     return file_put_contents($file, $content)?true:false;
   }
 
   /* 追加 */
-  static function WriterEnd(string $file='', string $content): bool {
+  static function WriterEnd(string $file='', $content=''): bool {
     $file = self::$Root.$file;
     self::MkdirFile($file);
     return file_put_contents($file, $content, FILE_APPEND)?true:false;

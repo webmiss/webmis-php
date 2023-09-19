@@ -17,7 +17,7 @@ class Captcha extends Base {
   static function GetCode(int $num): string {
     $code = '';
     for($i=0; $i<$num; $i++){
-      $code .= substr(self::$txtChars,rand(0, strlen(self::$txtChars)-1), 1);
+      $code .= substr(self::$txtChars, mt_rand(0, strlen(self::$txtChars)-1), 1);
     }
     return $code;
   }
