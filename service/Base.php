@@ -8,6 +8,7 @@ class Base {
 
   /* 返回JSON */
   static function GetJSON(array $data=[]): string {
+    header('Content-type: application/json; charset=utf-8');
     return json_encode($data);
   }
 
