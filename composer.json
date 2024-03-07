@@ -20,7 +20,8 @@
     "cboden/ratchet": "v0.4.4",
     "mpdf/mpdf": "^8.0.13",
     "milon/barcode": "dev-master",
-    "gregwar/captcha": "dev-master"
+    "gregwar/captcha": "dev-master",
+    "phpmailer/phpmailer": "dev-master"
   },
   "autoload": {
     "psr-4": {

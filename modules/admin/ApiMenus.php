@@ -237,7 +237,7 @@ class ApiMenus extends Base {
     $html .= Export::ExcelBottom();
     Export::ExcelFileEnd(self::$export_path, self::$export_filename, $html);
     // 数据
-    return self::GetJSON(['code'=>0,'msg'=>'成功','path'=>Env::$base_url.self::$export_path, 'filename'=>self::$export_filename]);
+    return self::GetJSON(['code'=>0,'msg'=>'成功','path'=>Env::BaseUrl(self::$export_path), 'filename'=>self::$export_filename]);
   }
 
 }

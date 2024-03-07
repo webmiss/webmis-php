@@ -25,7 +25,7 @@ class SysFile extends Base {
     FileEo::$Root = self::$dirRoot;
     $list = FileEo::List($path);
     // 返回
-    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'url'=>Env::$base_url.self::$dirRoot, 'data'=>$list]);
+    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'url'=>Env::BaseUrl(self::$dirRoot), 'data'=>$list]);
   }
 
   /* 新建文件夹 */

@@ -64,7 +64,7 @@ class User extends Base {
         'nickname'=> $data['nickname'],
         'name'=> $data['name'],
         'gender'=> $data['gender'],
-        'img'=> !empty($data['img'])?Env::$base_url.$data['img']:'',
+        'img'=> !empty($data['img'])?Env::BaseUrl($data['img']):'',
       ],
     ]);
   }
