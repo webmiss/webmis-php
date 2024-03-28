@@ -2,8 +2,8 @@
 namespace Service;
 
 use Config\Env;
-use Service\ApiToken;
 use Service\AdminToken;
+use Service\ApiToken;
 use Util\Util;
 
 use Model\UserMsg;
@@ -25,25 +25,28 @@ class Socket implements MessageComponentInterface {
   /* 消息 */
   function getMsg(string $uid, array $msg) {
     // 群发
-    if($uid=='0' && !isset($msg['to'])) return $this->sendAll($msg);
+    if($uid=='0') return $this->sendAll($msg);
     // 时间
     $time = time();
     if(!isset($msg['time'])) $msg['time']=date('Y-m-d H:i:s', $time);
     // 保存
     $m = new UserMsg();
     $m->Values([
+      'format'=> $msg['format'],
       'gid'=> $msg['gid'],
-      'uid'=> $msg['to'],
+      'uid'=> $msg['fid'],
       'fid'=> $uid,
       'ctime'=> $time,
       'utime'=> $time,
       'is_new'=> json_encode([$uid]),
       'title'=> $msg['title'],
-      'content'=> $msg['msg'],
+      'content'=> $msg['content'],
     ]);
     if($m->Insert()){
       $msg['code'] = 0;
       $msg['id'] = $m->GetID();
+      $msg['uid'] = $msg['fid'];
+      $msg['fid'] = $uid;
     }else{
       $msg['code'] = 500;
       $msg['id'] = 0;
@@ -81,8 +84,8 @@ class Socket implements MessageComponentInterface {
 
   /* 单发 */
   function send(array $data) {
-    if(!isset($data['to']) || !isset($this->uids[$data['to']])) return;
-    $id = $this->uids[$data['to']];
+    if(!isset($data['uid']) || !isset($this->uids[$data['uid']])) return;
+    $id = $this->uids[$data['uid']];
     foreach ($this->clients as $conn) {
       if($conn->resourceId==$id) return $conn->send(json_encode($data));
     }
@@ -134,12 +137,12 @@ class Socket implements MessageComponentInterface {
     // 验证
     if($token==Env::$key){
       return '0';
-    }elseif($channel=='api'){
-      $tData = ApiToken::Token($token);
-      if(empty($tData)) return '';
-      return (string)$tData->uid;
     }elseif($channel=='admin'){
       $tData = AdminToken::Token($token);
+      if(empty($tData)) return '';
+      return (string)$tData->uid;
+    }elseif($channel=='api'){
+      $tData = ApiToken::Token($token);
       if(empty($tData)) return '';
       return (string)$tData->uid;
     }
