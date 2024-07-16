@@ -23,9 +23,12 @@ class Base {
   }
 
   /* JSON参数 */
-  static function Json() {
+  static function Json(): array {
+    if($_SERVER['REQUEST_METHOD']=='GET') return $_GET;
+    if($_POST) return $_POST;
     $param = file_get_contents('php://input');
-    return $param?json_decode($param, true):[];
+    $data = $param?@json_decode($param, true):[];
+    return $data?:[];
   }
   static function JsonName(array $param, string $name) {
     return isset($param[$name])?$param[$name]:'';

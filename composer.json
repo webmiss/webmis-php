@@ -21,7 +21,8 @@
     "mpdf/mpdf": "^8.0.13",
     "milon/barcode": "dev-master",
     "gregwar/captcha": "dev-master",
-    "phpmailer/phpmailer": "dev-master"
+    "phpmailer/phpmailer": "dev-master",
+    "aliyuncs/oss-sdk-php": "^2.7.1"
   },
   "autoload": {
     "psr-4": {

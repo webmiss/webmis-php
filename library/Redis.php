@@ -33,7 +33,9 @@ class Redis extends Base {
 
   /* 关闭 */
   function Close() {
-    if($this->conn) $this->conn->close();
+    if(!$this->conn) return;
+    $this->conn->close();
+    $this->conn = null;
   }
 
   /* 数据池 */
@@ -83,7 +85,7 @@ class Redis extends Base {
   /* 获取过期时间(秒) */
   function Ttl(string $key) {
     if(!$this->conn) return;
-    return $this->conn->ttl($key);
+    return @$this->conn->ttl($key);
   }
   /* 获取长度 */
   function StrLen(string $key) {
