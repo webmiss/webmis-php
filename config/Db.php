@@ -12,7 +12,7 @@ class Db {
       'port'=> 3306,                                      //端口
       'username'=> 'webmis',                              //账号
       'password'=> 'e4b99adec618e653400966be536c45f8',    //密码
-      'dbname'=> 'data',                                  //数据库名
+      'dbname'=> 'webmis',                                  //数据库名
       'charset'=> 'utf8mb4',                              //编码
       'persistent'=> true,                                //持久链接
     ];

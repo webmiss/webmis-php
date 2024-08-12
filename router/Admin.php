@@ -11,14 +11,15 @@ class Admin {
     Cors::Init();
     // 路由
     $app = Container::getInstance();
-    $app['router']->group(['namespace'=>'App\Admin'], function($router){
+    $app['router']->group(['namespace'=>'App\Admin', 'prefix' => 'admin'], function($router){
       // 首页
-      $router->get('/admin', "Index@Index");
-      $router->get('/admin/index/getConfig', "Index@GetConfig");
-      $router->post('/admin/index/getChart', "Index@GetChart");
+      $router->get('', "Index@Index");
+      $router->get('index/getConfig', "Index@GetConfig");
+      $router->post('index/getChart', "Index@GetChart");
       // 登录
-      $router->post('/admin/user/login', "User@Login");
-      $router->post('/admin/user/token', "User@Token");
+      $router->post('user/login', "User@Login");
+      $router->post('user/token', "User@Token");
+      $router->get('user/vcode/{tel}', "User@Vcode");
       // 消息
       $router->get('/admin/msg/socket', "Msg@Socket");
       $router->post('/admin/msg/list', "Msg@List");
@@ -46,22 +47,6 @@ class Admin {
       $router->post('/admin/sys_user/perm', "SysUser@Perm");
       $router->post('/admin/sys_user/info', "SysUser@Info");
       $router->post('/admin/sys_user/export', "SysUser@Export");
-      // API菜单
-      $router->post('/admin/api_menus/list', "ApiMenus@List");
-      $router->post('/admin/api_menus/add', "ApiMenus@Add");
-      $router->post('/admin/api_menus/edit', "ApiMenus@Edit");
-      $router->post('/admin/api_menus/del', "ApiMenus@Del");
-      $router->post('/admin/api_menus/perm', "ApiMenus@Perm");
-      $router->post('/admin/api_menus/export', "ApiMenus@Export");
-      // API角色
-      $router->post('/admin/api_role/list', "ApiRole@List");
-      $router->post('/admin/api_role/add', "ApiRole@Add");
-      $router->post('/admin/api_role/edit', "ApiRole@Edit");
-      $router->post('/admin/api_role/del', "ApiRole@Del");
-      $router->post('/admin/api_role/perm', "ApiRole@Perm");
-      $router->post('/admin/api_role/export', "ApiRole@Export");
-      $router->post('/admin/api_role/permList', "ApiRole@PermList");
-      $router->post('/admin/api_role/roleList', "ApiRole@RoleList");
       // 系统菜单
       $router->post('/admin/sys_menus/list', "SysMenus@List");
       $router->post('/admin/sys_menus/add', "SysMenus@Add");

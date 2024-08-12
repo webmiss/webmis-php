@@ -18,7 +18,6 @@
     "textalk/websocket": "^1.4.2",
     "khanamiryan/qrcode-detector-decoder": "1.0.6",
     "cboden/ratchet": "v0.4.4",
-    "mpdf/mpdf": "^8.0.13",
     "milon/barcode": "dev-master",
     "gregwar/captcha": "dev-master",
     "phpmailer/phpmailer": "dev-master",
