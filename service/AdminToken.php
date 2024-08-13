@@ -23,7 +23,7 @@ class AdminToken extends Base {
     $time = $redis->Ttl($key);
     $redis->Close();
     if(Env::$admin_token_sso && md5($token)!=$access_token) return '强制退出!';
-    if($time<1) return 'Token已过期!';
+    if($time<1) return '请重新登录!';
     // 续期
     if(Env::$admin_token_auto){
       $redis = new Redis();

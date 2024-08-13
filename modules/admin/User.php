@@ -9,7 +9,6 @@ use Library\Redis;
 use Library\Captcha;
 use Service\AdminToken;
 use Model\User as UserM;
-use Model\UserInfo;
 
 class User extends Base {
 

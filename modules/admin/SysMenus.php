@@ -249,7 +249,7 @@ class SysMenus extends Base {
     // 用户权限
     self::$permAll = AdminToken::getPerm($token);
     // 返回
-    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'menus'=>self::_getMenusPerm('0')]);
+    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'data'=>self::_getMenusPerm('0')]);
   }
   // 递归菜单
   private static function _getMenusPerm(string $fid) {
@@ -271,7 +271,7 @@ class SysMenus extends Base {
       }
       // 数据
       $value = ['url'=>$val['url'], 'controller'=>$val['controller'], 'action'=>$action];
-      $tmp = ['icon'=>$val['ico'], 'label'=>$val['title'], 'en'=>$val['en'], 'value'=>$value];
+      $tmp = ['icon'=>$val['ico'], 'label'=>$val['title'], 'en'=>$val['en'], 'value'=>$value, 'display'=>true];
       $menu = self::_getMenusPerm($id);
       if(!empty($menu)) $tmp['children'] = $menu;
       $data[] = $tmp;

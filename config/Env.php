@@ -8,7 +8,7 @@ class Env {
   static $password = '123456';                              //默认密码
   // 资源
   static $root_dir = 'public/';                             //根目录
-  static $img_url = 'https://img.webmis.vip';               //图片目录
+  static $img_url = 'http://localhost:9000/';               //图片目录
   /* Token */
   static $admin_token_prefix = 'Admin';                     //前缀
   static $admin_token_time = 2*3600;                        //有效时长(2小时)
