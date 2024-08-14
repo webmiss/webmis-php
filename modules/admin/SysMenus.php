@@ -271,7 +271,7 @@ class SysMenus extends Base {
       }
       // 数据
       $value = ['url'=>$val['url'], 'controller'=>$val['controller'], 'action'=>$action];
-      $tmp = ['icon'=>$val['ico'], 'label'=>$val['title'], 'en'=>$val['en'], 'value'=>$value, 'display'=>true];
+      $tmp = ['icon'=>$val['ico'], 'label'=>$val['title'], 'en'=>$val['en'], 'value'=>$value, 'display'=>true, 'show'=>true];
       $menu = self::_getMenusPerm($id);
       if(!empty($menu)) $tmp['children'] = $menu;
       $data[] = $tmp;
