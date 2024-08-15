@@ -9,13 +9,13 @@ use Util\Base64;
 class Upload extends Base {
 
   /* 单文件 */
-  static function File($file, array $param=[]): string {
+  static function File($file, array $cfg=[]): string {
     // 参数
     $param = array_merge([
       'path'=>'upload/',  //上传目录
       'filename'=>'', //文件名
       'bind'=>['svg','jpg','jpeg','png','gif','mov','mp4','wav','mp3'], //允许格式
-    ],$param);
+    ],$cfg);
     // 限制格式
     $ext = FileEo::GetExt($file['name']);
     if($param['bind']){
@@ -25,7 +25,7 @@ class Upload extends Base {
       }
     }
     // 是否重命名
-    $param['filename'] = empty($param['filename'])?$file['name']:$param['filename'].'.'.$ext;
+    $param['filename'] = $param['filename']?$file['name']:$param['filename'].'.'.$ext;
     // 创建目录
     if(!FileEo::Mkdir($param['path'])){
       self::Print('[Upload] Mkdir:', '创建目录失败!');
@@ -40,35 +40,15 @@ class Upload extends Base {
   }
 
   /* Base64 */
-  static function Base64(array $param=[]): string {
-    // 参数
-    $param = array_merge([
-      'path'=>'upload/',  //上传目录
-      'base64'=>'',       //文件内容
-      'filename'=>'',     //文件名
-      'ext'=>'png',       //后缀
-    ],$param);
-    // 内容
-    $base64 = $param['base64'];
+  static function Base64(string $file, string $base64): string {
     // 否有类型
-    $ct = explode(',',$param['base64']);
+    $ct = explode(',', $base64);
     if(count($ct)>1){
       $param['ext'] = Base64::GetExt($ct[0]);
       $base64 = $ct[1];
     }
-    // 创建目录
-    if(!FileEo::Mkdir($param['path'])){
-      self::Print('[Upload] Mkdir:', '创建目录失败!');
-      return '';
-    }
-    // 文件名
-    $filename = empty($param['filename'])?self::GetFileName().'.'.$param['ext']:$param['filename'];
     // 保存文件
-    if(!FileEo::Writer($param['path'].$filename, base64_decode($base64))){
-      self::Print('[Upload] Writer:', '保存文件失败!');
-      return '';
-    }
-    return $filename;
+    return FileEo::Writer($file, base64_decode($base64))?$file:'';
   }
 
   /* 图片回收 */

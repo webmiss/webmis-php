@@ -3,8 +3,11 @@ namespace Service;
 
 use Config\Env;
 use Library\Redis;
+use Library\Upload;
+use Library\Aliyun\Oss;
 
 use Model\Model;
+use Model\UserInfo;
 
 /* 数据类 */
 class Data extends Base {
@@ -49,6 +52,36 @@ class Data extends Base {
   static function Img(string $img, bool $isTmp=true): string {
     if(!$img) return '';
     return $isTmp?Env::$img_url.$img:Env::$img_url.$img.'?'.date('YmdHis');
+  }
+
+  /* 用户头像 */
+  static function UserImg(string $token, string $base64, string $storage='local'): string {
+    // 限制格式
+    $extAll = [
+      'data:image/jpeg;base64' => 'jpg',
+      'data:image/png;base64' => 'png',
+      'data:image/gif;base64' => 'gif',
+    ];
+    $ct = explode(',', $base64);
+    $ext = $extAll[$ct[0]];
+    if(!$ext) return self::GetJSON(['code'=>4000, 'msg'=>'只能上传JPG、PNG格式图片!']);
+    // 文件
+    $admin = AdminToken::Token($token);
+    $file = 'user/img/'.$admin->uid.'.'.$ext;
+    // OSS
+    if($storage=='oss'){
+      $res = Oss::PutObject($file, $ct[1]);
+      if(!$res) return '';
+    }else{
+      $file = 'upload/'.$file;
+      $res = Upload::Base64($file, $ct[1]);
+      if(!$res) return '';
+    }
+    // 保存图片
+    $m = new UserInfo();
+    $m->Set(['img'=>$file]);
+    $m->Where('uid=?', $admin->uid);
+    return $m->Update()?$file:'';
   }
 
   /*

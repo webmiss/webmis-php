@@ -4,6 +4,7 @@ namespace App\Admin;
 use Service\Base;
 use Service\Data;
 use Service\AdminToken;
+use Library\Upload;
 use Library\Aliyun\Oss;
 use Model\UserInfo as UserInfoM;
 use Util\Util;
@@ -72,26 +73,11 @@ class UserInfo extends Base {
     $msg = AdminToken::Verify($token, '');
     if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
     if(empty($base64)) return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
-    // 限制格式
-    $extAll = [
-      'data:image/jpeg;base64' => 'jpg',
-      'data:image/png;base64' => 'png',
-    ];
-    $ct = explode(',', $base64);
-    $ext = $extAll[$ct[0]];
-    if(!$ext) return self::GetJSON(['code'=>400, 'msg'=>'只能上传JPG、PNG格式图片!']);
-    // OSS
-    $admin = AdminToken::Token($token);
-    $file = 'user/img/'.$admin->uid.'.jpg';
-    $res = Oss::PutObject($file, $ct[1]);
-    if(!$res) return self::GetJSON(['code'=>5000, 'msg'=>'上传失败!']);
-    // 保存图片
-    $m = new UserInfoM();
-    $m->Set(['img'=>$file]);
-    $m->Where('uid=?', $admin->uid);
-    if(!$m->Update()) return self::GetJSON(['code'=>5000, 'msg'=>'请重新上传!']);
+    // 上传
+    $img = Data::UserImg($token, $base64);
+    if(!$img) return self::GetJSON(['code'=>5000, 'msg'=>'请重新上传!']);
     // 返回
-    return self::GetJSON(['code'=>0,'msg'=>'成功', 'img'=>Data::Img($file, false)]);
+    return self::GetJSON(['code'=>0,'msg'=>'成功', 'data'=>Data::Img($img, false)]);
   }
 
 }
