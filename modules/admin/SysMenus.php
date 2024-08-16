@@ -249,7 +249,8 @@ class SysMenus extends Base {
     // 用户权限
     self::$permAll = AdminToken::getPerm($token);
     // 返回
-    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'data'=>self::_getMenusPerm('0')]);
+    $menus = self::_getMenusPerm('0');
+    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'data'=>$menus]);
   }
   // 递归菜单
   private static function _getMenusPerm(string $fid) {
