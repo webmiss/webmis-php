@@ -13,7 +13,7 @@ class Sms extends Base {
   /* 发送 */
   static function Send($tel, $sign, $template, $param=[]): bool {
     $cfg = Aliyun::RAM();
-    $param = [
+    $data = [
       'AccessKeyId'=> $cfg['AccessKeyId'],
       'PhoneNumbers'=> $tel,
       'SignName'=> $sign,
@@ -27,9 +27,9 @@ class Sms extends Base {
       'SignatureNonce'=> uniqid(),
       'Timestamp'=> gmdate('Y-m-d\TH:i:s\Z'),
     ];
-    $param['Signature'] = self::GetSign($param, $cfg['AccessKeySecret']);
+    $data['Signature'] = self::GetSign($data, $cfg['AccessKeySecret']);
     // 请求
-    $res = Curl::Request(self::$Url.'?'.Curl::UrlEncode($param));
+    $res = Curl::Request(self::$Url, $data);
     return $res->Code=='OK'?true:false;
   }
 
