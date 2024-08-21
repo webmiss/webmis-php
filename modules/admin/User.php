@@ -1,21 +1,32 @@
 <?php
 namespace App\Admin;
 
+use Config\Env;
 use Service\Base;
 use Service\Data;
-use Config\Env;
+use Service\AdminToken;
 use Library\Safety;
 use Library\Redis;
-use Library\Captcha;
 use Library\Mail;
 use Library\Aliyun\Sms;
-use Service\AdminToken;
+use Library\Captcha;
 use Model\User as UserM;
 
 class User extends Base {
 
-  /* 数字验证码 */
-  static function GetCode() {
+  /* 验证码-图形 */
+  static function Vcode(string $uname) {
+    // 编码
+    $code = Captcha::Vcode(4);
+    // 缓存
+    $redis = new Redis();
+    $redis->Set('admin_vcode_'.$uname, strtolower($code));
+    $redis->Expire('admin_vcode_'.$uname, 24*3600);
+    $redis->Close();
+  }
+
+  /* 验证码-数字 */
+  static function GetVcode() {
     // 参数
     $json = self::Json();
     $type = self::JsonName($json, 'type');
@@ -25,15 +36,15 @@ class User extends Base {
     // 限制: 60秒/次、10次/天、10分钟内有效
     $max_time=60; $max_num=10; $limt=10;
     $redis = new Redis();
-    $time = $redis->Ttl('admin_code_time_'.$uname);
-    $num = $redis->Gets('admin_code_num_'.$uname)?:0;
+    $time = $redis->Ttl('admin_vcode_time_'.$uname);
+    $num = $redis->Gets('admin_vcode_num_'.$uname)?:0;
     $redis->Close();
     if($time>0) return self::GetJSON(['code'=>4001, 'msg'=>'请'.$time.'秒后重试', 'data'=>$time]);
     if($num>=$max_num) return self::GetJSON(['code'=>4000, 'msg'=>'超过当天最大上限'.$max_num.'次']);
     // 验证码
     $code = mt_rand(1000, 9999);
     if($type=='tel') {
-      $res = Sms::Send($uname, '婵石供应链', 'SMS_471805004', ['code'=>$code]);
+      $res = Sms::Send($uname, '短信签名', 'SMS_471805004', ['code'=>$code]);
       if(!$res) return self::GetJSON(['code'=>5000, 'msg'=>'发送失败']);
     }elseif($type=='email') {
       $res = Mail::SmtpSend([
@@ -46,19 +57,18 @@ class User extends Base {
     }
     // 缓存
     $redis = new Redis();
-    $redis->Set('admin_code_'.$uname, $code);
-    $redis->Expire('admin_code_'.$uname, $limt*60);
-    $redis->Set('admin_code_time_'.$uname, $code);
-    $redis->Expire('admin_code_time_'.$uname, $max_time);
-    $redis->Set('admin_code_num_'.$uname, $num+1);
-    $redis->Expire('admin_code_num_'.$uname, strtotime(date('Y-m-d').' 23:59:59')-time());
+    $redis->Set('admin_vcode_'.$uname, $code);
+    $redis->Expire('admin_vcode_'.$uname, $limt*60);
+    $redis->Set('admin_vcode_time_'.$uname, $code);
+    $redis->Expire('admin_vcode_time_'.$uname, $max_time);
+    $redis->Set('admin_vcode_num_'.$uname, $num+1);
+    $redis->Expire('admin_vcode_num_'.$uname, strtotime(date('Y-m-d').' 23:59:59')-time());
     $redis->Close();
     // 返回
-    self::Print('admin_code_'.$uname, $code);
     return self::GetJSON(['code'=>0, 'msg'=>'成功']);
   }
 
-  /* 数字验证码 */
+  /* 修改密码 */
   static function ChangePasswd() {
     // 参数
     $json = self::Json();
@@ -71,27 +81,23 @@ class User extends Base {
     if(mb_strlen($vcode)!=4) return self::GetJSON(['code'=>4000, 'msg'=>'无效验证码!']);
     // 验证码
     $redis = new Redis();
-    $code = $redis->Gets('admin_code_'.$uname);
+    $code = $redis->Gets('admin_vcode_'.$uname);
     $redis->Close();
     if($code!=$vcode) return self::GetJSON(['code'=>4000, 'msg'=>'验证码错误!']);
-    // 修改密码
+    // 更新
     $m = new UserM();
     $m->Set(['password'=>md5($passwd)]);
     $m->Where('tel=? OR email=?', $uname, $uname);
     // 返回
-    if($m->Update()) return self::GetJSON(['code'=>0, 'msg'=>'成功']);
-    else return self::GetJSON(['code'=>4000, 'msg'=>'更新失败!']);
-  }
-
-  /* 图形验证码 */
-  static function Vcode(string $uname) {
-    // 编码
-    $code = Captcha::Vcode(4);
-    // 缓存
-    $redis = new Redis();
-    $redis->Set('admin_vcode_'.$uname, strtolower($code));
-    $redis->Expire('admin_vcode_'.$uname, 24*3600);
-    $redis->Close();
+    if($m->Update()){
+      // 清除验证码
+      $redis = new Redis();
+      $redis->Expire('admin_vcode_'.$uname, 1);
+      $redis->Close();
+      return self::GetJSON(['code'=>0, 'msg'=>'成功']);
+    }else{
+      return self::GetJSON(['code'=>4000, 'msg'=>'更新失败!']);
+    }
   }
 
   /* 登录 */
@@ -125,12 +131,12 @@ class User extends Base {
     }else{
       // 验证码
       $redis = new Redis();
-      $code = $redis->Gets('admin_code_'.$uname);
+      $code = $redis->Gets('admin_vcode_'.$uname);
       $redis->Close();
       if(!$code || $code!=$vcode) return self::GetJSON(['code'=>4000, 'msg'=>'验证码错误']);
       // 清除
       $redis = new Redis();
-      $redis->Expire('admin_code_'.$uname, 1);
+      $redis->Expire('admin_vcode_'.$uname, 1);
       $redis->Close();
       // 条件
       $where = 'a.tel="'.$uname.'"';
@@ -150,11 +156,6 @@ class User extends Base {
     $data = $model->FindFirst();
     // 是否存在
     if(empty($data)){
-      // 缓存
-      $redis = new Redis();
-      $redis->Set('admin_vcode_'.$uname, time());
-      $redis->Expire('admin_vcode_'.$uname, 24*3600);
-      $redis->Close();
       return self::GetJSON(['code'=>4000,'msg'=>'帐号或密码错误!', 'vcode_url'=>$vcode_url]);
     }
     // 是否禁用

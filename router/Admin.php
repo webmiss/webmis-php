@@ -20,7 +20,7 @@ class Admin {
       $router->post('user/login', "User@Login");
       $router->post('user/token', "User@Token");
       $router->get('user/vcode/{uname}', "User@Vcode");
-      $router->post('user/get_code', "User@GetCode");
+      $router->post('user/get_vcode', "User@GetVcode");
       $router->post('user/change_passwd', "User@ChangePasswd");
       // 消息
       $router->get('msg/socket', "Msg@Socket");

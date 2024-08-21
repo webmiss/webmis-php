@@ -4,7 +4,7 @@ namespace Library;
 use Service\Base;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-use Config\Email as EmailCfg;
+use Config\Email;
 
 /* 邮件 */
 class Mail extends Base {
@@ -12,7 +12,7 @@ class Mail extends Base {
   /* 发送 */
   static function SmtpSend(array $param=[]): string {
     // 配置
-    $cfg = EmailCfg::Default();
+    $cfg = Email::Default();
     // 参数
     $param = array_merge([
       'from'=> $cfg['username'],    // 发件人
