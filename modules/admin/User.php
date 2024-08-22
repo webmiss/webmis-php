@@ -11,6 +11,7 @@ use Library\Mail;
 use Library\Aliyun\Sms;
 use Library\Captcha;
 use Model\User as UserM;
+use Model\UserInfo;
 
 class User extends Base {
 
@@ -66,38 +67,6 @@ class User extends Base {
     $redis->Close();
     // 返回
     return self::GetJSON(['code'=>0, 'msg'=>'成功']);
-  }
-
-  /* 修改密码 */
-  static function ChangePasswd() {
-    // 参数
-    $json = self::Json();
-    $uname = self::JsonName($json, 'uname');
-    $passwd = self::JsonName($json, 'passwd');
-    $vcode = self::JsonName($json, 'vcode');
-    // 验证
-    if(!Safety::IsRight('tel', $uname) && !Safety::IsRight('email', $uname)) return self::GetJSON(['code'=>4000, 'msg'=>'无效帐号!']);
-    if(!Safety::IsRight('passwd', $passwd)) return self::GetJSON(['code'=>4000, 'msg'=>'无效密码!']);
-    if(mb_strlen($vcode)!=4) return self::GetJSON(['code'=>4000, 'msg'=>'无效验证码!']);
-    // 验证码
-    $redis = new Redis();
-    $code = $redis->Gets('admin_vcode_'.$uname);
-    $redis->Close();
-    if($code!=$vcode) return self::GetJSON(['code'=>4000, 'msg'=>'验证码错误!']);
-    // 更新
-    $m = new UserM();
-    $m->Set(['password'=>md5($passwd)]);
-    $m->Where('tel=? OR email=?', $uname, $uname);
-    // 返回
-    if($m->Update()){
-      // 清除验证码
-      $redis = new Redis();
-      $redis->Expire('admin_vcode_'.$uname, 1);
-      $redis->Close();
-      return self::GetJSON(['code'=>0, 'msg'=>'成功']);
-    }else{
-      return self::GetJSON(['code'=>4000, 'msg'=>'更新失败!']);
-    }
   }
 
   /* 登录 */
@@ -234,6 +203,70 @@ class User extends Base {
     }
     // 返回
     return self::GetJSON(['code'=>0, 'msg'=>'成功', 'data'=>['token_time'=>$tData->time, 'uinfo'=>$uinfo, 'isPasswd'=>$tData->isPasswd]]);
+  }
+
+  /* 修改密码 */
+  static function ChangePasswd() {
+    // 参数
+    $json = self::Json();
+    $uname = self::JsonName($json, 'uname');
+    $passwd = self::JsonName($json, 'passwd');
+    $vcode = self::JsonName($json, 'vcode');
+    // 验证
+    if(!Safety::IsRight('tel', $uname) && !Safety::IsRight('email', $uname)) return self::GetJSON(['code'=>4000, 'msg'=>'无效帐号!']);
+    if(!Safety::IsRight('passwd', $passwd)) return self::GetJSON(['code'=>4000, 'msg'=>'无效密码!']);
+    if(mb_strlen($vcode)!=4) return self::GetJSON(['code'=>4000, 'msg'=>'无效验证码!']);
+    // 验证码
+    $redis = new Redis();
+    $code = $redis->Gets('admin_vcode_'.$uname);
+    $redis->Close();
+    if($code!=$vcode) return self::GetJSON(['code'=>4000, 'msg'=>'验证码错误!']);
+    // 更新
+    $m = new UserM();
+    $m->Set(['password'=>md5($passwd)]);
+    $m->Where('tel=? OR email=?', $uname, $uname);
+    // 返回
+    if($m->Update()){
+      // 清除验证码
+      $redis = new Redis();
+      $redis->Expire('admin_vcode_'.$uname, 1);
+      $redis->Close();
+      return self::GetJSON(['code'=>0, 'msg'=>'成功']);
+    }else{
+      return self::GetJSON(['code'=>4000, 'msg'=>'更新失败!']);
+    }
+  }
+
+  /* 修改用户信息 */
+  static function ChangeUinfo() {
+    // 参数
+    $json = self::Json();
+    $token = self::JsonName($json, 'token');
+    $uinfo = self::JsonName($json, 'uinfo');
+    // 验证
+    $msg = AdminToken::Verify($token, '');
+    if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if(empty($uinfo) || !is_array($uinfo)) {
+      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+    }
+    // 用户信息
+    $data = [];
+    if(isset($uinfo['nickname'])) $data['nickname']=trim($uinfo['nickname']);
+    if(isset($uinfo['gender'])) $data['gender']=trim($uinfo['gender']);
+    if(isset($uinfo['birthday'])) $data['birthday']=strtotime($uinfo['birthday'])?:'';
+    if(isset($uinfo['department'])) $data['department']=trim($uinfo['department']);
+    if(isset($uinfo['position'])) $data['position']=trim($uinfo['position']);
+    // 更新
+    $admin = AdminToken::Token($token);
+    $m = new UserInfo();
+    $m->Set($data);
+    $m->Where('uid=?', $admin->uid);
+    // 返回
+    if($m->Update()){
+      return self::GetJSON(['code'=>0, 'msg'=>'成功']);
+    }else{
+      return self::GetJSON(['code'=>4000, 'msg'=>'更新失败!']);
+    }
   }
 
 }

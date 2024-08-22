@@ -22,6 +22,7 @@ class Admin {
       $router->get('user/vcode/{uname}', "User@Vcode");
       $router->post('user/get_vcode', "User@GetVcode");
       $router->post('user/change_passwd', "User@ChangePasswd");
+      $router->post('user/change_uinfo', "User@ChangeUinfo");
       // 消息
       $router->get('msg/socket', "Msg@Socket");
       $router->post('msg/list', "Msg@List");
