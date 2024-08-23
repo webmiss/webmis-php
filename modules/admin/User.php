@@ -43,7 +43,7 @@ class User extends Base {
     if($time>0) return self::GetJSON(['code'=>4001, 'msg'=>'请'.$time.'秒后重试', 'data'=>$time]);
     if($num>=$max_num) return self::GetJSON(['code'=>4000, 'msg'=>'超过当天最大上限'.$max_num.'次']);
     // 验证码
-    $code = mt_rand(1000, 9999);
+    $code = (string)mt_rand(1000, 9999);
     if($type=='tel') {
       // $res = Sms::Send($uname, '短信签名', 'SMS_471805004', ['code'=>$code]);
       // if(!$res) return self::GetJSON(['code'=>5000, 'msg'=>'发送失败']);
