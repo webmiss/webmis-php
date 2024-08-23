@@ -45,16 +45,16 @@ class User extends Base {
     // 验证码
     $code = mt_rand(1000, 9999);
     if($type=='tel') {
-      $res = Sms::Send($uname, '短信签名', 'SMS_471805004', ['code'=>$code]);
-      if(!$res) return self::GetJSON(['code'=>5000, 'msg'=>'发送失败']);
+      // $res = Sms::Send($uname, '短信签名', 'SMS_471805004', ['code'=>$code]);
+      // if(!$res) return self::GetJSON(['code'=>5000, 'msg'=>'发送失败']);
     }elseif($type=='email') {
-      $res = Mail::SmtpSend([
-        'to'=> $uname,
-        'subject'=> '【WebMIS】验证码',
-        'content'=> '<div style="font-size: 24px">【WebMIS】您的验证码为: <b>'.$code.'</b>, 该验证码10分钟内有效, 请勿泄露于他人!</div>',
-        'isHtml'=> true,
-      ]);
-      if($res) return self::GetJSON(['code'=>5000, 'msg'=>$res]);
+      // $res = Mail::SmtpSend([
+      //   'to'=> $uname,
+      //   'subject'=> '【WebMIS】验证码',
+      //   'content'=> '<div style="font-size: 24px">【WebMIS】您的验证码为: <b>'.$code.'</b>, 该验证码10分钟内有效, 请勿泄露于他人!</div>',
+      //   'isHtml'=> true,
+      // ]);
+      // if($res) return self::GetJSON(['code'=>5000, 'msg'=>$res]);
     }
     // 缓存
     $redis = new Redis();
@@ -66,7 +66,7 @@ class User extends Base {
     $redis->Expire('admin_vcode_num_'.$uname, strtotime(date('Y-m-d').' 23:59:59')-time());
     $redis->Close();
     // 返回
-    return self::GetJSON(['code'=>0, 'msg'=>'成功']);
+    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'data'=>$code]);
   }
 
   /* 登录 */
