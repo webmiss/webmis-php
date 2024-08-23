@@ -253,7 +253,7 @@ class User extends Base {
     $data = [];
     if(isset($uinfo['nickname'])) $data['nickname']=trim($uinfo['nickname']);
     if(isset($uinfo['gender'])) $data['gender']=trim($uinfo['gender']);
-    if(isset($uinfo['birthday'])) $data['birthday']=strtotime($uinfo['birthday'])?:'';
+    if(isset($uinfo['birthday'])) $data['birthday']=strtotime($uinfo['birthday'])?:0;
     if(isset($uinfo['department'])) $data['department']=trim($uinfo['department']);
     if(isset($uinfo['position'])) $data['position']=trim($uinfo['position']);
     // 更新
