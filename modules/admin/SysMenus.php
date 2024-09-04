@@ -45,6 +45,9 @@ class SysMenus extends Base {
     $m->Page($page, $limit);
     $m->Order($order?:'id DESC');
     $list = $m->Find();
+    foreach($list as $k=>$v) {
+      $list[$k]['action'] = $v['action']?json_decode($v['action']):[];
+    }
     // 返回
     return self::GetJSON(['code'=>0, 'msg'=>'成功', 'time'=>date('Y/m/d H:i:s'), 'data'=>['total'=>$total, 'list'=>$list]]);
   }
@@ -92,6 +95,104 @@ class SysMenus extends Base {
     if($remark!='') $where[] = 'remark like "%'.$remark.'%"';
     // 返回
     return implode(' AND ', $where);
+  }
+
+  /* 添加、更新 */
+  static function Save() {
+    // 参数
+    $json = self::Json();
+    $token = self::JsonName($json, 'token');
+    $data = self::JsonName($json, 'data');
+    // 验证
+    $msg = AdminToken::Verify($token, '');
+    if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if(empty($data) || !is_array($data)){
+      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+    }
+    // 数据
+    $param = [];
+    $id = isset($data['id'])&&$data['id']?trim($data['id']):'';
+    $param['fid'] = isset($data['fid'])&&$data['fid']?end($data['fid']):0;
+    $param['title'] = isset($data['title'])?trim($data['title']):'';
+    if(mb_strlen($param['title'])<2) return self::GetJSON(['code'=>4000, 'msg'=>'菜单名称2～16位字符!']);
+    $param['en'] = isset($data['en'])?trim($data['en']):'';
+    $param['ico'] = isset($data['ico'])?trim($data['ico']):'';
+    $param['sort'] = isset($data['sort'])?trim($data['sort']):0;
+    $param['url'] = isset($data['url'])?trim($data['url']):'';
+    $param['controller'] = isset($data['controller'])?trim($data['controller']):'';
+    $param['remark'] = isset($data['remark'])?trim($data['remark']):'';
+    $param['action'] = isset($data['action'])?json_encode($data['action']):'';
+    // 添加
+    if(!$id) {
+      $param['ctime'] = time();
+      $param['utime'] = time();
+      $m = new SysMenu();
+      $m->Values($param);
+      if($m->Insert()) {
+        return self::GetJSON(['code'=>0,'msg'=>'成功']);
+      } else {
+        return self::GetJSON(['code'=>5000,'msg'=>'添加失败!']);
+      }
+    }
+    // 更新
+    $param['utime'] = time();
+    $m = new SysMenu();
+    $m->Set($param);
+    $m->Where('id=?', $id);
+    if($m->Update()) {
+      return self::GetJSON(['code'=>0,'msg'=>'成功']);
+    } else {
+      return self::GetJSON(['code'=>5000,'msg'=>'更新失败!']);
+    }
+  }
+
+  /* 删除 */
+  static function Del() {
+    // 参数
+    $json = self::Json();
+    $token = self::JsonName($json, 'token');
+    $data = self::JsonName($json, 'data');
+    // 验证
+    $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
+    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if(empty($data) || !is_array($data)){
+      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+    }
+    // 模型
+    $m = new SysMenu();
+    $m->Where('id in('.implode(',', $data).')');
+    if($m->Delete()) {
+      return self::GetJSON(['code'=>0,'msg'=>'成功']);
+    } else {
+      return self::GetJSON(['code'=>5000,'msg'=>'删除失败!']);
+    }
+  }
+
+  /* 获取菜单-全部 */
+  static function GetMenusAll() {
+    // 参数
+    $json = self::Json();
+    $token = self::JsonName($json, 'token');
+    // 验证
+    $msg = AdminToken::Verify($token, '');
+    if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    // 全部菜单
+    self::_getMenus();
+    // 返回
+    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'time'=>date('Y/m/d H:i:s'), 'data'=>self::_getMenusAll('0')]);
+  }
+  // 递归菜单
+  private static function _getMenusAll(string $fid) {
+    $data = [];
+    $M = isset(self::$menus[$fid])?self::$menus[$fid]:[];
+    foreach($M as $val){
+      $id = $val['id'];
+      $tmp = ['label'=>$val['title'], 'value'=>$id];
+      $menu = self::_getMenusAll($id);
+      if(!empty($menu)) $tmp['children'] = $menu;
+      $data[] = $tmp;
+    }
+    return $data;
   }
 
 
@@ -171,28 +272,6 @@ class SysMenus extends Base {
     }
   }
 
-  /* 删除 */
-  static function Del() {
-    // 参数
-    $json = self::Json();
-    $token = self::JsonName($json, 'token');
-    $data = self::JsonName($json, 'data');
-    // 验证
-    $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    if(empty($data)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
-    }
-    // 模型
-    $m = new SysMenu();
-    $m->Where('id=?', $data);
-    if($m->Delete()) {
-      return self::GetJSON(['code'=>0,'msg'=>'成功']);
-    } else {
-      return self::GetJSON(['code'=>5000,'msg'=>'删除失败!']);
-    }
-  }
-
   /* 动作权限 */
   static function Perm() {
     // 参数
@@ -256,35 +335,10 @@ class SysMenus extends Base {
     $html .= Export::ExcelBottom();
     Export::ExcelFileEnd(self::$export_path, self::$export_filename, $html);
     // 数据
-    return self::GetJSON(['code'=>0,'msg'=>'成功','path'=>Env::BaseUrl(self::$export_path), 'filename'=>self::$export_filename]);
+    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'path'=>Env::BaseUrl(self::$export_path), 'filename'=>self::$export_filename]);
   }
 
-  /* 获取菜单-全部 */
-  static function GetMenusAll() {
-    // 参数
-    $json = self::Json();
-    $token = self::JsonName($json, 'token');
-    // 验证
-    $msg = AdminToken::Verify($token, '');
-    if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    // 全部菜单
-    self::_getMenus();
-    // 返回
-    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'menus'=>self::_getMenusAll('0')]);
-  }
-  // 递归菜单
-  private static function _getMenusAll(string $fid) {
-    $data = [];
-    $M = isset(self::$menus[$fid])?self::$menus[$fid]:[];
-    foreach($M as $val){
-      $id = $val['id'];
-      $tmp = ['label'=>$val['title'], 'value'=>$id];
-      $menu = self::_getMenusAll($id);
-      if(!empty($menu)) $tmp['children'] = $menu;
-      $data[] = $tmp;
-    }
-    return $data;
-  }
+  
 
   /* 获取菜单-权限 */
   static function GetMenusPerm() {

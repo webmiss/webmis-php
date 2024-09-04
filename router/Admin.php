@@ -52,12 +52,14 @@ class Admin {
       $router->post('sys_user/export', "SysUser@Export");
       // 系统菜单
       $router->post('sys_menus/list', "SysMenus@List");
+      $router->post('sys_menus/save', "SysMenus@Save");
+      $router->post('sys_menus/get_menus_all', "SysMenus@GetMenusAll");
+      $router->post('sys_menus/del', "SysMenus@Del");
+
       $router->post('sys_menus/add', "SysMenus@Add");
       $router->post('sys_menus/edit', "SysMenus@Edit");
-      $router->post('sys_menus/del', "SysMenus@Del");
       $router->post('sys_menus/perm', "SysMenus@Perm");
       $router->post('sys_menus/export', "SysMenus@Export");
-      $router->post('sys_menus/getMenusAll', "SysMenus@GetMenusAll");
       $router->post('sys_menus/getMenusPerm', "SysMenus@GetMenusPerm");
       // 系统角色
       $router->post('sys_role/list', "SysRole@List");
