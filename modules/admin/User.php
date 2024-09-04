@@ -125,6 +125,11 @@ class User extends Base {
     $data = $model->FindFirst();
     // 是否存在
     if(empty($data)){
+      // 缓存
+      $redis = new Redis();
+      $redis->Set('admin_vcode_'.$uname, time());
+      $redis->Expire('admin_vcode_'.$uname, 24*3600);
+      $redis->Close();
       return self::GetJSON(['code'=>4000,'msg'=>'帐号或密码错误!', 'vcode_url'=>$vcode_url]);
     }
     // 是否禁用

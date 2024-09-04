@@ -20,30 +20,80 @@ class SysMenus extends Base {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
+    $data = self::JsonName($json, 'data');
+    $page = self::JsonName($json, 'page');
+    $limit = self::JsonName($json, 'limit');
+    $order = self::JsonName($json, 'order');
     // 验证
     $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if(empty($data) || !is_array($data) || empty($page) || empty($limit)) {
+      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+    }
+    // 数据
+    $where = self::getWhere($data);
     // 统计
     $m = new SysMenu();
     $m->Columns('count(*) AS total');
+    $m->Where($where);
     $total = $m->FindFirst();
-    // 全部菜单
-    self::_getMenus();
+    // 查询
+    $m->Columns(
+      'id', 'fid', 'title', 'en', 'ico', 'sort', 'url', 'controller', 'remark', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime', 'action'
+    );
+    $m->Where($where);
+    $m->Page($page, $limit);
+    $m->Order($order?:'id DESC');
+    $list = $m->Find();
     // 返回
-    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'total'=>(int)$total['total'], 'list'=>self::_getMenusList('0')]);
+    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'time'=>date('Y/m/d H:i:s'), 'data'=>['total'=>$total, 'list'=>$list]]);
   }
-  // 递归菜单
-  private static function _getMenusList(string $fid) {
-    $data = [];
-    $M = isset(self::$menus[$fid])?self::$menus[$fid]:[];
-    foreach($M as $val){
-      $val['action'] = $val['action']!=''?json_decode($val['action'], true):'';
-      $menu = self::_getMenusList($val['id']);
-      $val['children'] = !empty($menu)?$menu:[];
-      $data[] = $val;
+  /* 搜索条件 */
+  static private function getWhere(array $d): string {
+    $where = [];
+    // 时间
+    $stime = isset($d['stime'])&&!empty($d['stime'])?trim($d['stime']):date('Y-m-d', strtotime('-1 year'));
+    if($stime){
+      $start = strtotime($stime.' 00:00:00');
+      // $where[] = 'ctime>='.$start;
     }
-    return $data;
+    $etime = isset($d['etime'])&&!empty($d['etime'])?trim($d['etime']):date('Y-m-d');
+    if($etime){
+      $end = strtotime($etime.' 23:59:59');
+      $where[] = 'ctime<='.$end;
+    }
+    // 关键字
+    $key = isset($d['key'])?trim($d['key']):'';
+    if($key){
+      $arr = [
+        'fid="'.$key.'"',
+        'title like "%'.$key.'%"',
+        'en like "%'.$key.'%"',
+        'ico like "%'.$key.'%"',
+        'url like "%'.$key.'%"',
+        'controller like "%'.$key.'%"',
+      ];
+      $where[] = '('.implode(' OR ', $arr).')';
+    }
+    // 菜单名称
+    $title = isset($d['title'])?trim($d['title']):'';
+    if($title!='') $where[] = 'title like "%'.$title.'%"';
+    // 英文名称
+    $en = isset($d['en'])?trim($d['en']):'';
+    if($en!='') $where[] = 'en like "%'.$en.'%"';
+    // 前端路由
+    $url = isset($d['url'])?trim($d['url']):'';
+    if($url!='') $where[] = 'url like "%'.$url.'%"';
+    // 接口地址
+    $controller = isset($d['controller'])?trim($d['controller']):'';
+    if($controller!='') $where[] = 'controller like "%'.$controller.'%"';
+    // 备注
+    $remark = isset($d['remark'])?trim($d['remark']):'';
+    if($remark!='') $where[] = 'remark like "%'.$remark.'%"';
+    // 返回
+    return implode(' AND ', $where);
   }
+
 
   /* 添加 */
   static function Add() {
