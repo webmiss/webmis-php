@@ -12,6 +12,7 @@ class SysMenus extends Base {
   private static $menus = [];   //全部菜单
   private static $permAll = []; //用户权限
   // 导出
+  static private $export_max = 500000;          //导出-最大数
   static private $export_path = 'upload/tmp/';  //导出-目录
   static private $export_filename = '';         //导出-文件名
 
@@ -168,6 +169,63 @@ class SysMenus extends Base {
     }
   }
 
+  /* 导出 */
+  static function Export() {
+    // 参数
+    $json = self::Json();
+    $token = self::JsonName($json, 'token');
+    $data = self::JsonName($json, 'data');
+    $order = self::JsonName($json, 'order');
+    // 验证
+    $msg = AdminToken::Verify($token, '');
+    if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if(empty($data) || !is_array($data)) {
+      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+    }
+    // 条件
+    $where = self::getWhere($data);
+    // 统计
+    $m = new SysMenu();
+    $m->Columns('count(*) AS total');
+    $m->Where($where);
+    $t = $m->FindFirst();
+    if($t['total']>self::$export_max) return self::GetJSON(['code'=>5000, 'msg'=>'总数不能大于'.self::$export_max]);
+    // 查询
+    $m = new SysMenu();
+    $m->Columns('id', 'fid', 'title', 'en', 'ico', 'sort', 'url', 'controller', 'action', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
+    $m->Where($where);
+    $m->Order($order?:'id DESC');
+    $list = $m->Find();
+    if(!$list) return self::GetJSON(['code'=>5000, 'msg'=>'暂无数据!']);
+    // 导出文件
+    $admin = AdminToken::Token($token);
+    self::$export_filename = 'SysMenus_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
+    $html = Export::ExcelTop();
+    $html .= Export::ExcelTitle([
+      'ID', 'FID', '名称', '英文', '图标', 'URL', 'API', '创建时间', '更新时间', '动作菜单'
+    ]);
+    // 数据
+    foreach($list as $k=>$v){
+      // 内容
+      $html .= Export::ExcelData([
+        $v['id'],
+        $v['fid'],
+        $v['title'],
+        $v['en'],
+        $v['ico'],
+        $v['url'],
+        $v['controller'],
+        '&nbsp;'.$v['ctime'],
+        '&nbsp;'.$v['utime'],
+        $v['action'],
+      ]);
+    }
+    $html .= Export::ExcelBottom();
+    Export::ExcelFileEnd(self::$export_path, self::$export_filename, $html);
+    // 数据
+    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'data'=>['path'=>Env::BaseUrl(self::$export_path), 'filename'=>self::$export_filename]]);
+  }
+
   /* 获取菜单-全部 */
   static function GetMenusAll() {
     // 参数
@@ -275,50 +333,6 @@ class SysMenus extends Base {
       return self::GetJSON(['code'=>5000,'msg'=>'更新失败!']);
     }
   }
-
-  /* 导出 */
-  static function Export() {
-    // 参数
-    $json = self::Json();
-    $token = self::JsonName($json, 'token');
-    // 验证
-    $msg = AdminToken::Verify($token, '');
-    if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    // 查询
-    $m = new SysMenu();
-    $m->Columns('id', 'fid', 'title', 'en', 'ico', 'sort', 'url', 'controller', 'action', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
-    $m->Order('id');
-    $list = $m->Find();
-    // 导出文件
-    $admin = AdminToken::Token($token);
-    self::$export_filename = 'SysMenus_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
-    $html = Export::ExcelTop();
-    $html .= Export::ExcelTitle([
-      'ID', 'FID', '名称', '英文', '图表', 'URL', 'API', '创建时间', '更新时间', '动作菜单'
-    ]);
-    // 数据
-    foreach($list as $k=>$v){
-      // 内容
-      $html .= Export::ExcelData([
-        $v['id'],
-        $v['fid'],
-        $v['title'],
-        $v['en'],
-        $v['ico'],
-        $v['url'],
-        $v['controller'],
-        '&nbsp;'.$v['ctime'],
-        '&nbsp;'.$v['utime'],
-        $v['action'],
-      ]);
-    }
-    $html .= Export::ExcelBottom();
-    Export::ExcelFileEnd(self::$export_path, self::$export_filename, $html);
-    // 数据
-    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'path'=>Env::BaseUrl(self::$export_path), 'filename'=>self::$export_filename]);
-  }
-
-  
 
   
 

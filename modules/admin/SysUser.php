@@ -17,9 +17,9 @@ use Util\Util;
 class SysUser extends Base {
 
   // 状态
-  static private $state = ['0'=>'禁用', '1'=>'正常'];
+  static private $stateName = ['0'=>'禁用', '1'=>'正常'];
   // 角色类型
-  static private $type = ['0'=>'职员', '1'=>'供应商', '2'=>'采购员', '3'=>'主管', '9'=>'开发'];
+  static private $typeName = ['0'=>'职员', '1'=>'开发'];
   // 导出
   static private $export_path = 'upload/tmp/';  //导出-目录
   static private $export_filename = '';         //导出-文件名
@@ -34,17 +34,17 @@ class SysUser extends Base {
     $limit = self::JsonName($json, 'limit');
     $order = self::JsonName($json, 'order');
     // 验证
+    self::Print($_SERVER['REQUEST_URI']);
     $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
     if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    if(empty($data) || empty($page) || empty($limit)) {
+    if(empty($data) || !is_array($data) || empty($page) || empty($limit)) {
       return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
     }
     // 条件
-    $param = json_decode($data);
-    $where = self::getWhere($param);
+    $where = self::getWhere($data);
     // 统计
     $m = new User();
-    $m->Columns('count(*) AS num');
+    $m->Columns('count(*) AS total');
     $m->Table('user as a');
     $m->LeftJoin('user_info as b', 'a.id=b.uid');
     $m->LeftJoin('sys_perm as c', 'a.id=c.uid');
@@ -52,9 +52,9 @@ class SysUser extends Base {
     $total = $m->FindFirst();
     // 查询
     $m->Columns(
-      'a.id AS uid', 'a.uname', 'a.email', 'a.tel', 'a.state', 'FROM_UNIXTIME(a.rtime) as rtime', 'FROM_UNIXTIME(a.ltime) as ltime', 'FROM_UNIXTIME(a.utime) as utime',
+      'a.id', 'a.uname', 'a.email', 'a.tel', 'a.state', 'FROM_UNIXTIME(a.rtime) as rtime', 'FROM_UNIXTIME(a.ltime) as ltime', 'FROM_UNIXTIME(a.utime) as utime',
       'b.type', 'b.nickname', 'b.department', 'b.position', 'b.name', 'b.gender', 'b.img', 'b.remark', 'FROM_UNIXTIME(b.birthday, "%Y-%m-%d") as birthday',
-      'c.role AS sys_role', 'c.perm AS sys_perm', 'c.brand AS sys_brand', 'c.shop AS sys_shop', 'c.partner AS sys_partner', 'c.partner_in AS sys_partner_in'
+      'c.role', 'c.perm',
     );
     $m->Where($where);
     $m->Order($order?:'a.id DESC');
@@ -69,24 +69,24 @@ class SysUser extends Base {
     // 数据
     foreach ($list as $k => $v) {
       $list[$k]['state'] = $v['state']?true:false;
-      $list[$k]['sys_role_name'] = $v['sys_role']?$role[$v['sys_role']]:'';
+      $list[$k]['state'] = $v['state']?true:false;
+      $list[$k]['role_name'] = $v['role']?$role[$v['role']]:'';
       $list[$k]['img'] = Data::Img($v['img']);
-      if(!$v['sys_role']) $list[$k]['sys_role']='';
-      if(!$v['sys_perm']) $list[$k]['sys_perm']='';
-      if(!$v['sys_brand']) $list[$k]['sys_brand']='';
-      if(!$v['sys_partner']) $list[$k]['sys_partner']='';
     }
     // 返回
-    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'time'=>date('Y/m/d H:i:s'), 'list'=>$list, 'total'=>(int)$total['num']]);
+    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'time'=>date('Y/m/d H:i:s'), 'data'=>['total'=>$total, 'list'=>$list]]);
   }
   /* 搜索条件 */
-  static private function getWhere(object $param): string {
+  static private function getWhere(array $d): string {
     $where = [];
     // 关键字
-    $key = isset($param->key)?trim($param->key):'';
+    $key = isset($d['key'])?trim($d['key']):'';
     if($key){
       $arr = [
+        'a.id="'.$key.'"',
+        'a.uname like "%'.$key.'%"',
         'a.tel like "%'.$key.'%"',
+        'a.email like "%'.$key.'%"',
         'b.nickname like "%'.$key.'%"',
         'b.name like "%'.$key.'%"',
         'b.department like "%'.$key.'%"',
@@ -95,33 +95,21 @@ class SysUser extends Base {
       ];
       $where[] = '('.implode(' OR ', $arr).')';
     }
-    // 状态
-    $state = isset($param->state)?trim($param->state):'';
-    if($state!='') $where[] = 'a.state="'.$state.'"';
-    // 类型
-    $type = isset($param->type)?trim($param->type):'';
-    if($type!='') $where[] = 'b.type="'.$type.'"';
-    // 角色
-    $role = isset($param->role)?$param->role:[];
-    if($role) $where[] = 'c.role in('.implode(',', $role).')';
-    // 账号
-    $uname = isset($param->uname)?trim($param->uname):'';
-    if($uname) $where[] = '(a.uname LIKE "%'.$uname.'%" OR a.tel LIKE "%'.$uname.'%" OR a.email LIKE "%'.$uname.'%")';
     // 昵称
-    $nickname = isset($param->nickname)?trim($param->nickname):'';
-    if($nickname) $where[] = 'b.nickname LIKE "%'.$nickname.'%"';
-    // 姓名
-    $name = isset($param->name)?trim($param->name):'';
-    if($name) $where[] = 'b.name LIKE "%'.$name.'%"';
+    $nickname = isset($d['nickname'])?trim($d['nickname']):'';
+    if($nickname!='') $where[] = 'b.nickname like "%'.$nickname.'%"';
     // 部门
-    $department = isset($param->department)?trim($param->department):'';
-    if($department) $where[] = 'b.department LIKE "%'.$department.'%"';
-    // 职务
-    $position = isset($param->position)?trim($param->position):'';
-    if($position) $where[] = 'b.position LIKE "%'.$position.'%"';
+    $department = isset($d['department'])?trim($d['department']):'';
+    if($department!='') $where[] = 'b.department like "%'.$department.'%"';
+    // 职位
+    $position = isset($d['position'])?trim($d['position']):'';
+    if($position!='') $where[] = 'b.position like "%'.$position.'%"';
+    // 姓名
+    $name = isset($d['name'])?trim($d['name']):'';
+    if($name!='') $where[] = 'b.name like "%'.$name.'%"';
     // 备注
-    $remark = isset($param->remark)?trim($param->remark):'';
-    if($remark!='') $where[] = 'b.remark like "%'.$remark.'%"';
+    $remark = isset($d['remark'])?trim($d['remark']):'';
+    if($remark!='') $where[] = 'remark like "%'.$remark.'%"';
     return implode(' AND ', $where);
   }
 
@@ -238,36 +226,6 @@ class SysUser extends Base {
       return self::GetJSON(['code'=>0,'msg'=>'成功']);
     } else {
       return self::GetJSON(['code'=>5000,'msg'=>'删除失败!']);
-    }
-  }
-
-  /* 状态 */
-  static function State(){
-    // 参数
-    $json = self::Json();
-    $token = self::JsonName($json, 'token');
-    $uid = self::JsonName($json, 'uid');
-    $state = self::JsonName($json, 'state');
-    // 验证
-    $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    if(empty($uid)){
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
-    }
-    // 超级管理员
-    $tData = AdminToken::Token($token);
-    if($uid==1 && $tData->uid!=1){
-      return self::GetJSON(['code'=>4000, 'msg'=>'您不是超级管理员!']);
-    }
-    // 模型
-    $state = $state=='1'?'1':'0';
-    $m = new User();
-    $m->Set(['state'=>$state]);
-    $m->Where('id=?', $uid);
-    if($m->Update()) {
-      return self::GetJSON(['code'=>0,'msg'=>'成功']);
-    } else {
-      return self::GetJSON(['code'=>5000,'msg'=>'更新失败!']);
     }
   }
 
@@ -424,9 +382,9 @@ class SysUser extends Base {
       $html .= Export::ExcelData([
         $v['uid'],
         $v['tel']?:$v['uname']??$v['email'],
-        self::$state[$v['state']],
+        self::$stateName[$v['state']],
         $v['sys_role']?$role[$v['sys_role']]:'',
-        self::$type[$v['type']],
+        self::$typeName[$v['type']],
         $v['nickname'],
         $v['name'],
         $v['gender'],

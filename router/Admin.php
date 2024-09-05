@@ -43,6 +43,8 @@ class Admin {
       $router->post('sys_file/remove', "SysFile@Remove");
       // 用户管理
       $router->post('sys_user/list', "SysUser@List");
+
+      
       $router->post('sys_user/add', "SysUser@Add");
       $router->post('sys_user/edit', "SysUser@Edit");
       $router->post('sys_user/del', "SysUser@Del");
