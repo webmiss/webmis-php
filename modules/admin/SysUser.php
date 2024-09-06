@@ -19,8 +19,9 @@ class SysUser extends Base {
   // 状态
   static private $stateName = ['0'=>'禁用', '1'=>'正常'];
   // 角色类型
-  static private $typeName = ['0'=>'职员', '1'=>'开发'];
+  static private $typeName = ['0'=>'用户', '1'=>'开发'];
   // 导出
+  static private $export_max = 500000;          //导出-最大数
   static private $export_path = 'upload/tmp/';  //导出-目录
   static private $export_filename = '';         //导出-文件名
 
@@ -34,7 +35,6 @@ class SysUser extends Base {
     $limit = self::JsonName($json, 'limit');
     $order = self::JsonName($json, 'order');
     // 验证
-    self::Print($_SERVER['REQUEST_URI']);
     $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
     if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
     if(empty($data) || !is_array($data) || empty($page) || empty($limit)) {
@@ -48,6 +48,7 @@ class SysUser extends Base {
     $m->Table('user as a');
     $m->LeftJoin('user_info as b', 'a.id=b.uid');
     $m->LeftJoin('sys_perm as c', 'a.id=c.uid');
+    $m->LeftJoin('sys_role as d', 'c.role=d.id');
     $m->Where($where);
     $total = $m->FindFirst();
     // 查询
@@ -55,22 +56,17 @@ class SysUser extends Base {
       'a.id', 'a.uname', 'a.email', 'a.tel', 'a.state', 'FROM_UNIXTIME(a.rtime) as rtime', 'FROM_UNIXTIME(a.ltime) as ltime', 'FROM_UNIXTIME(a.utime) as utime',
       'b.type', 'b.nickname', 'b.department', 'b.position', 'b.name', 'b.gender', 'b.img', 'b.remark', 'FROM_UNIXTIME(b.birthday, "%Y-%m-%d") as birthday',
       'c.role', 'c.perm',
+      'd.name as role_name',
     );
     $m->Where($where);
     $m->Order($order?:'a.id DESC');
     $m->Page($page, $limit);
     $list = $m->Find();
-    // 角色
-    $m = new SysRole();
-    $m->Columns('id', 'name');
-    $all = $m->Find();
-    $role = [];
-    foreach($all as $v) $role[(string)$v['id']]=$v['name'];
     // 数据
     foreach ($list as $k => $v) {
       $list[$k]['state'] = $v['state']?true:false;
-      $list[$k]['state'] = $v['state']?true:false;
-      $list[$k]['role_name'] = $v['role']?$role[$v['role']]:'';
+      $list[$k]['type_name'] = self::$typeName[$v['type']];
+      $list[$k]['role_name'] = $v['role_name']?:($v['perm']?'私有':'-');
       $list[$k]['img'] = Data::Img($v['img']);
     }
     // 返回
@@ -111,6 +107,37 @@ class SysUser extends Base {
     $remark = isset($d['remark'])?trim($d['remark']):'';
     if($remark!='') $where[] = 'remark like "%'.$remark.'%"';
     return implode(' AND ', $where);
+  }
+
+  /* 选项 */
+  static function GetSelect(): string {
+    // 参数
+    $json = self::Json();
+    $token = self::JsonName($json, 'token');
+    // 验证
+    $msg = AdminToken::Verify($token, '');
+    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    // 返回
+    return self::GetJSON(['code'=>0,'msg'=>'成功', 'data'=>[
+      'type'=> self::getType(),   // 类型
+      'role'=> self::getRole(),   // 角色
+    ]]);
+  }
+  /* 类型 */
+  private static function getType(): array {
+    $list = [];
+    foreach(self::$typeName as $k=>$v) $list[]=['label'=> $v, 'value'=> $k];
+    return $list;
+  }
+  /* 角色 */
+  private static function getRole(): array {
+    $m = new SysRole();
+    $m->Columns('id', 'name');
+    $m->Where('status=1');
+    $all = $m->Find();
+    $list = [['label'=> '无', 'value'=> '']];
+    foreach($all as $k=>$v) $list[]=['label'=> $v['name'], 'value'=> $v['id']];
+    return $list;
   }
 
   /* 添加 */
@@ -348,27 +375,28 @@ class SysUser extends Base {
       return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
     }
     // 条件
-    $param = json_decode($data);
-    $where = self::getWhere($param, $token);
-    // 查询
+    $where = self::getWhere($data);
+    // 统计
     $m = new User();
     $m->Table('user as a');
     $m->LeftJoin('user_info as b', 'a.id=b.uid');
     $m->LeftJoin('sys_perm as c', 'a.id=c.uid');
+    $m->LeftJoin('sys_role as d', 'c.role=d.id');
+    $m->Columns('count(*) AS total');
+    $m->Where($where);
+    $t = $m->FindFirst();
+    if($t['total']>self::$export_max) return self::GetJSON(['code'=>5000, 'msg'=>'总数不能大于'.self::$export_max]);
+    // 查询
     $m->Columns(
-      'a.id AS uid', 'a.uname', 'a.email', 'a.tel', 'a.state', 'FROM_UNIXTIME(a.rtime) as rtime', 'FROM_UNIXTIME(a.ltime) as ltime', 'FROM_UNIXTIME(a.utime) as utime',
+      'a.id', 'a.uname', 'a.email', 'a.tel', 'a.state', 'FROM_UNIXTIME(a.rtime) as rtime', 'FROM_UNIXTIME(a.ltime) as ltime', 'FROM_UNIXTIME(a.utime) as utime',
       'b.type', 'b.nickname', 'b.department', 'b.position', 'b.name', 'b.gender', 'b.img', 'b.remark', 'FROM_UNIXTIME(b.birthday, "%Y-%m-%d") as birthday',
-      'c.role as sys_role',
+      'c.role', 'c.perm',
+      'd.name as role_name',
     );
     $m->Where($where);
     $m->Order($order?:'a.id DESC');
     $list = $m->Find();
-    // 角色
-    $m = new SysRole();
-    $m->Columns('id', 'name');
-    $all = $m->Find();
-    $role = [];
-    foreach($all as $v) $role[(string)$v['id']]=$v['name'];
+    if(!$list) return self::GetJSON(['code'=>5000, 'msg'=>'暂无数据!']);
     // 导出文件
     $admin = AdminToken::Token($token);
     self::$export_filename = 'SysUser_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
@@ -380,10 +408,10 @@ class SysUser extends Base {
     foreach($list as $k=>$v){
       // 内容
       $html .= Export::ExcelData([
-        $v['uid'],
+        $v['id'],
         $v['tel']?:$v['uname']??$v['email'],
         self::$stateName[$v['state']],
-        $v['sys_role']?$role[$v['sys_role']]:'',
+        $v['role_name']?:($v['perm']?'私有':'-'),
         self::$typeName[$v['type']],
         $v['nickname'],
         $v['name'],
@@ -399,7 +427,7 @@ class SysUser extends Base {
     $html .= Export::ExcelBottom();
     Export::ExcelFileEnd(self::$export_path, self::$export_filename, $html);
     // 数据
-    return self::GetJSON(['code'=>0,'msg'=>'成功','path'=>Env::BaseUrl(self::$export_path), 'filename'=>self::$export_filename]);
+    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'data'=>['path'=>Env::BaseUrl(self::$export_path), 'filename'=>self::$export_filename]]);
   }
 
   /* 角色列表 */
