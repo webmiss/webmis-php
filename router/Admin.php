@@ -45,6 +45,7 @@ class Admin {
       $router->post('sys_user/list', "SysUser@List");
       $router->post('sys_user/export', "SysUser@Export");
       $router->post('sys_user/get_select', "SysUser@GetSelect");
+      $router->post('sys_user/get_perm', "SysUser@GetPerm");
 
       $router->post('sys_user/add', "SysUser@Add");
       $router->post('sys_user/edit', "SysUser@Edit");

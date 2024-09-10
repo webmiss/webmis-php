@@ -12,10 +12,13 @@ use Model\User;
 use Model\UserInfo;
 use Model\SysRole;
 use Model\SysPerm;
+use Model\SysMenu;
 use Util\Util;
 
 class SysUser extends Base {
 
+  private static $menus = [];   // 全部菜单
+  private static $perms = [];   // 用户权限
   // 状态
   static private $stateName = ['0'=>'禁用', '1'=>'正常'];
   // 角色类型
@@ -139,6 +142,85 @@ class SysUser extends Base {
     foreach($all as $k=>$v) $list[]=['label'=> $v['name'], 'value'=> $v['id']];
     return $list;
   }
+
+  /* 权限菜单 */
+  static function GetPerm(): string {
+    // 参数
+    $json = self::Json();
+    $token = self::JsonName($json, 'token');
+    $role = self::JsonName($json, 'role');
+    $perm = self::JsonName($json, 'perm');
+    // 验证
+    $msg = AdminToken::Verify($token, '');
+    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    // 用户权限
+    if(!$perm){
+      $m = new SysRole();
+      $m->Columns('perm');
+      $m->Where('id=?', $role);
+      $one = $m->FindFirst();
+      $perm = $one?$one['perm']:'';
+    }
+    self::$perms = self::permArr($perm);
+    // 全部菜单
+    $m = new SysMenu();
+    $m->Columns('id', 'fid', 'title', 'action');
+    $m->Order('sort, id');
+    $data = $m->Find();
+    foreach($data as $val){
+      $fid = (string)$val['fid'];
+      self::$menus[$fid][] = $val;
+    }
+    $list = self::_getMenu('0');
+    // self::Print($list);
+    // self::Print(self::$perms);
+    // 返回
+    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'data'=>$list]);
+  }
+  // 权限拆分
+  private static function permArr(string $perm): array {
+    $list = [];
+    $arr = !empty($perm)?explode(' ',$perm):[];
+    foreach($arr as $val){
+      $s = explode(':',$val);
+      $list[$s[0]] = (int)$s[1];
+      
+    }
+    return $list;
+  }
+  // 递归菜单
+  private static function _getMenu(string $fid, string $value=':'): array {
+    $data = [];
+    $m = isset(self::$menus[$fid])?self::$menus[$fid]:[];
+    foreach($m as $v) {
+      // 动作菜单
+      // 菜单信息
+      $id = (string)$v['id'];
+      $value .= $id.':';
+      $checked = isset(self::$perms[$id])?true:false;
+      $tmp = ['id'=>$id, 'label'=>$v['title'], 'value'=>$value, 'checked'=>$checked];
+      $menu = self::_getMenu($id, $value);
+      if(!empty($menu)) $tmp['children'] = $menu;
+      $data[] = $tmp;
+    }
+    return $data;
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   /* 添加 */
   static function Add() {
