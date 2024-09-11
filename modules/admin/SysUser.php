@@ -148,19 +148,11 @@ class SysUser extends Base {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
-    $role = self::JsonName($json, 'role');
     $perm = self::JsonName($json, 'perm');
     // 验证
     $msg = AdminToken::Verify($token, '');
     if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
     // 用户权限
-    if(!$perm){
-      $m = new SysRole();
-      $m->Columns('perm');
-      $m->Where('id=?', $role);
-      $one = $m->FindFirst();
-      $perm = $one?$one['perm']:'';
-    }
     self::$perms = self::permArr($perm);
     // 全部菜单
     $m = new SysMenu();
@@ -171,9 +163,8 @@ class SysUser extends Base {
       $fid = (string)$val['fid'];
       self::$menus[$fid][] = $val;
     }
+    // 数据
     $list = self::_getMenu('0');
-    // self::Print($list);
-    // self::Print(self::$perms);
     // 返回
     return self::GetJSON(['code'=>0, 'msg'=>'成功', 'data'=>$list]);
   }
@@ -184,23 +175,32 @@ class SysUser extends Base {
     foreach($arr as $val){
       $s = explode(':',$val);
       $list[$s[0]] = (int)$s[1];
-      
     }
     return $list;
   }
   // 递归菜单
-  private static function _getMenu(string $fid, string $value=':'): array {
+  private static function _getMenu(string $fid, string $ids=':'): array {
     $data = [];
     $m = isset(self::$menus[$fid])?self::$menus[$fid]:[];
     foreach($m as $v) {
-      // 动作菜单
       // 菜单信息
       $id = (string)$v['id'];
-      $value .= $id.':';
-      $checked = isset(self::$perms[$id])?true:false;
-      $tmp = ['id'=>$id, 'label'=>$v['title'], 'value'=>$value, 'checked'=>$checked];
-      $menu = self::_getMenu($id, $value);
-      if(!empty($menu)) $tmp['children'] = $menu;
+      $ids .= $id.':';
+      $tmp = ['label'=>$v['title'], 'value'=>$id.':0', 'checked'=>isset(self::$perms[$id])];
+      $menu = self::_getMenu($id, $ids);
+      // 动作菜单
+      $action = $v['action']?json_decode($v['action'], true):[];
+      // 下级
+      if($menu){
+        $tmp['children'] = $menu;
+      }elseif($action){
+        $list = [];
+        foreach($action as $a) {
+          $perm = isset(self::$perms[$id])?self::$perms[$id]:0;
+          $list[] = ['label'=>$a['name'], 'value'=>$id.':'.$a['perm'], 'checked'=>($perm&$a['perm'])>0?true:false];
+        }
+        $tmp['children'] = $list;
+      }
       $data[] = $tmp;
     }
     return $data;
