@@ -41,19 +41,13 @@ class Admin {
       $router->post('sys_file/upload', "SysFile@Upload");
       $router->post('sys_file/down', "SysFile@Down");
       $router->post('sys_file/remove', "SysFile@Remove");
-      // 用户管理
+      // 系统用户
       $router->post('sys_user/list', "SysUser@List");
+      $router->post('sys_user/save', "SysUser@Save");
+      $router->post('sys_user/del', "SysUser@Del");
       $router->post('sys_user/export', "SysUser@Export");
       $router->post('sys_user/get_select', "SysUser@GetSelect");
       $router->post('sys_user/get_perm', "SysUser@GetPerm");
-
-      $router->post('sys_user/add', "SysUser@Add");
-      $router->post('sys_user/edit', "SysUser@Edit");
-      $router->post('sys_user/del', "SysUser@Del");
-      $router->post('sys_user/state', "SysUser@State");
-      $router->post('sys_user/perm', "SysUser@Perm");
-      $router->post('sys_user/info', "SysUser@Info");
-      
       // 系统菜单
       $router->post('sys_menus/list', "SysMenus@List");
       $router->post('sys_menus/save', "SysMenus@Save");

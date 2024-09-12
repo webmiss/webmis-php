@@ -72,6 +72,9 @@ class SysUser extends Base {
       $list[$k]['role_name'] = $v['role_name']?:($v['perm']?'私有':'-');
       $list[$k]['img'] = Data::Img($v['img']);
     }
+    // $list[0]['img'] = 'https://img.zcool.cn/community/012a895b207440a80121bbec0822ba.jpeg';
+    $list[1]['img'] = 'https://img.zcool.cn/community/017d825b207435a8012034f7d869a2.jpeg';
+    $list[2]['img'] = 'https://img.zcool.cn/community/0134195b20751ba80121bbec89ed62.jpg';
     // 返回
     return self::GetJSON(['code'=>0, 'msg'=>'成功', 'time'=>date('Y/m/d H:i:s'), 'data'=>['total'=>$total, 'list'=>$list]]);
   }
@@ -110,6 +113,214 @@ class SysUser extends Base {
     $remark = isset($d['remark'])?trim($d['remark']):'';
     if($remark!='') $where[] = 'remark like "%'.$remark.'%"';
     return implode(' AND ', $where);
+  }
+
+  /* 添加、更新 */
+  static function Save(): string {
+    // 参数
+    $json = self::Json();
+    $token = self::JsonName($json, 'token');
+    $data = self::JsonName($json, 'data');
+    // 验证
+    $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
+    if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if(empty($data) || !is_array($data)){
+      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+    }
+    // 数据
+    $param = [];
+    $id = isset($data['id'])&&$data['id']?trim($data['id']):'';
+    $param['state'] = isset($data['state'])&&$data['state']?'1':'0';
+    $param['uname'] = isset($data['uname'])&&$data['uname']?trim($data['uname']):'';
+    $param['passwd'] = isset($data['passwd'])&&$data['passwd']?trim($data['passwd']):'';
+    $param['type'] = isset($data['type'])&&$data['type']?$data['type'][0]:0;
+    $param['name'] = isset($data['name'])&&$data['name']?trim($data['name']):'';
+    $param['nickname'] = isset($data['nickname'])&&$data['nickname']?trim($data['nickname']):'';
+    $param['department'] = isset($data['department'])&&$data['department']?trim($data['department']):'';
+    $param['position'] = isset($data['position'])&&$data['position']?trim($data['position']):'';
+    $param['remark'] = isset($data['remark'])&&$data['remark']?trim($data['remark']):'';
+    $param['role'] = isset($data['role'])&&$data['role']?trim($data['role']):'';
+    $param['perm'] = isset($data['perm'])&&$data['perm']?trim($data['perm']):'';
+    // 用户名
+    $uname = '';
+    if(Safety::IsRight('tel', $param['uname'])) $uname='tel';
+    elseif(Safety::IsRight('email', $param['uname'])) $uname='email';
+    elseif(Safety::IsRight('uname', $param['uname'])) $uname='uname';
+    if(!$uname) return self::GetJSON(['code'=>4000, 'msg'=>'请输入用户名、手机号码、邮箱!']);
+    // 密码
+    if((!$id && !Safety::IsRight('passwd', $param['passwd'])) || ($id && $param['passwd'] && !Safety::IsRight('passwd', $param['passwd']))) {
+      return self::GetJSON(['code'=>4000, 'msg'=>'密码为英文字母开头6～16位!']);
+    }
+    // 添加
+    if(!$id) {
+      // 是否存在
+      $m = new User();
+      $m->Columns('id');
+      $m->Where($uname.'=?', $param['uname']);
+      $one = $m->FindFirst();
+      if($one) return self::GetJSON(['code'=>4000, 'msg'=>'该用户已存在!']);
+      // 帐号
+      $user = ['password'=>md5($param['passwd']), 'state'=>$param['state'], 'rtime'=>time()];
+      $user[$uname] = $param['uname'];
+      $m1 = new User();
+      $m1->Values($user);
+      $m1->Insert();
+      $id = $m1->GetID();
+      if(!$id) return self::GetJSON(['code'=>5000,'msg'=>'添加失败!']);
+      // 基本信息
+      $m2 = new UserInfo();
+      $m2->Values([
+        'uid'=> $id,
+        'type'=> $param['type'],
+        'utime'=> time(),
+        'name'=> $param['name'],
+        'nickname'=> $param['nickname'],
+        'department'=> $param['department'],
+        'position'=> $param['position'],
+        'remark'=> $param['remark'],
+      ]);
+      // 用户权限
+      $m3 = new SysPerm();
+      $m3->Values(['uid'=>$id, 'utime'=>time(), 'role'=>$param['role'], 'perm'=>$param['perm']]);
+      // 执行
+      if($m2->Insert() && $m3-> Insert()) {
+        return self::GetJSON(['code'=>0,'msg'=>'成功']);
+      } else {
+        return self::GetJSON(['code'=>5000,'msg'=>'添加失败!']);
+      }
+    } else {
+      // 是否存在
+      $m = new User();
+      $m->Columns('id');
+      $m->Where($uname.'=? AND id<>?', $param['uname'], $id);
+      $one = $m->FindFirst();
+      if($one) return self::GetJSON(['code'=>4000, 'msg'=>'该用户已存在!']);
+      // 帐号
+      $user = ['state'=>$param['state'], 'utime'=>time()];
+      if($param['passwd']) $user['password'] = md5($param['passwd']);
+      $user[$uname] = $param['uname'];
+      $m1 = new User();
+      $m1->Set($user);
+      $m1->Where('id=?', $id);
+      // 基本信息
+      $m2 = new UserInfo();
+      $m2->Set([
+        'type'=> $param['type'],
+        'utime'=> time(),
+        'name'=> $param['name'],
+        'nickname'=> $param['nickname'],
+        'department'=> $param['department'],
+        'position'=> $param['position'],
+        'remark'=> $param['remark'],
+      ]);
+      $m2->Where('uid=?', $id);
+      // 用户权限
+      $m3 = new SysPerm();
+      $m3->Set(['uid'=>$id, 'utime'=>time(), 'role'=>$param['role'], 'perm'=>$param['perm']]);
+      $m3->Where('uid=?', $id);
+      // 执行
+      if($m1->Update() && $m2->Update() && $m3-> Update()) {
+        return self::GetJSON(['code'=>0,'msg'=>'成功']);
+      } else {
+        return self::GetJSON(['code'=>5000,'msg'=>'添加失败!']);
+      }
+    }
+  }
+
+  /* 删除 */
+  static function Del() {
+    // 参数
+    $json = self::Json();
+    $token = self::JsonName($json, 'token');
+    $data = self::JsonName($json, 'data');
+    // 验证
+    $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
+    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if(empty($data) || !is_array($data)){
+      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+    }
+    // 数据
+    $ids = implode(',', $data);
+    $m1 = new User();
+    $m1->Where('id in('.$ids.')');
+    $m2 = new UserInfo();
+    $m2->Where('uid in('.$ids.')');
+    $m3 = new SysPerm();
+    $m3->Where('uid in('.$ids.')');
+    if($m1->Delete() && $m2->Delete() && $m3->Delete()) {
+      return self::GetJSON(['code'=>0,'msg'=>'成功']);
+    } else {
+      return self::GetJSON(['code'=>5000,'msg'=>'删除失败!']);
+    }
+  }
+
+  /* 导出 */
+  static function Export() {
+    // 参数
+    $json = self::Json();
+    $token = self::JsonName($json, 'token');
+    $data = self::JsonName($json, 'data');
+    $order = self::JsonName($json, 'order');
+    // 验证
+    $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
+    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if(empty($data)) {
+      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+    }
+    // 条件
+    $where = self::getWhere($data);
+    // 统计
+    $m = new User();
+    $m->Table('user as a');
+    $m->LeftJoin('user_info as b', 'a.id=b.uid');
+    $m->LeftJoin('sys_perm as c', 'a.id=c.uid');
+    $m->LeftJoin('sys_role as d', 'c.role=d.id');
+    $m->Columns('count(*) AS total');
+    $m->Where($where);
+    $t = $m->FindFirst();
+    if($t['total']>self::$export_max) return self::GetJSON(['code'=>5000, 'msg'=>'总数不能大于'.self::$export_max]);
+    // 查询
+    $m->Columns(
+      'a.id', 'a.uname', 'a.email', 'a.tel', 'a.state', 'FROM_UNIXTIME(a.rtime) as rtime', 'FROM_UNIXTIME(a.ltime) as ltime', 'FROM_UNIXTIME(a.utime) as utime',
+      'b.type', 'b.nickname', 'b.department', 'b.position', 'b.name', 'b.gender', 'b.img', 'b.remark', 'FROM_UNIXTIME(b.birthday, "%Y-%m-%d") as birthday',
+      'c.role', 'c.perm',
+      'd.name as role_name',
+    );
+    $m->Where($where);
+    $m->Order($order?:'a.id DESC');
+    $list = $m->Find();
+    if(!$list) return self::GetJSON(['code'=>5000, 'msg'=>'暂无数据!']);
+    // 导出文件
+    $admin = AdminToken::Token($token);
+    self::$export_filename = 'SysUser_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
+    $html = Export::ExcelTop();
+    $html .= Export::ExcelTitle([
+      'UID', '账号', '状态', '角色', '类型', '昵称', '姓名', '性别', '生日', '部门', '职务', '注册时间', '登录时间', '备注'
+    ]);
+    // 数据
+    foreach($list as $k=>$v){
+      // 内容
+      $html .= Export::ExcelData([
+        $v['id'],
+        $v['tel']?:$v['uname']??$v['email'],
+        self::$stateName[$v['state']],
+        $v['role_name']?:($v['perm']?'私有':'-'),
+        self::$typeName[$v['type']],
+        $v['nickname'],
+        $v['name'],
+        $v['gender']?:'-',
+        $v['birthday'],
+        $v['department'],
+        $v['position'],
+        '&nbsp;'.$v['rtime'],
+        '&nbsp;'.$v['ltime'],
+        $v['remark'],
+      ]);
+    }
+    $html .= Export::ExcelBottom();
+    Export::ExcelFileEnd(self::$export_path, self::$export_filename, $html);
+    // 数据
+    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'data'=>['path'=>Env::BaseUrl(self::$export_path), 'filename'=>self::$export_filename]]);
   }
 
   /* 选项 */
@@ -204,329 +415,6 @@ class SysUser extends Base {
       $data[] = $tmp;
     }
     return $data;
-  }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  /* 添加 */
-  static function Add() {
-    // 参数
-    $json = self::Json();
-    $token = self::JsonName($json, 'token');
-    $data = self::JsonName($json, 'data');
-    // 验证
-    $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    if(empty($data)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
-    }
-    // 数据
-    $param = json_decode($data);
-    $tel = isset($param->tel)?trim($param->tel):'';
-    $passwd = isset($param->passwd)?$param->passwd:Env::$password;
-    // 验证
-    if(!Safety::IsRight('tel', $tel)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'手机号码有误!']);
-    }
-    if(!Safety::IsRight('passwd', $passwd)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'密码为6～16位!']);
-    }
-    // 是否存在
-    $m = new User();
-    $m->Columns('id');
-    $m->Where('tel=?', $tel);
-    $user = $m->FindFirst();
-    if(!empty($user)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'该用户已存在!']);
-    }
-    // 用户
-    $m1 = new User();
-    $m1->Values(['tel'=>$tel, 'password'=>md5($passwd), 'rtime'=>time()]);
-    $m1->Insert();
-    $uid = $m1->GetID();
-    // 用户信息
-    $m2 = new UserInfo();
-    $m2->Values(['uid'=>$uid]);
-    if($m2->Insert()){
-      return self::GetJSON(['code'=>0,'msg'=>'成功']);
-    }else{
-      return self::GetJSON(['code'=>5000,'msg'=>'添加失败!']);
-    }
-  }
-
-  /* 编辑 */
-  static function Edit() {
-    // 参数
-    $json = self::Json();
-    $token = self::JsonName($json, 'token');
-    $uid = self::JsonName($json, 'uid');
-    $data = self::JsonName($json, 'data');
-    // 验证
-    $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    if(empty($uid) || empty($data)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
-    }
-    // 数据
-    $param = json_decode($data);
-    $tel = isset($param->tel)?trim($param->tel):'';
-    $passwd = isset($param->passwd)?$param->passwd:'';
-    // 验证
-    if(!Safety::IsRight('tel', $tel)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'手机号码有误!']);
-    }
-    // 是否存在
-    $m = new User();
-    $m->Columns('id');
-    $m->Where('tel=?', $tel);
-    $user = $m->FindFirst();
-    if(!empty($user) && $user['id']!=$uid){
-      return self::GetJSON(['code'=>4000, 'msg'=>'该用户已存在!']);
-    }
-    // 模型
-    $uData = ['tel'=>$tel];
-    if($passwd!='') $uData['password'] = md5($passwd);
-    $m->Set($uData);
-    $m->Where('id=?', $uid);
-    if($m->Update()) {
-      return self::GetJSON(['code'=>0,'msg'=>'成功']);
-    } else {
-      return self::GetJSON(['code'=>5000,'msg'=>'更新失败!']);
-    }
-  }
-
-  /* 删除 */
-  static function Del() {
-    // 参数
-    $json = self::Json();
-    $token = self::JsonName($json, 'token');
-    $data = self::JsonName($json, 'data');
-    // 验证
-    $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    if(empty($data)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
-    }
-    // 数据
-    $param = json_decode($data);
-    $ids = implode(',',$param);
-    // 模型
-    $m1 = new User();
-    $m1->Where('id in('.$ids.')');
-    $m2 = new UserInfo();
-    $m2->Where('uid in('.$ids.')');
-    $m3 = new SysPerm();
-    $m3->Where('uid in('.$ids.')');
-    if($m1->Delete() && $m2->Delete() && $m3->Delete()) {
-      return self::GetJSON(['code'=>0,'msg'=>'成功']);
-    } else {
-      return self::GetJSON(['code'=>5000,'msg'=>'删除失败!']);
-    }
-  }
-
-  /* 权限 */
-  static function Perm(){
-    // 参数
-    $json = self::Json();
-    $token = self::JsonName($json, 'token');
-    $type = self::JsonName($json, 'type');
-    $uid = self::JsonName($json, 'uid');
-    $role = self::JsonName($json, 'role');
-    $perm = self::JsonName($json, 'perm');
-    $brand = self::JsonName($json, 'brand');
-    $shop = self::JsonName($json, 'shop');
-    $partner = self::JsonName($json, 'partner');
-    $partner_in = self::JsonName($json, 'partner_in');
-    // 验证
-    $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    if(empty($type) || empty($uid)){
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
-    }
-    // 超级管理员
-    $tData = AdminToken::Token($token);
-    if($uid==1 && $tData->uid!=1){
-      return self::GetJSON(['code'=>4000, 'msg'=>'您不是超级管理员!']);
-    }
-    // 类型
-    if($type=='admin' && self::_permSys($uid, $role, $perm, $brand, $shop, $partner, $partner_in)){
-      return self::GetJSON(['code'=>0,'msg'=>'成功']);
-    }else{
-      return self::GetJSON(['code'=>5000,'msg'=>'更新失败!']);
-    }
-  }
-  // 权限-System
-  private static function _permSys($uid, $role, $perm, $brand, $shop, $partner, $partner_in) {
-    // 数据
-    $uData = ['perm'=>$perm, 'role'=>$role, 'brand'=>$brand, 'shop'=>$shop, 'partner'=>$partner, 'partner_in'=>$partner_in, 'utime'=>time()];
-    // 是否存在
-    $m = new SysPerm();
-    $m->Columns('uid');
-    $m->Where('uid=?', $uid);
-    $one = $m->FindFirst();
-    if($one){
-      $m->Set($uData);
-      $m->Where('uid=?', $uid);
-      $m->Update();
-    }else{
-      $uData['uid'] = $uid;
-      $uData['utime'] = time();
-      $m->Values($uData);
-      $m->Insert();
-    }
-    // 角色权限
-    if(empty($perm)){
-      $m1 = new SysRole();
-      $m1->Columns('perm');
-      $m1->Where('id=?', $role);
-      $data = $m1->FindFirst();
-      $perm = isset($data['perm'])?$data['perm']:'';
-    }
-    // 更新权限
-    return self::_setPerm(Env::$admin_token_prefix.'_perm_'.$uid, $perm);
-  }
-  // 更新权限
-  private static function _setPerm(string $key, string $perm): bool {
-    $redis = new Redis();
-    $redis->Set($key, $perm);
-    $redis->Close();
-    return true;
-  }
-
-  /* 个人信息 */
-  static function Info() {
-    // 参数
-    $json = self::Json();
-    $token = self::JsonName($json, 'token');
-    $uid = self::JsonName($json, 'uid');
-    $data = self::JsonName($json, 'data');
-    // 验证
-    $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    if(empty($uid) || empty($data)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
-    }
-    // 数据
-    $param = json_decode($data);
-    $info = [
-      'type'=> isset($param->type)?trim($param->type):'',
-      'nickname'=> isset($param->nickname)?trim($param->nickname):'',
-      'name'=> isset($param->name)?trim($param->name):'',
-      'gender'=> isset($param->gender)?trim($param->gender):'',
-      'birthday'=> isset($param->birthday)?Util::StrToTime($param->birthday):0,
-      'department'=> isset($param->department)?trim($param->department):'',
-      'position'=> isset($param->position)?trim($param->position):'',
-      'remark'=> isset($param->remark)?trim($param->remark):'',
-    ];
-    // 模型
-    $m = new UserInfo();
-    $m->Set($info);
-    $m->Where('uid=?', $uid);
-    if($m->Update()) {
-      return self::GetJSON(['code'=>0,'msg'=>'成功']);
-    } else {
-      return self::GetJSON(['code'=>5000,'msg'=>'更新失败!']);
-    }
-  }
-
-  /* 导出 */
-  static function Export() {
-    // 参数
-    $json = self::Json();
-    $token = self::JsonName($json, 'token');
-    $data = self::JsonName($json, 'data');
-    $order = self::JsonName($json, 'order');
-    // 验证
-    $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    if(empty($data)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
-    }
-    // 条件
-    $where = self::getWhere($data);
-    // 统计
-    $m = new User();
-    $m->Table('user as a');
-    $m->LeftJoin('user_info as b', 'a.id=b.uid');
-    $m->LeftJoin('sys_perm as c', 'a.id=c.uid');
-    $m->LeftJoin('sys_role as d', 'c.role=d.id');
-    $m->Columns('count(*) AS total');
-    $m->Where($where);
-    $t = $m->FindFirst();
-    if($t['total']>self::$export_max) return self::GetJSON(['code'=>5000, 'msg'=>'总数不能大于'.self::$export_max]);
-    // 查询
-    $m->Columns(
-      'a.id', 'a.uname', 'a.email', 'a.tel', 'a.state', 'FROM_UNIXTIME(a.rtime) as rtime', 'FROM_UNIXTIME(a.ltime) as ltime', 'FROM_UNIXTIME(a.utime) as utime',
-      'b.type', 'b.nickname', 'b.department', 'b.position', 'b.name', 'b.gender', 'b.img', 'b.remark', 'FROM_UNIXTIME(b.birthday, "%Y-%m-%d") as birthday',
-      'c.role', 'c.perm',
-      'd.name as role_name',
-    );
-    $m->Where($where);
-    $m->Order($order?:'a.id DESC');
-    $list = $m->Find();
-    if(!$list) return self::GetJSON(['code'=>5000, 'msg'=>'暂无数据!']);
-    // 导出文件
-    $admin = AdminToken::Token($token);
-    self::$export_filename = 'SysUser_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
-    $html = Export::ExcelTop();
-    $html .= Export::ExcelTitle([
-      'UID', '账号', '状态', '角色', '类型', '昵称', '姓名', '性别', '生日', '部门', '职务', '注册时间', '登录时间', '备注'
-    ]);
-    // 数据
-    foreach($list as $k=>$v){
-      // 内容
-      $html .= Export::ExcelData([
-        $v['id'],
-        $v['tel']?:$v['uname']??$v['email'],
-        self::$stateName[$v['state']],
-        $v['role_name']?:($v['perm']?'私有':'-'),
-        self::$typeName[$v['type']],
-        $v['nickname'],
-        $v['name'],
-        $v['gender'],
-        $v['birthday'],
-        $v['department'],
-        $v['position'],
-        '&nbsp;'.$v['rtime'],
-        '&nbsp;'.$v['ltime'],
-        $v['remark'],
-      ]);
-    }
-    $html .= Export::ExcelBottom();
-    Export::ExcelFileEnd(self::$export_path, self::$export_filename, $html);
-    // 数据
-    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'data'=>['path'=>Env::BaseUrl(self::$export_path), 'filename'=>self::$export_filename]]);
-  }
-
-  /* 角色列表 */
-  static function RoleList() {
-    // 参数
-    $json = self::Json();
-    $token = self::JsonName($json, 'token');
-    // 验证
-    $msg = AdminToken::Verify($token, '');
-    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    // 数据
-    $m = new SysRole();
-    $m->Columns('id', 'name');
-    $all = $m->Find();
-    $list = [];
-    foreach($all as $v) $list[]=['label'=>$v['name'], 'value'=>$v['id']];
-    return self::GetJSON(['code'=>0,'msg'=>'成功','data'=>$list]);
   }
 
 }
