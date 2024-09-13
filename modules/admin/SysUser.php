@@ -6,14 +6,12 @@ use Service\Base;
 use Service\Data;
 use Service\AdminToken;
 use Library\Safety;
-use Library\Redis;
 use Library\Export;
 use Model\User;
 use Model\UserInfo;
 use Model\SysRole;
 use Model\SysPerm;
 use Model\SysMenu;
-use Util\Util;
 
 class SysUser extends Base {
 
@@ -68,13 +66,10 @@ class SysUser extends Base {
     // 数据
     foreach ($list as $k => $v) {
       $list[$k]['state'] = $v['state']?true:false;
-      $list[$k]['type_name'] = self::$typeName[$v['type']];
+      $list[$k]['type_name'] = isset(self::$typeName[$v['type']])?self::$typeName[$v['type']]:'-';
       $list[$k]['role_name'] = $v['role_name']?:($v['perm']?'私有':'-');
       $list[$k]['img'] = Data::Img($v['img']);
     }
-    // $list[0]['img'] = 'https://img.zcool.cn/community/012a895b207440a80121bbec0822ba.jpeg';
-    $list[1]['img'] = 'https://img.zcool.cn/community/017d825b207435a8012034f7d869a2.jpeg';
-    $list[2]['img'] = 'https://img.zcool.cn/community/0134195b20751ba80121bbec89ed62.jpg';
     // 返回
     return self::GetJSON(['code'=>0, 'msg'=>'成功', 'time'=>date('Y/m/d H:i:s'), 'data'=>['total'=>$total, 'list'=>$list]]);
   }

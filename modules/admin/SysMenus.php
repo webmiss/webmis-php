@@ -308,32 +308,4 @@ class SysMenus extends Base {
     }
   }
 
-
-
-  /* 动作权限 */
-  static function Perm() {
-    // 参数
-    $json = self::Json();
-    $token = self::JsonName($json, 'token');
-    $id = self::JsonName($json, 'id');
-    $data = self::JsonName($json, 'data');
-    // 验证
-    $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    if(empty($id) || empty($data)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
-    }
-    // 模型
-    $m = new SysMenu();
-    $m->Set(['action'=>$data]);
-    $m->Where('id=?', $id);
-    if($m->Update()) {
-      return self::GetJSON(['code'=>0,'msg'=>'成功']);
-    } else {
-      return self::GetJSON(['code'=>5000,'msg'=>'更新失败!']);
-    }
-  }
-
-  
-
 }
