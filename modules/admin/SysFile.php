@@ -25,7 +25,7 @@ class SysFile extends Base {
     FileEo::$Root = self::$dirRoot;
     $list = FileEo::List($path);
     // 返回
-    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'url'=>Env::BaseUrl(self::$dirRoot), 'data'=>$list]);
+    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'time'=>date('Y/m/d H:i:s'), 'data'=>['url'=>Env::BaseUrl(self::$dirRoot), 'list'=>$list]]);
   }
 
   /* 新建文件夹 */
@@ -90,7 +90,7 @@ class SysFile extends Base {
     $path = self::JsonName($json, 'path');
     $filename = self::JsonName($json, 'filename');
     // 验证
-    $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
+    $msg = AdminToken::Verify($token, '');
     if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
     if(empty($path) || empty($filename)) return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
     // 返回
