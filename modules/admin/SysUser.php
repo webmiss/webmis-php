@@ -19,7 +19,7 @@ class SysUser extends Base {
   private static $perms = [];   // 用户权限
   // 状态
   static private $stateName = ['0'=>'禁用', '1'=>'正常'];
-  // 角色类型
+  // 类型
   static private $typeName = ['0'=>'用户', '1'=>'开发'];
   // 导出
   static private $export_max = 500000;          //导出-最大数
@@ -107,6 +107,7 @@ class SysUser extends Base {
     // 备注
     $remark = isset($d['remark'])?trim($d['remark']):'';
     if($remark!='') $where[] = 'remark like "%'.$remark.'%"';
+    // 结果
     return implode(' AND ', $where);
   }
 
@@ -259,7 +260,7 @@ class SysUser extends Base {
     // 验证
     $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
     if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    if(empty($data)) {
+    if(empty($data) || !is_array($data)) {
       return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
     }
     // 条件

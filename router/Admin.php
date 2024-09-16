@@ -57,13 +57,19 @@ class Admin {
       $router->post('sys_menus/get_menus_perm', "SysMenus@GetMenusPerm");
       // 系统角色
       $router->post('sys_role/list', "SysRole@List");
-      $router->post('sys_role/add', "SysRole@Add");
-      $router->post('sys_role/edit', "SysRole@Edit");
+      $router->post('sys_role/save', "SysRole@Save");
       $router->post('sys_role/del', "SysRole@Del");
-      $router->post('sys_role/perm', "SysRole@Perm");
       $router->post('sys_role/export', "SysRole@Export");
-      $router->post('sys_role/permList', "SysRole@PermList");
-      $router->post('sys_role/roleList', "SysRole@RoleList");
+      $router->post('sys_role/get_select', "SysRole@GetSelect");
+      $router->post('sys_role/get_perm', "SysRole@GetPerm");
+      // $router->post('sys_role/list', "SysRole@List");
+      // $router->post('sys_role/add', "SysRole@Add");
+      // $router->post('sys_role/edit', "SysRole@Edit");
+      // $router->post('sys_role/del', "SysRole@Del");
+      // $router->post('sys_role/perm', "SysRole@Perm");
+      // $router->post('sys_role/export', "SysRole@Export");
+      // $router->post('sys_role/permList', "SysRole@PermList");
+      // $router->post('sys_role/roleList', "SysRole@RoleList");
       // 新闻
       $router->post('news/list', "WebNews@List");
       $router->post('news/add', "WebNews@Add");

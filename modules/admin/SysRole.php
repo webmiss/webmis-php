@@ -10,9 +10,10 @@ use Model\SysMenu;
 
 class SysRole extends Base {
 
-  private static $menus = [];   //全部菜单
-  private static $permAll = []; //用户权限
+  private static $menus = [];   // 全部菜单
+  private static $perms = [];   // 用户权限
   // 导出
+  static private $export_max = 500000;          //导出-最大数
   static private $export_path = 'upload/tmp/';  //导出-目录
   static private $export_filename = '';         //导出-文件名
 
@@ -27,38 +28,53 @@ class SysRole extends Base {
     $order = self::JsonName($json, 'order');
     // 验证
     $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg != '')
-      return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    if(empty($data) || empty($page) || empty($limit))
+    if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if(empty($data) || !is_array($data) || empty($page) || empty($limit)) {
       return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+    }
     // 条件
-    $param = json_decode($data);
-    $where = self::getWhere($param);
+    $where = self::getWhere($data);
     // 统计
     $m = new SysRoleM();
-    $m->Columns('count(*) AS num');
+    $m->Columns('count(*) AS total');
     $m->Where($where);
     $total = $m->FindFirst();
     // 查询
-    $m->Columns('id', 'name', 'perm', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
+    $m->Columns('id', 'name', 'status', 'perm', 'remark', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
     $m->Where($where);
     $m->Order($order?:'id DESC');
     $m->Page($page, $limit);
     $list = $m->Find();
+    foreach($list as $k=>$v) {
+      $list[$k]['status'] = $v['status']?true:false;
+    }
     // 返回
-    return self::GetJSON(['code'=>0,'msg'=>'成功','list'=>$list,'total'=>(int)$total['num']]);
+    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'time'=>date('Y/m/d H:i:s'), 'data'=>['total'=>$total, 'list'=>$list]]);
   }
   /* 搜索条件 */
-  static private function getWhere(object $param): string {
+  static private function getWhere(array $d): string {
     $where = [];
+    // 关键字
+    $key = isset($d['key'])?trim($d['key']):'';
+    if($key){
+      $arr = [
+        'name like "%'.$key.'%"',
+        'remark like "%'.$key.'%"',
+      ];
+      $where[] = '('.implode(' OR ', $arr).')';
+    }
     // 名称
-    $name = isset($param->name)?trim($param->name):'';
+    $name = isset($d['name'])?trim($d['name']):'';
     if($name) $where[] = 'name LIKE "%'.$name.'%"';
+    // 备注
+    $remark = isset($d['remark'])?trim($d['remark']):'';
+    if($remark!='') $where[] = 'remark like "%'.$remark.'%"';
+    // 结果
     return implode(' AND ', $where);
   }
 
-  /* 添加 */
-  static function Add() {
+  /* 添加、更新 */
+  static function Save() {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -66,47 +82,33 @@ class SysRole extends Base {
     // 验证
     $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
     if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    if(empty($data)) {
+    if(empty($data) || !is_array($data)){
       return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
     }
     // 数据
-    $param = json_decode($data);
-    $name = isset($param->name)?trim($param->name):'';
-    if($name==''){
-      return self::GetJSON(['code'=>4000, 'msg'=>'名称不能为空!']);
+    $param = [];
+    $id = isset($data['id'])&&$data['id']?trim($data['id']):'';
+    $param['name'] = isset($data['name'])?trim($data['name']):'';
+    if(mb_strlen($param['name'])<2 || mb_strlen($param['name'])>16) return self::GetJSON(['code'=>4000, 'msg'=>'角色名称2～16位字符!']);
+    $param['status'] = isset($data['status'])&&$data['status']?1:0;
+    $param['remark'] = isset($data['remark'])&&$data['remark']?trim($data['remark']):'';
+    $param['perm'] = isset($data['perm'])&&$data['perm']?trim($data['perm']):'';
+    // 添加
+    if(!$id) {
+      $param['ctime'] = time();
+      $param['utime'] = time();
+      $m = new SysRoleM();
+      $m->Values($param);
+      if($m->Insert()) {
+        return self::GetJSON(['code'=>0,'msg'=>'成功']);
+      } else {
+        return self::GetJSON(['code'=>5000,'msg'=>'添加失败!']);
+      }
     }
-    // 数据
+    // 更新
+    $param['utime'] = time();
     $m = new SysRoleM();
-    $m->Values(['name'=> $name, 'ctime'=> time()]);
-    if($m->Insert()) {
-      return self::GetJSON(['code'=>0,'msg'=>'成功']);
-    } else {
-      return self::GetJSON(['code'=>5000,'msg'=>'添加失败!']);
-    }
-  }
-
-  /* 编辑 */
-  static function Edit() {
-    // 参数
-    $json = self::Json();
-    $token = self::JsonName($json, 'token');
-    $id = self::JsonName($json, 'id');
-    $data = self::JsonName($json, 'data');
-    // 验证
-    $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    if(empty($id) || empty($data)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
-    }
-    // 数据
-    $param = json_decode($data);
-    $name = isset($param->name)?trim($param->name):'';
-    if($name=='') {
-      return self::GetJSON(['code'=>4000, 'msg'=>'名称不能为空!']);
-    }
-    // 模型
-    $m = new SysRoleM();
-    $m->Set(['name'=>$name, 'utime'=>time()]);
+    $m->Set($param);
     $m->Where('id=?', $id);
     if($m->Update()) {
       return self::GetJSON(['code'=>0,'msg'=>'成功']);
@@ -123,44 +125,17 @@ class SysRole extends Base {
     $data = self::JsonName($json, 'data');
     // 验证
     $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    if(empty($data)) {
+    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if(empty($data) || !is_array($data)){
       return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
     }
-    // 数据
-    $param = json_decode($data);
-    $ids = implode(',',$param);
     // 模型
     $m = new SysRoleM();
-    $m->Where('id in('.$ids.')');
+    $m->Where('id in('.implode(',', $data).')');
     if($m->Delete()) {
       return self::GetJSON(['code'=>0,'msg'=>'成功']);
     } else {
       return self::GetJSON(['code'=>5000,'msg'=>'删除失败!']);
-    }
-  }
-
-  /* 权限 */
-  static function Perm() {
-    // 参数
-    $json = self::Json();
-    $token = self::JsonName($json, 'token');
-    $id = self::JsonName($json, 'id');
-    $perm = self::JsonName($json, 'perm');
-    // 验证
-    $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    if(empty($id)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
-    }
-    // 模型
-    $m = new SysRoleM();
-    $m->Set(['perm'=>$perm, 'utime'=>time()]);
-    $m->Where('id=?', $id);
-    if($m->Update()) {
-      return self::GetJSON(['code'=>0,'msg'=>'成功']);
-    } else {
-      return self::GetJSON(['code'=>5000,'msg'=>'更新失败!']);
     }
   }
 
@@ -174,24 +149,30 @@ class SysRole extends Base {
     // 验证
     $msg = AdminToken::Verify($token, '');
     if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    if(empty($data)) {
+    if(empty($data) || !is_array($data)) {
       return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
     }
     // 条件
-    $param = json_decode($data);
-    $where = self::getWhere($param, $token);
+    $where = self::getWhere($data);
+    // 统计
+    $m = new SysRoleM();
+    $m->Columns('count(*) AS total');
+    $m->Where($where);
+    $t = $m->FindFirst();
+    if($t['total']>self::$export_max) return self::GetJSON(['code'=>5000, 'msg'=>'总数不能大于'.self::$export_max]);
     // 查询
     $m = new SysRoleM();
-    $m->Columns('id', 'name', 'perm', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
+    $m->Columns('id', 'name', 'status', 'remark', 'perm', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
     $m->Where($where);
     $m->Order($order?:'id DESC');
     $list = $m->Find();
+    if(!$list) return self::GetJSON(['code'=>5000, 'msg'=>'暂无数据!']);
     // 导出文件
     $admin = AdminToken::Token($token);
     self::$export_filename = 'SysRole_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
     $html = Export::ExcelTop();
     $html .= Export::ExcelTitle([
-      'ID', '名称', '创建时间', '更新时间', '权限'
+      'ID', '名称', '状态', '备注', '权限值'
     ]);
     // 数据
     foreach($list as $k=>$v){
@@ -199,106 +180,74 @@ class SysRole extends Base {
       $html .= Export::ExcelData([
         $v['id'],
         $v['name'],
-        '&nbsp;'.$v['ctime'],
-        '&nbsp;'.$v['utime'],
+        $v['status']?'正常':'禁用',
+        $v['remark'],
         $v['perm'],
       ]);
     }
     $html .= Export::ExcelBottom();
     Export::ExcelFileEnd(self::$export_path, self::$export_filename, $html);
     // 数据
-    return self::GetJSON(['code'=>0,'msg'=>'成功','path'=>Env::BaseUrl(self::$export_path), 'filename'=>self::$export_filename]);
+    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'data'=>['path'=>Env::BaseUrl(self::$export_path), 'filename'=>self::$export_filename]]);
   }
 
-  /* 角色-列表 */
-  static function RoleList() {
-    // 参数
-    $json = self::Json();
-    $token = self::JsonName($json, 'token');
-    // 验证
-    $msg = AdminToken::Verify($token, '');
-    if($msg != '') {
-      return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    }
-    // 查询
-    $m = new SysRoleM();
-    $m->Columns('id', 'name');
-    $data = $m->Find();
-    $lists = [['label'=>'无', 'value'=>0]];
-    foreach($data as $val) {
-      $lists[] = ['label'=>$val['name'], 'value'=>(int)$val['id']];
-    }
-    return self::GetJSON(['code'=>0,'msg'=>'成功', 'list'=>$lists]);
-  }
-
-  /* 权限-列表 */
-  static function PermList() {
+  /* 权限菜单 */
+  static function GetPerm(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
     $perm = self::JsonName($json, 'perm');
     // 验证
     $msg = AdminToken::Verify($token, '');
-    if($msg != '') {
-      return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    }
+    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    // 用户权限
+    self::$perms = self::permArr($perm);
     // 全部菜单
-    $model = new SysMenu();
-    $model->Columns('id', 'fid', 'title', 'url', 'ico', 'controller', 'action');
-    $model->Order('sort, id');
-    $data = $model->Find();
+    $m = new SysMenu();
+    $m->Columns('id', 'fid', 'title', 'action');
+    $m->Order('sort, id');
+    $data = $m->Find();
     foreach($data as $val){
       $fid = (string)$val['fid'];
       self::$menus[$fid][] = $val;
     }
-    // 用户权限
-    self::$permAll = self::permArr($perm);
+    // 数据
+    $list = self::_getMenu('0');
     // 返回
-    return self::GetJSON(['code'=>0,'msg'=>'成功', 'list'=>self::_getMenu('0')]);
+    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'data'=>$list]);
   }
-  // 权限-拆分
+  // 权限拆分
   private static function permArr(string $perm): array {
-    $permAll = [];
+    $list = [];
     $arr = !empty($perm)?explode(' ',$perm):[];
     foreach($arr as $val){
       $s = explode(':',$val);
-      $permAll[$s[0]] = (int)$s[1];
+      $list[$s[0]] = (int)$s[1];
     }
-    return $permAll;
+    return $list;
   }
   // 递归菜单
-  private static function _getMenu(string $fid) {
+  private static function _getMenu(string $fid, string $ids=':'): array {
     $data = [];
-    $M = isset(self::$menus[$fid])?self::$menus[$fid]:[];
-    foreach($M as $val){
-      // 菜单权限
-      $id = (string)$val['id'];
-      $perm = isset(self::$permAll[$id])?self::$permAll[$id]:0;
-      // 动作权限
-      $action = [];
-      $actionArr = [];
-      $actionStr = (string)$val['action'];
-      if($actionStr != '') $actionArr=json_decode($actionStr, true);
-      foreach($actionArr as $v){
-        $permVal = (int)$v['perm'];
-        $checked = ($perm&$permVal)>0?true:false;
-        $action[]=[
-          'id'=> $val['id'].'_'.$v['perm'],
-          'label'=> $v['name'],
-          'checked'=> $checked,
-          'perm'=> $v['perm'],
-        ];
-      }
-      // 数据
-      $checked = isset(self::$permAll[$id])?true:false;
-      $tmp = ['id'=>$val['id'], 'label'=>$val['title'], 'checked'=>$checked];
-      if($val['fid']==0) $tmp['show'] = true;
-      // children
-      $menu = self::_getMenu($id);
-      if(!empty($menu)) $tmp['children'] = $menu;
-      else if(!empty($action)){
-        $tmp['action'] = true;
-        $tmp['children'] = $action;
+    $m = isset(self::$menus[$fid])?self::$menus[$fid]:[];
+    foreach($m as $v) {
+      // 菜单信息
+      $id = (string)$v['id'];
+      $ids .= $id.':';
+      $tmp = ['label'=>$v['title'], 'value'=>$id.':0', 'checked'=>isset(self::$perms[$id])];
+      $menu = self::_getMenu($id, $ids);
+      // 动作菜单
+      $action = $v['action']?json_decode($v['action'], true):[];
+      // 下级
+      if($menu){
+        $tmp['children'] = $menu;
+      }elseif($action){
+        $list = [];
+        foreach($action as $a) {
+          $perm = isset(self::$perms[$id])?self::$perms[$id]:0;
+          $list[] = ['label'=>$a['name'], 'value'=>$id.':'.$a['perm'], 'checked'=>($perm&$a['perm'])>0?true:false];
+        }
+        $tmp['children'] = $list;
       }
       $data[] = $tmp;
     }

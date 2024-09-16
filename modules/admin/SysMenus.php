@@ -115,7 +115,7 @@ class SysMenus extends Base {
     $id = isset($data['id'])&&$data['id']?trim($data['id']):'';
     $param['fid'] = isset($data['fid'])&&$data['fid']?end($data['fid']):0;
     $param['title'] = isset($data['title'])?trim($data['title']):'';
-    if(mb_strlen($param['title'])<2) return self::GetJSON(['code'=>4000, 'msg'=>'菜单名称2～16位字符!']);
+    if(mb_strlen($param['title'])<2 || mb_strlen($param['title'])>16) return self::GetJSON(['code'=>4000, 'msg'=>'菜单名称2～16位字符!']);
     $param['en'] = isset($data['en'])?trim($data['en']):'';
     $param['ico'] = isset($data['ico'])?trim($data['ico']):'';
     $param['sort'] = isset($data['sort'])?trim($data['sort']):0;
