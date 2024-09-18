@@ -68,15 +68,16 @@ class SysFile extends Base {
   /* 上传 */
   static function Upload(){
     // 参数
-    $token = self::Post('token');
-    $path = self::Post('path');
+    $json = self::Json();
+    $token = self::JsonName($json, 'token');
+    $path = self::JsonName($json, 'path');
     // 验证
     $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
     if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
     if(empty($path)) return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
     // 数据
-    $file = $_FILES['up'];
-    $img = Upload::File($file, ['path'=>self::$dirRoot . $path, 'bind'=>null]);
+    $file = $_FILES['file'];
+    $img = Upload::File($file, ['path'=>self::$dirRoot.$path, 'filename'=>$file['name'], 'bind'=>null]);
     if(empty($img)) return self::GetJSON(['code'=>5000, 'msg'=>'上传失败!']);
     // 返回
     return self::GetJSON(['code'=>0, 'msg'=>'成功']);
@@ -109,11 +110,10 @@ class SysFile extends Base {
     // 验证
     $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
     if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    if(empty($path) || empty($data)) return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+    if(empty($path) || empty($data) || !is_array($data)) return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
     // 数据
     FileEo::$Root = self::$dirRoot;
-    $files = json_decode($data, true);
-    foreach($files as $val) FileEo::RemoveAll($path.$val);
+    foreach($data as $val) FileEo::RemoveAll($path.$val);
     // 返回
     return self::GetJSON(['code'=>0, 'msg'=>'成功']);
   }
