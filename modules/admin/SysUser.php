@@ -18,7 +18,7 @@ class SysUser extends Base {
   private static $menus = [];   // 全部菜单
   private static $perms = [];   // 用户权限
   // 状态
-  static private $stateName = ['0'=>'禁用', '1'=>'正常'];
+  static private $statusName = ['0'=>'禁用', '1'=>'正常'];
   // 类型
   static private $typeName = ['0'=>'用户', '1'=>'开发'];
   // 导出
@@ -54,7 +54,7 @@ class SysUser extends Base {
     $total = $m->FindFirst();
     // 查询
     $m->Columns(
-      'a.id', 'a.uname', 'a.email', 'a.tel', 'a.state', 'FROM_UNIXTIME(a.rtime) as rtime', 'FROM_UNIXTIME(a.ltime) as ltime', 'FROM_UNIXTIME(a.utime) as utime',
+      'a.id', 'a.uname', 'a.email', 'a.tel', 'a.status', 'FROM_UNIXTIME(a.rtime) as rtime', 'FROM_UNIXTIME(a.ltime) as ltime', 'FROM_UNIXTIME(a.utime) as utime',
       'b.type', 'b.nickname', 'b.department', 'b.position', 'b.name', 'b.gender', 'b.img', 'b.remark', 'FROM_UNIXTIME(b.birthday, "%Y-%m-%d") as birthday',
       'c.role', 'c.perm',
       'd.name as role_name',
@@ -65,7 +65,7 @@ class SysUser extends Base {
     $list = $m->Find();
     // 数据
     foreach ($list as $k => $v) {
-      $list[$k]['state'] = $v['state']?true:false;
+      $list[$k]['status'] = $v['status']?true:false;
       $list[$k]['type_name'] = isset(self::$typeName[$v['type']])?self::$typeName[$v['type']]:'-';
       $list[$k]['role_name'] = $v['role_name']?:($v['perm']?'私有':'-');
       $list[$k]['img'] = Data::Img($v['img']);
@@ -126,7 +126,7 @@ class SysUser extends Base {
     // 数据
     $param = [];
     $id = isset($data['id'])&&$data['id']?trim($data['id']):'';
-    $param['state'] = isset($data['state'])&&$data['state']?'1':'0';
+    $param['status'] = isset($data['status'])&&$data['status']?'1':'0';
     $param['uname'] = isset($data['uname'])&&$data['uname']?trim($data['uname']):'';
     $param['passwd'] = isset($data['passwd'])&&$data['passwd']?trim($data['passwd']):'';
     $param['type'] = isset($data['type'])&&$data['type']?$data['type'][0]:0;
@@ -156,7 +156,7 @@ class SysUser extends Base {
       $one = $m->FindFirst();
       if($one) return self::GetJSON(['code'=>4000, 'msg'=>'该用户已存在!']);
       // 帐号
-      $user = ['password'=>md5($param['passwd']), 'state'=>$param['state'], 'rtime'=>time()];
+      $user = ['password'=>md5($param['passwd']), 'status'=>$param['status'], 'rtime'=>time()];
       $user[$uname] = $param['uname'];
       $m1 = new User();
       $m1->Values($user);
@@ -192,7 +192,7 @@ class SysUser extends Base {
       $one = $m->FindFirst();
       if($one) return self::GetJSON(['code'=>4000, 'msg'=>'该用户已存在!']);
       // 帐号
-      $user = ['state'=>$param['state'], 'utime'=>time()];
+      $user = ['status'=>$param['status'], 'utime'=>time()];
       if($param['passwd']) $user['password'] = md5($param['passwd']);
       $user[$uname] = $param['uname'];
       $m1 = new User();
@@ -277,7 +277,7 @@ class SysUser extends Base {
     if($t['total']>self::$export_max) return self::GetJSON(['code'=>5000, 'msg'=>'总数不能大于'.self::$export_max]);
     // 查询
     $m->Columns(
-      'a.id', 'a.uname', 'a.email', 'a.tel', 'a.state', 'FROM_UNIXTIME(a.rtime) as rtime', 'FROM_UNIXTIME(a.ltime) as ltime', 'FROM_UNIXTIME(a.utime) as utime',
+      'a.id', 'a.uname', 'a.email', 'a.tel', 'a.status', 'FROM_UNIXTIME(a.rtime) as rtime', 'FROM_UNIXTIME(a.ltime) as ltime', 'FROM_UNIXTIME(a.utime) as utime',
       'b.type', 'b.nickname', 'b.department', 'b.position', 'b.name', 'b.gender', 'b.img', 'b.remark', 'FROM_UNIXTIME(b.birthday, "%Y-%m-%d") as birthday',
       'c.role', 'c.perm',
       'd.name as role_name',
@@ -299,7 +299,7 @@ class SysUser extends Base {
       $html .= Export::ExcelData([
         $v['id'],
         $v['tel']?:$v['uname']??$v['email'],
-        self::$stateName[$v['state']],
+        self::$statusName[$v['status']],
         $v['role_name']?:($v['perm']?'私有':'-'),
         self::$typeName[$v['type']],
         $v['nickname'],

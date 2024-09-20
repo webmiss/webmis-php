@@ -117,7 +117,7 @@ class User extends Base {
     $model->LeftJoin('sys_perm AS c', 'a.id=c.uid');
     $model->LeftJoin('sys_role AS d', 'c.role=d.id');
     $model->Columns(
-      'a.id', 'a.state', 'a.password', 'a.tel', 'a.email',
+      'a.id', 'a.status', 'a.password', 'a.tel', 'a.email',
       'b.type', 'b.nickname', 'b.department', 'b.position', 'b.name', 'b.gender', 'b.birthday', 'b.img', 'b.signature',
       'c.perm', 'd.perm as role_perm'
     );
@@ -133,7 +133,7 @@ class User extends Base {
       return self::GetJSON(['code'=>4000,'msg'=>'帐号或密码错误!', 'vcode_url'=>$vcode_url]);
     }
     // 是否禁用
-    if($data['state']!='1') return self::GetJSON(['code'=>4000,'msg'=>'该用户已被禁用!']);
+    if($data['status']!='1') return self::GetJSON(['code'=>4000,'msg'=>'该用户已被禁用!']);
     // 清除验证码
     $redis = new Redis();
     $redis->Expire('admin_vcode_'.$uname, 1);
@@ -272,6 +272,23 @@ class User extends Base {
     }else{
       return self::GetJSON(['code'=>4000, 'msg'=>'更新失败!']);
     }
+  }
+
+  /* 头像 */
+  static function Upimg(){
+    // 参数
+    $json = self::Json();
+    $token = self::JsonName($json, 'token');
+    $base64 = self::JsonName($json, 'base64');
+    // 验证
+    $msg = AdminToken::Verify($token, '');
+    if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if(empty($base64)) return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+    // 上传
+    $img = Data::UserImg($token, $base64);
+    if(!$img) return self::GetJSON(['code'=>5000, 'msg'=>'请重新上传!']);
+    // 返回
+    return self::GetJSON(['code'=>0,'msg'=>'成功', 'data'=>Data::Img($img, false)]);
   }
 
 }

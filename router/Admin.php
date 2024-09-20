@@ -23,17 +23,12 @@ class Admin {
       $router->post('user/get_vcode', "User@GetVcode");
       $router->post('user/change_passwd', "User@ChangePasswd");
       $router->post('user/change_uinfo', "User@ChangeUinfo");
+      $router->post('user/upimg', "User@Upimg");
       // 消息
       $router->get('msg/socket', "Msg@Socket");
       $router->post('msg/list', "Msg@List");
       $router->post('msg/sea', "Msg@Sea");
       $router->post('msg/read', "Msg@Read");
-      // 个人资料
-      $router->post('user_info/list', "UserInfo@List");
-      $router->post('user_info/edit', "UserInfo@Edit");
-      $router->post('user_info/upimg', "UserInfo@Upimg");
-      // 修改密码
-      $router->post('user_passwd/edit', "UserPasswd@Edit");
       // 文件管理
       $router->post('sys_file/list', "SysFile@List");
       $router->post('sys_file/mkdir', "SysFile@Mkdir");
@@ -60,32 +55,12 @@ class Admin {
       $router->post('sys_role/save', "SysRole@Save");
       $router->post('sys_role/del', "SysRole@Del");
       $router->post('sys_role/export', "SysRole@Export");
-      $router->post('sys_role/get_select', "SysRole@GetSelect");
       $router->post('sys_role/get_perm', "SysRole@GetPerm");
-      // $router->post('sys_role/list', "SysRole@List");
-      // $router->post('sys_role/add', "SysRole@Add");
-      // $router->post('sys_role/edit', "SysRole@Edit");
-      // $router->post('sys_role/del', "SysRole@Del");
-      // $router->post('sys_role/perm', "SysRole@Perm");
-      // $router->post('sys_role/export', "SysRole@Export");
-      // $router->post('sys_role/permList', "SysRole@PermList");
-      // $router->post('sys_role/roleList', "SysRole@RoleList");
-      // 新闻
-      $router->post('news/list', "WebNews@List");
-      $router->post('news/add', "WebNews@Add");
-      $router->post('news/edit', "WebNews@Edit");
-      $router->post('news/del', "WebNews@Del");
-      $router->post('news/state', "WebNews@State");
-      $router->post('news/get_class', "WebNews@GetClass");
-      $router->post('news/get_content', "WebNews@GetContent");
-      $router->post('news/content', "WebNews@Content");
-      $router->post('news/up_img', "WebNews@UpImg");
-      // 新闻分类
-      $router->post('news_class/list', "WebNewsClass@List");
-      $router->post('news_class/add', "WebNewsClass@Add");
-      $router->post('news_class/edit', "WebNewsClass@Edit");
-      $router->post('news_class/del', "WebNewsClass@Del");
-      $router->post('news_class/state', "WebNewsClass@State");
+      // 静态页面
+      $router->post('web_html/list', "WebHtml@List");
+      $router->post('web_html/save', "WebHtml@Save");
+      $router->post('web_html/del', "WebHtml@Del");
+      $router->post('web_html/export', "WebHtml@Export");
     });
     
   }
