@@ -289,7 +289,8 @@ class SysMenus extends Base {
       }
       // 数据
       $value = ['url'=>$val['url'], 'controller'=>$val['controller'], 'action'=>$action];
-      $tmp = ['icon'=>$val['ico'], 'label'=>$val['title'], 'en'=>$val['en'], 'value'=>$value];
+      $langs = ['en_US'=>$val['en_US'], 'zh_CN'=>$val['zh_CN']];
+      $tmp = ['icon'=>$val['ico'], 'label'=>$val['title'], 'en'=>$val['en'], 'value'=>$value, 'langs'=>$langs];
       $menu = self::_getMenusPerm($id);
       if(!empty($menu)) $tmp['children'] = $menu;
       $data[] = $tmp;
@@ -299,7 +300,12 @@ class SysMenus extends Base {
   /* 全部菜单 */
   private static function _getMenus() {
     $model = new SysMenu();
-    $model->Columns('id', 'fid', 'title', 'en', 'url', 'ico', 'controller', 'action', 'sort', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
+    $model->Columns(
+      'id', 'fid', 'title', 'en', 'url', 'ico', 'controller', 'sort', 'status',
+      'en_US', 'zh_CN',
+      'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime',
+      'action', 'remark'
+    );
     $model->Order('sort, id');
     $data = $model->Find();
     foreach($data as $val){
