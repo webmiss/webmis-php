@@ -361,9 +361,11 @@ class SysUser extends Base {
     if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
     // 用户权限
     self::$perms = self::permArr($perm);
+    // 语言
+    $lang = isset($_GET['lang'])&&$_GET['lang']?trim($_GET['lang']):'';
     // 全部菜单
     $m = new SysMenu();
-    $m->Columns('id', 'fid', 'title', 'action');
+    $m->Columns('id', 'fid', 'title', 'action', $lang);
     $m->Order('sort, id');
     $data = $m->Find();
     foreach($data as $val){
@@ -371,7 +373,7 @@ class SysUser extends Base {
       self::$menus[$fid][] = $val;
     }
     // 数据
-    $list = self::_getMenu('0');
+    $list = self::_getMenu('0', $lang);
     // 返回
     return self::GetJSON(['code'=>0, 'msg'=>'成功', 'data'=>$list]);
   }
@@ -386,15 +388,14 @@ class SysUser extends Base {
     return $list;
   }
   // 递归菜单
-  private static function _getMenu(string $fid, string $ids=':'): array {
+  private static function _getMenu(string $fid, string $lang=''): array {
     $data = [];
     $m = isset(self::$menus[$fid])?self::$menus[$fid]:[];
     foreach($m as $v) {
       // 菜单信息
       $id = (string)$v['id'];
-      $ids .= $id.':';
-      $tmp = ['label'=>$v['title'], 'value'=>$id.':0', 'checked'=>isset(self::$perms[$id])];
-      $menu = self::_getMenu($id, $ids);
+      $tmp = ['label'=>$lang?$v[$lang]:$v['title'], 'value'=>$id.':0', 'checked'=>isset(self::$perms[$id])];
+      $menu = self::_getMenu($id, $lang);
       // 动作菜单
       $action = $v['action']?json_decode($v['action'], true):[];
       // 下级
@@ -404,7 +405,7 @@ class SysUser extends Base {
         $list = [];
         foreach($action as $a) {
           $perm = isset(self::$perms[$id])?self::$perms[$id]:0;
-          $list[] = ['label'=>$a['name'], 'value'=>$id.':'.$a['perm'], 'checked'=>($perm&$a['perm'])>0?true:false];
+          $list[] = ['label'=>$a['name'].'( '.$a['action'].' )', 'value'=>$id.':'.$a['perm'], 'checked'=>($perm&$a['perm'])>0?true:false];
         }
         $tmp['children'] = $list;
       }
