@@ -11,6 +11,8 @@ class SysMenus extends Base {
 
   private static $menus = [];   //全部菜单
   private static $permAll = []; //用户权限
+  // 状态
+  static private $statusName = ['0'=>'禁用', '1'=>'正常'];
   // 导出
   static private $export_max = 500000;          //导出-最大数
   static private $export_path = 'upload/tmp/';  //导出-目录
@@ -40,13 +42,16 @@ class SysMenus extends Base {
     $total = $m->FindFirst();
     // 查询
     $m->Columns(
-      'id', 'fid', 'title', 'en', 'ico', 'sort', 'url', 'controller', 'remark', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime', 'action'
+      'id', 'fid', 'title', 'en', 'ico', 'sort', 'url', 'controller', 'status', 'remark', 'action',
+      'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime',
+      'en_US', 'zh_CN'
     );
     $m->Where($where);
     $m->Page($page, $limit);
     $m->Order($order?:'id DESC');
     $list = $m->Find();
     foreach($list as $k=>$v) {
+      $list[$k]['status'] = $v['status']?true:false;
       $list[$k]['action'] = $v['action']?json_decode($v['action']):[];
     }
     // 返回
@@ -123,6 +128,8 @@ class SysMenus extends Base {
     $param['controller'] = isset($data['controller'])?trim($data['controller']):'';
     $param['remark'] = isset($data['remark'])?trim($data['remark']):'';
     $param['action'] = isset($data['action'])?json_encode($data['action']):'';
+    $param['en_US'] = isset($data['en_US'])?trim($data['en_US']):'';
+    $param['zh_CN'] = isset($data['zh_CN'])?trim($data['zh_CN']):'';
     // 添加
     if(!$id) {
       $param['ctime'] = time();
@@ -192,7 +199,11 @@ class SysMenus extends Base {
     if($t['total']>self::$export_max) return self::GetJSON(['code'=>5000, 'msg'=>'总数不能大于'.self::$export_max]);
     // 查询
     $m = new SysMenu();
-    $m->Columns('id', 'fid', 'title', 'en', 'ico', 'sort', 'url', 'controller', 'action', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
+    $m->Columns(
+      'id', 'fid', 'title', 'en', 'ico', 'sort', 'url', 'controller', 'status', 'action', 'remark',
+      'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime',
+      'en_US', 'zh_CN'
+    );
     $m->Where($where);
     $m->Order($order?:'id DESC');
     $list = $m->Find();
@@ -202,7 +213,7 @@ class SysMenus extends Base {
     self::$export_filename = 'SysMenus_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
     $html = Export::ExcelTop();
     $html .= Export::ExcelTitle([
-      'ID', 'FID', '名称', '英文', '图标', 'URL', 'API', '创建时间', '更新时间', '动作菜单'
+      'ID', 'FID', '名称', '英文', '图标', 'URL', 'API', '状态', '创建时间', '更新时间', 'English', '简体中文', '动作菜单', '备注'
     ]);
     // 数据
     foreach($list as $k=>$v){
@@ -215,9 +226,13 @@ class SysMenus extends Base {
         $v['ico'],
         $v['url'],
         $v['controller'],
+        self::$statusName[$v['status']],
         '&nbsp;'.$v['ctime'],
         '&nbsp;'.$v['utime'],
         $v['action'],
+        $v['en_US'],
+        $v['zh_CN'],
+        $v['remark'],
       ]);
     }
     $html .= Export::ExcelBottom();
