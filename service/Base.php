@@ -8,8 +8,24 @@ class Base {
 
   /* 返回JSON */
   static function GetJSON(array $data=[]): string {
+    // 语言
+    $lang = isset($_GET['lang'])&&$_GET['lang']?$_GET['lang']:'';
+    if($lang && isset($data['code']) && !isset($data['msg'])) {
+      $name = 'Config\\Langs\\'.$lang;
+      $class = new $name();
+      $action = 'code_'.$data['code'];
+      $data['msg'] = $class::$$action;
+    }
     header('Content-type: application/json; charset=utf-8');
     return json_encode($data);
+  }
+
+  /* 获取语言 */
+  static function GetLang(string $action, ...$argv): string {
+    $lang = isset($_GET['lang'])&&$_GET['lang']?$_GET['lang']:'en_US';
+    $name = 'Config\\Langs\\'.$lang;
+    $class = new $name();
+    return $argv?sprintf($class::$$action, ...$argv):$class::$$action;
   }
 
   /* Get参数 */

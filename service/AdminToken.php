@@ -34,7 +34,7 @@ class AdminToken extends Base {
     // URL权限
     if($urlPerm=='') return '';
     $arr = explode('/', $urlPerm);
-    $action = end($arr);
+    $action = explode('?', end($arr))[0];
     array_pop($arr);
     $controller = implode('/', $arr);
     // 菜单

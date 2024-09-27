@@ -37,9 +37,9 @@ class SysUser extends Base {
     $order = self::JsonName($json, 'order');
     // 验证
     $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if($msg!='') return self::GetJSON(['code'=>4001]);
     if(empty($data) || !is_array($data) || empty($page) || empty($limit)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+      return self::GetJSON(['code'=>4000]);
     }
     // 条件
     $where = self::getWhere($data);
@@ -71,7 +71,7 @@ class SysUser extends Base {
       $list[$k]['img'] = Data::Img($v['img']);
     }
     // 返回
-    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'time'=>date('Y/m/d H:i:s'), 'data'=>['total'=>$total, 'list'=>$list]]);
+    return self::GetJSON(['code'=>0, 'time'=>date('Y/m/d H:i:s'), 'data'=>['total'=>$total, 'list'=>$list]]);
   }
   /* 搜索条件 */
   static private function getWhere(array $d): string {

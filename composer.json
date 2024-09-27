@@ -26,6 +26,7 @@
   "autoload": {
     "psr-4": {
       "Config\\": "config/",
+      "Config\\Langs\\": "config/langs",
       "Data\\": "data/",
       "Library\\": "library/",
       "Library\\Aliyun\\": "library/aliyun/",
