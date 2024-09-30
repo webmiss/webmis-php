@@ -79,21 +79,21 @@ class User extends Base {
     $vcode_url = Env::BaseUrl('admin/user/vcode').'/'.$uname.'?'.time();
     // 验证用户名
     if(!Safety::IsRight('uname',$uname) && !Safety::IsRight('tel',$uname) && !Safety::IsRight('email',$uname)){
-      return self::GetJSON(['code'=>4000, 'msg'=>'请输入用户名/手机/邮箱!']);
+      return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('login_uname')]);
     }
     // 登录方式
     $where = '';
     $vcode = strtolower(trim($vcode));
     if($passwd){
       // 密码长度
-      if(!Safety::IsRight('passwd', $passwd)) return self::GetJSON(['code'=>4000, 'msg'=>'请输入6~16位密码!']);
+      if(!Safety::IsRight('passwd', $passwd)) return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('login_passwd', 6, 16)]);
       // 验证码
       $redis = new Redis();
       $code = $redis->Gets('admin_vcode_'.$uname);
       $redis->Close();
       if($code){
-        if(strlen($vcode)!=4) return self::GetJSON(['code'=>4001,'msg'=>'请输入验证码!', 'vcode_url'=>$vcode_url]);
-        elseif($vcode!=$code) return self::GetJSON(['code'=>4002,'msg'=>'验证码错误!', 'vcode_url'=>$vcode_url]);
+        if(strlen($vcode)!=4) return self::GetJSON(['code'=>4001,'msg'=>self::GetLang('login_vcode'), 'vcode_url'=>$vcode_url]);
+        elseif($vcode!=$code) return self::GetJSON(['code'=>4002,'msg'=>self::GetLang('login_verify_vcode'), 'vcode_url'=>$vcode_url]);
       }
       // 条件
       $where = '(a.uname="'.$uname.'" OR a.tel="'.$uname.'" OR a.email="'.$uname.'") AND a.password="'.md5($passwd).'"';
@@ -102,7 +102,7 @@ class User extends Base {
       $redis = new Redis();
       $code = $redis->Gets('admin_vcode_'.$uname);
       $redis->Close();
-      if(!$code || $code!=$vcode) return self::GetJSON(['code'=>4000, 'msg'=>'验证码错误']);
+      if(!$code || $code!=$vcode) return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('login_verify_vcode')]);
       // 清除
       $redis = new Redis();
       $redis->Expire('admin_vcode_'.$uname, 1);
@@ -130,10 +130,10 @@ class User extends Base {
       $redis->Set('admin_vcode_'.$uname, time());
       $redis->Expire('admin_vcode_'.$uname, 24*3600);
       $redis->Close();
-      return self::GetJSON(['code'=>4000,'msg'=>'帐号或密码错误!', 'vcode_url'=>$vcode_url]);
+      return self::GetJSON(['code'=>4000,'msg'=>self::GetLang('login_verify'), 'vcode_url'=>$vcode_url]);
     }
     // 是否禁用
-    if($data['status']!='1') return self::GetJSON(['code'=>4000,'msg'=>'该用户已被禁用!']);
+    if($data['status']!='1') return self::GetJSON(['code'=>4000,'msg'=>self::GetLang('login_verify_status')]);
     // 清除验证码
     $redis = new Redis();
     $redis->Expire('admin_vcode_'.$uname, 1);
@@ -143,7 +143,7 @@ class User extends Base {
     // 权限
     $perm = $data['role_perm'];
     if($data['perm']) $perm=$data['perm'];
-    if(!$perm) return self::GetJSON(['code'=>4000,'msg'=>'该用户不允许登录!']);
+    if(!$perm) return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('login_verify_perm')]);
     AdminToken::savePerm($data['id'], $perm);
     // 登录时间
     $ltime = time();
@@ -177,7 +177,7 @@ class User extends Base {
       'signature'=> $data['signature'],
     ];
     // 返回
-    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'data'=>['token'=>$token, 'uinfo'=>$uinfo, 'isPasswd'=>$isPasswd]]);
+    return self::GetJSON(['code'=>0, 'data'=>['token'=>$token, 'uinfo'=>$uinfo, 'isPasswd'=>$isPasswd]]);
   }
 
   /* Token验证 */
@@ -188,7 +188,7 @@ class User extends Base {
     $is_uinfo = self::JsonName($json, 'uinfo');
     // 验证
     $msg = AdminToken::Verify($token, '');
-    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if($msg!='') return self::GetJSON(['code'=>4001]);
     $tData = AdminToken::Token($token);
     // 用户信息
     $uinfo = (object)[];
@@ -207,7 +207,7 @@ class User extends Base {
       $uinfo['img'] = Data::Img($uinfo['img'], false);
     }
     // 返回
-    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'data'=>['token_time'=>$tData->time, 'uinfo'=>$uinfo, 'isPasswd'=>$tData->isPasswd]]);
+    return self::GetJSON(['code'=>0, 'data'=>['token_time'=>$tData->time, 'uinfo'=>$uinfo, 'isPasswd'=>$tData->isPasswd]]);
   }
 
   /* 修改密码 */
@@ -225,7 +225,7 @@ class User extends Base {
     $redis = new Redis();
     $code = $redis->Gets('admin_vcode_'.$uname);
     $redis->Close();
-    if($code!=$vcode) return self::GetJSON(['code'=>4000, 'msg'=>'验证码错误!']);
+    if($code!=$vcode) return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('login_verify_vcode')]);
     // 更新
     $m = new UserM();
     $m->Set(['password'=>md5($passwd)]);
@@ -236,9 +236,9 @@ class User extends Base {
       $redis = new Redis();
       $redis->Expire('admin_vcode_'.$uname, 1);
       $redis->Close();
-      return self::GetJSON(['code'=>0, 'msg'=>'成功']);
+      return self::GetJSON(['code'=>0]);
     }else{
-      return self::GetJSON(['code'=>4000, 'msg'=>'更新失败!']);
+      return self::GetJSON(['code'=>5000]);
     }
   }
 
@@ -250,9 +250,9 @@ class User extends Base {
     $uinfo = self::JsonName($json, 'uinfo');
     // 验证
     $msg = AdminToken::Verify($token, '');
-    if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if($msg!='') return self::GetJSON(['code'=>4001]);
     if(empty($uinfo) || !is_array($uinfo)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+      return self::GetJSON(['code'=>4000]);
     }
     // 用户信息
     $data = [];
@@ -268,9 +268,9 @@ class User extends Base {
     $m->Where('uid=?', $admin->uid);
     // 返回
     if($m->Update()){
-      return self::GetJSON(['code'=>0, 'msg'=>'成功']);
+      return self::GetJSON(['code'=>0]);
     }else{
-      return self::GetJSON(['code'=>4000, 'msg'=>'更新失败!']);
+      return self::GetJSON(['code'=>5000]);
     }
   }
 
@@ -282,13 +282,13 @@ class User extends Base {
     $base64 = self::JsonName($json, 'base64');
     // 验证
     $msg = AdminToken::Verify($token, '');
-    if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    if(empty($base64)) return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+    if($msg!='') return self::GetJSON(['code'=>4001]);
+    if(empty($base64)) return self::GetJSON(['code'=>4000]);
     // 上传
     $img = Data::UserImg($token, $base64);
-    if(!$img) return self::GetJSON(['code'=>5000, 'msg'=>'请重新上传!']);
+    if(!$img) return self::GetJSON(['code'=>5000]);
     // 返回
-    return self::GetJSON(['code'=>0,'msg'=>'成功', 'data'=>Data::Img($img, false)]);
+    return self::GetJSON(['code'=>0, 'data'=>Data::Img($img, false)]);
   }
 
 }

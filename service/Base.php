@@ -9,7 +9,7 @@ class Base {
   /* 返回JSON */
   static function GetJSON(array $data=[]): string {
     // 语言
-    $lang = isset($_GET['lang'])&&$_GET['lang']?$_GET['lang']:'';
+    $lang = isset($_GET['lang'])&&$_GET['lang']?$_GET['lang']:'en_US';
     if($lang && isset($data['code']) && !isset($data['msg'])) {
       $name = 'Config\\Langs\\'.$lang;
       $class = new $name();
