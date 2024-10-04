@@ -33,15 +33,15 @@ class User extends Base {
     $type = self::JsonName($json, 'type');
     $uname = self::JsonName($json, 'uname');
     // 验证
-    if(!Safety::IsRight($type, $uname)) return self::GetJSON(['code'=>4000, 'msg'=>'无效帐号!']);
+    if(!Safety::IsRight($type, $uname)) return self::GetJSON(['code'=>4000]);
     // 限制: 60秒/次、10次/天、10分钟内有效
     $max_time=60; $max_num=10; $limt=10;
     $redis = new Redis();
     $time = $redis->Ttl('admin_vcode_time_'.$uname);
     $num = $redis->Gets('admin_vcode_num_'.$uname)?:0;
     $redis->Close();
-    if($time>0) return self::GetJSON(['code'=>4001, 'msg'=>'请'.$time.'秒后重试', 'data'=>$time]);
-    if($num>=$max_num) return self::GetJSON(['code'=>4000, 'msg'=>'超过当天最大上限'.$max_num.'次']);
+    if($time>0) return self::GetJSON(['code'=>4001, 'msg'=>self::GetLang('login_verify_vcode_time', $time), 'data'=>$time]);
+    if($num>=$max_num) return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('login_verify_vcode_max', $max_num)]);
     // 验证码
     $code = (string)mt_rand(1000, 9999);
     if($type=='tel') {
@@ -66,7 +66,7 @@ class User extends Base {
     $redis->Expire('admin_vcode_num_'.$uname, strtotime(date('Y-m-d').' 23:59:59')-time());
     $redis->Close();
     // 返回
-    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'data'=>$code]);
+    return self::GetJSON(['code'=>0, 'data'=>$code]);
   }
 
   /* 登录 */

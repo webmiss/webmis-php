@@ -119,9 +119,9 @@ class SysUser extends Base {
     $data = self::JsonName($json, 'data');
     // 验证
     $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if($msg != '') return self::GetJSON(['code'=>4001]);
     if(empty($data) || !is_array($data)){
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+      return self::GetJSON(['code'=>4000]);
     }
     // 数据
     $param = [];
@@ -142,10 +142,10 @@ class SysUser extends Base {
     if(Safety::IsRight('tel', $param['uname'])) $uname='tel';
     elseif(Safety::IsRight('email', $param['uname'])) $uname='email';
     elseif(Safety::IsRight('uname', $param['uname'])) $uname='uname';
-    if(!$uname) return self::GetJSON(['code'=>4000, 'msg'=>'请输入用户名、手机号码、邮箱!']);
+    if(!$uname) return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('sys_user_uname')]);
     // 密码
     if((!$id && !Safety::IsRight('passwd', $param['passwd'])) || ($id && $param['passwd'] && !Safety::IsRight('passwd', $param['passwd']))) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'密码为英文字母开头6～16位!']);
+      return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('sys_user_passwd', 6, 16)]);
     }
     // 添加
     if(!$id) {
@@ -154,7 +154,7 @@ class SysUser extends Base {
       $m->Columns('id');
       $m->Where($uname.'=?', $param['uname']);
       $one = $m->FindFirst();
-      if($one) return self::GetJSON(['code'=>4000, 'msg'=>'该用户已存在!']);
+      if($one) return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('sys_user_is_exist')]);
       // 帐号
       $user = ['password'=>md5($param['passwd']), 'status'=>$param['status'], 'rtime'=>time()];
       $user[$uname] = $param['uname'];
@@ -162,7 +162,7 @@ class SysUser extends Base {
       $m1->Values($user);
       $m1->Insert();
       $id = $m1->GetID();
-      if(!$id) return self::GetJSON(['code'=>5000,'msg'=>'添加失败!']);
+      if(!$id) return self::GetJSON(['code'=>5000]);
       // 基本信息
       $m2 = new UserInfo();
       $m2->Values([
@@ -180,9 +180,9 @@ class SysUser extends Base {
       $m3->Values(['uid'=>$id, 'utime'=>time(), 'role'=>$param['role'], 'perm'=>$param['perm']]);
       // 执行
       if($m2->Insert() && $m3-> Insert()) {
-        return self::GetJSON(['code'=>0,'msg'=>'成功']);
+        return self::GetJSON(['code'=>0]);
       } else {
-        return self::GetJSON(['code'=>5000,'msg'=>'添加失败!']);
+        return self::GetJSON(['code'=>5000]);
       }
     } else {
       // 是否存在
@@ -190,7 +190,7 @@ class SysUser extends Base {
       $m->Columns('id');
       $m->Where($uname.'=? AND id<>?', $param['uname'], $id);
       $one = $m->FindFirst();
-      if($one) return self::GetJSON(['code'=>4000, 'msg'=>'该用户已存在!']);
+      if($one) return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('sys_user_is_exist')]);
       // 帐号
       $user = ['status'=>$param['status'], 'utime'=>time()];
       if($param['passwd']) $user['password'] = md5($param['passwd']);
@@ -216,9 +216,9 @@ class SysUser extends Base {
       $m3->Where('uid=?', $id);
       // 执行
       if($m1->Update() && $m2->Update() && $m3-> Update()) {
-        return self::GetJSON(['code'=>0,'msg'=>'成功']);
+        return self::GetJSON(['code'=>0]);
       } else {
-        return self::GetJSON(['code'=>5000,'msg'=>'添加失败!']);
+        return self::GetJSON(['code'=>5000]);
       }
     }
   }
@@ -231,9 +231,9 @@ class SysUser extends Base {
     $data = self::JsonName($json, 'data');
     // 验证
     $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if($msg!='') return self::GetJSON(['code'=>4001]);
     if(empty($data) || !is_array($data)){
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+      return self::GetJSON(['code'=>4000]);
     }
     // 数据
     $ids = implode(',', $data);
@@ -244,9 +244,9 @@ class SysUser extends Base {
     $m3 = new SysPerm();
     $m3->Where('uid in('.$ids.')');
     if($m1->Delete() && $m2->Delete() && $m3->Delete()) {
-      return self::GetJSON(['code'=>0,'msg'=>'成功']);
+      return self::GetJSON(['code'=>0]);
     } else {
-      return self::GetJSON(['code'=>5000,'msg'=>'删除失败!']);
+      return self::GetJSON(['code'=>5000]);
     }
   }
 
@@ -259,9 +259,9 @@ class SysUser extends Base {
     $order = self::JsonName($json, 'order');
     // 验证
     $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if($msg!='') return self::GetJSON(['code'=>4001]);
     if(empty($data) || !is_array($data)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+      return self::GetJSON(['code'=>4000]);
     }
     // 条件
     $where = self::getWhere($data);
@@ -274,7 +274,7 @@ class SysUser extends Base {
     $m->Columns('count(*) AS total');
     $m->Where($where);
     $t = $m->FindFirst();
-    if($t['total']>self::$export_max) return self::GetJSON(['code'=>5000, 'msg'=>'总数不能大于'.self::$export_max]);
+    if($t['total']>self::$export_max) return self::GetJSON(['code'=>5000, 'msg'=>self::GetLang('export_limit', self::$export_max)]);
     // 查询
     $m->Columns(
       'a.id', 'a.uname', 'a.email', 'a.tel', 'a.status', 'FROM_UNIXTIME(a.rtime) as rtime', 'FROM_UNIXTIME(a.ltime) as ltime', 'FROM_UNIXTIME(a.utime) as utime',
@@ -285,7 +285,7 @@ class SysUser extends Base {
     $m->Where($where);
     $m->Order($order?:'a.id DESC');
     $list = $m->Find();
-    if(!$list) return self::GetJSON(['code'=>5000, 'msg'=>'暂无数据!']);
+    if(!$list) return self::GetJSON(['code'=>4010]);
     // 导出文件
     $admin = AdminToken::Token($token);
     self::$export_filename = 'SysUser_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
@@ -316,7 +316,7 @@ class SysUser extends Base {
     $html .= Export::ExcelBottom();
     Export::ExcelFileEnd(self::$export_path, self::$export_filename, $html);
     // 返回
-    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'data'=>['path'=>Env::BaseUrl(self::$export_path), 'filename'=>self::$export_filename]]);
+    return self::GetJSON(['code'=>0, 'data'=>['path'=>Env::BaseUrl(self::$export_path), 'filename'=>self::$export_filename]]);
   }
 
   /* 选项 */
@@ -328,7 +328,7 @@ class SysUser extends Base {
     $msg = AdminToken::Verify($token, '');
     if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
     // 返回
-    return self::GetJSON(['code'=>0,'msg'=>'成功', 'data'=>[
+    return self::GetJSON(['code'=>0, 'data'=>[
       'type'=> self::getType(),   // 类型
       'role'=> self::getRole(),   // 角色
     ]]);

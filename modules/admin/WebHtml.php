@@ -26,9 +26,9 @@ class WebHtml extends Base {
     $order = self::JsonName($json, 'order');
     // 验证
     $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if($msg != '') return self::GetJSON(['code'=>4001]);
     if(empty($data) || !is_array($data) || empty($page) || empty($limit)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+      return self::GetJSON(['code'=>4000]);
     }
     // 条件
     $where = self::getWhere($data);
@@ -52,7 +52,7 @@ class WebHtml extends Base {
       $list[$k]['type_name'] = isset(self::$typeName[$v['type']])?self::$typeName[$v['type']]:'-';
     }
     // 返回
-    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'time'=>date('Y/m/d H:i:s'), 'data'=>['total'=>$total, 'list'=>$list]]);
+    return self::GetJSON(['code'=>0, 'time'=>date('Y/m/d H:i:s'), 'data'=>['total'=>$total, 'list'=>$list]]);
   }
   /* 搜索条件 */
   static private function getWhere(array $d): string {
@@ -88,17 +88,17 @@ class WebHtml extends Base {
     $data = self::JsonName($json, 'data');
     // 验证
     $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if($msg != '') return self::GetJSON(['code'=>4001]);
     if(empty($data) || !is_array($data)){
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+      return self::GetJSON(['code'=>4000]);
     }
     // 数据
     $param = [];
     $id = isset($data['id'])&&$data['id']?trim($data['id']):'';
     $param['title'] = isset($data['title'])?trim($data['title']):'';
-    if(mb_strlen($param['title'])<2 || mb_strlen($param['title'])>32) return self::GetJSON(['code'=>4000, 'msg'=>'名称2～32位字符!']);
+    if(mb_strlen($param['title'])<2 || mb_strlen($param['title'])>32) return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('web_html_title', 2, 32)]);
     $param['name'] = isset($data['name'])?trim($data['name']):'';
-    if(mb_strlen($param['name'])<2 || mb_strlen($param['name'])>16) return self::GetJSON(['code'=>4000, 'msg'=>'名称2～16位字符!']);
+    if(mb_strlen($param['name'])<2 || mb_strlen($param['name'])>16) return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('web_html_name', 2, 16)]);
     $param['status'] = isset($data['status'])&&$data['status']?1:0;
     $param['type'] = isset($data['type'])&&$data['type']?$data['type'][0]:0;
     $param['remark'] = isset($data['remark'])&&$data['remark']?trim($data['remark']):'';
@@ -110,9 +110,9 @@ class WebHtml extends Base {
       $m = new WebHtmlM();
       $m->Values($param);
       if($m->Insert()) {
-        return self::GetJSON(['code'=>0,'msg'=>'成功']);
+        return self::GetJSON(['code'=>0]);
       } else {
-        return self::GetJSON(['code'=>5000,'msg'=>'添加失败!']);
+        return self::GetJSON(['code'=>5000]);
       }
     }
     // 更新
@@ -121,9 +121,9 @@ class WebHtml extends Base {
     $m->Set($param);
     $m->Where('id=?', $id);
     if($m->Update()) {
-      return self::GetJSON(['code'=>0,'msg'=>'成功']);
+      return self::GetJSON(['code'=>0]);
     } else {
-      return self::GetJSON(['code'=>5000,'msg'=>'更新失败!']);
+      return self::GetJSON(['code'=>5000]);
     }
   }
 
@@ -135,17 +135,17 @@ class WebHtml extends Base {
     $data = self::JsonName($json, 'data');
     // 验证
     $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if($msg!='') return self::GetJSON(['code'=>4001]);
     if(empty($data) || !is_array($data)){
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+      return self::GetJSON(['code'=>4000]);
     }
     // 模型
     $m = new WebHtmlM();
     $m->Where('id in('.implode(',', $data).')');
     if($m->Delete()) {
-      return self::GetJSON(['code'=>0,'msg'=>'成功']);
+      return self::GetJSON(['code'=>0]);
     } else {
-      return self::GetJSON(['code'=>5000,'msg'=>'删除失败!']);
+      return self::GetJSON(['code'=>5000]);
     }
   }
 
@@ -158,9 +158,9 @@ class WebHtml extends Base {
     $order = self::JsonName($json, 'order');
     // 验证
     $msg = AdminToken::Verify($token, '');
-    if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if($msg != '') return self::GetJSON(['code'=>4001]);
     if(empty($data) || !is_array($data)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+      return self::GetJSON(['code'=>4000]);
     }
     // 条件
     $where = self::getWhere($data);
@@ -169,7 +169,7 @@ class WebHtml extends Base {
     $m->Columns('count(*) AS total');
     $m->Where($where);
     $t = $m->FindFirst();
-    if($t['total']>self::$export_max) return self::GetJSON(['code'=>5000, 'msg'=>'总数不能大于'.self::$export_max]);
+    if($t['total']>self::$export_max) return self::GetJSON(['code'=>5000, 'msg'=>self::GetLang('export_limit', self::$export_max)]);
     // 查询
     $m = new WebHtmlM();
     $m->Columns(
@@ -180,7 +180,7 @@ class WebHtml extends Base {
     $m->Where($where);
     $m->Order($order?:'id DESC');
     $list = $m->Find();
-    if(!$list) return self::GetJSON(['code'=>5000, 'msg'=>'暂无数据!']);
+    if(!$list) return self::GetJSON(['code'=>4010]);
     // 导出文件
     $admin = AdminToken::Token($token);
     self::$export_filename = 'SysRole_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
@@ -196,7 +196,7 @@ class WebHtml extends Base {
         isset(self::$typeName[$v['type']])?self::$typeName[$v['type']]:'-',
         $v['title'],
         $v['name'],
-        $v['status']?'正常':'禁用',
+        $v['status']?self::GetLang('enable'):self::GetLang('disable'),
         $v['remark'],
         $v['content'],
       ]);
@@ -204,7 +204,7 @@ class WebHtml extends Base {
     $html .= Export::ExcelBottom();
     Export::ExcelFileEnd(self::$export_path, self::$export_filename, $html);
     // 返回
-    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'data'=>['path'=>Env::BaseUrl(self::$export_path), 'filename'=>self::$export_filename]]);
+    return self::GetJSON(['code'=>0, 'data'=>['path'=>Env::BaseUrl(self::$export_path), 'filename'=>self::$export_filename]]);
   }
 
 }
