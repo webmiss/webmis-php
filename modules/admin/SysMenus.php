@@ -116,6 +116,7 @@ class SysMenus extends Base {
     // 数据
     $param = [];
     $id = isset($data['id'])&&$data['id']?trim($data['id']):'';
+    $param['status'] = isset($data['status'])&&$data['status']?'1':'0';
     $param['fid'] = isset($data['fid'])&&$data['fid']?end($data['fid']):0;
     $param['title'] = isset($data['title'])?trim($data['title']):'';
     if(mb_strlen($param['title'])<2 || mb_strlen($param['title'])>16) return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('sys_menus_name', 2, 16)]);

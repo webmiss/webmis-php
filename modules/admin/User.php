@@ -130,10 +130,10 @@ class User extends Base {
       $redis->Set('admin_vcode_'.$uname, time());
       $redis->Expire('admin_vcode_'.$uname, 24*3600);
       $redis->Close();
-      return self::GetJSON(['code'=>4000,'msg'=>self::GetLang('login_verify'), 'vcode_url'=>$vcode_url]);
+      return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('login_verify'), 'vcode_url'=>$vcode_url]);
     }
     // 是否禁用
-    if($data['status']!='1') return self::GetJSON(['code'=>4000,'msg'=>self::GetLang('login_verify_status')]);
+    if($data['status']!='1') return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('login_verify_status')]);
     // 清除验证码
     $redis = new Redis();
     $redis->Expire('admin_vcode_'.$uname, 1);
@@ -218,9 +218,9 @@ class User extends Base {
     $passwd = self::JsonName($json, 'passwd');
     $vcode = self::JsonName($json, 'vcode');
     // 验证
-    if(!Safety::IsRight('tel', $uname) && !Safety::IsRight('email', $uname)) return self::GetJSON(['code'=>4000, 'msg'=>'无效帐号!']);
-    if(!Safety::IsRight('passwd', $passwd)) return self::GetJSON(['code'=>4000, 'msg'=>'无效密码!']);
-    if(mb_strlen($vcode)!=4) return self::GetJSON(['code'=>4000, 'msg'=>'无效验证码!']);
+    if(!Safety::IsRight('tel', $uname) && !Safety::IsRight('email', $uname)) return self::GetJSON(['code'=>4000]);
+    if(!Safety::IsRight('passwd', $passwd)) return self::GetJSON(['code'=>4000]);
+    if(mb_strlen($vcode)!=4) return self::GetJSON(['code'=>4000]);
     // 验证码
     $redis = new Redis();
     $code = $redis->Gets('admin_vcode_'.$uname);

@@ -17,8 +17,6 @@ class SysUser extends Base {
 
   private static $menus = [];   // 全部菜单
   private static $perms = [];   // 用户权限
-  // 状态
-  static private $statusName = ['0'=>'禁用', '1'=>'正常'];
   // 类型
   static private $typeName = ['0'=>'用户', '1'=>'开发'];
   // 导出
@@ -299,7 +297,7 @@ class SysUser extends Base {
       $html .= Export::ExcelData([
         $v['id'],
         $v['tel']?:$v['uname']??$v['email'],
-        self::$statusName[$v['status']],
+        $v['status']?self::GetLang('enable'):self::GetLang('disable'),
         $v['role_name']?:($v['perm']?'私有':'-'),
         self::$typeName[$v['type']],
         $v['nickname'],
