@@ -18,7 +18,10 @@ class SysUser extends Base {
   private static $menus = [];   // 全部菜单
   private static $perms = [];   // 用户权限
   // 类型
-  static private $typeName = ['0'=>'用户', '1'=>'开发'];
+  static private $typeName = [
+    '0'=> '用户',
+    '1'=> '开发',
+  ];
   // 导出
   static private $export_max = 500000;          //导出-最大数
   static private $export_path = 'upload/tmp/';  //导出-目录
@@ -58,7 +61,7 @@ class SysUser extends Base {
       'd.name as role_name',
     );
     $m->Where($where);
-    $m->Order($order?:'a.id DESC');
+    $m->Order($order?:'a.ltime DESC');
     $m->Page($page, $limit);
     $list = $m->Find();
     // 数据
@@ -90,6 +93,15 @@ class SysUser extends Base {
       ];
       $where[] = '('.implode(' OR ', $arr).')';
     }
+    // 类型
+    $type = isset($d['type'])&&!empty($d['type'])?$d['type']:[];
+    if($type) $where[] = 'b.type in('.implode(',', $type).')';
+    // 角色
+    $role = isset($d['role'])&&!empty($d['role'])?$d['role']:[];
+    if($role) $where[] = 'd.id in('.implode(',', $role).')';
+    // 用户名
+    $uname = isset($d['uname'])?trim($d['uname']):'';
+    if($uname!='') $where[] = '(a.uname="'.$uname.'" OR a.tel="'.$uname.'" OR a.email="'.$uname.'")';
     // 昵称
     $nickname = isset($d['nickname'])?trim($d['nickname']):'';
     if($nickname!='') $where[] = 'b.nickname like "%'.$nickname.'%"';
@@ -324,7 +336,7 @@ class SysUser extends Base {
     $token = self::JsonName($json, 'token');
     // 验证
     $msg = AdminToken::Verify($token, '');
-    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if($msg!='') return self::GetJSON(['code'=>4001]);
     // 返回
     return self::GetJSON(['code'=>0, 'data'=>[
       'type'=> self::getType(),   // 类型
@@ -356,7 +368,7 @@ class SysUser extends Base {
     $perm = self::JsonName($json, 'perm');
     // 验证
     $msg = AdminToken::Verify($token, '');
-    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if($msg!='') return self::GetJSON(['code'=>4001]);
     // 用户权限
     self::$perms = self::permArr($perm);
     // 语言
@@ -373,7 +385,7 @@ class SysUser extends Base {
     // 数据
     $list = self::_getMenu('0', $lang);
     // 返回
-    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'data'=>$list]);
+    return self::GetJSON(['code'=>0, 'data'=>$list]);
   }
   // 权限拆分
   private static function permArr(string $perm): array {
