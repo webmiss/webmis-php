@@ -2,21 +2,23 @@
 namespace Service;
 
 use Config\Env;
+use Config\Socket as cfg;
 use Service\AdminToken;
 use Service\ApiToken;
 use Util\Util;
 
 use Model\UserMsg;
 
-use Ratchet\WebSocket\MessageComponentInterface;
+use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
 
 /* Socket服务 */
 class Socket implements MessageComponentInterface {
 
-  public $clients=null; //连接
-  public $uids=[];      //Uid
-
+  public $lang = '';      // 语言
+  public $clients = null; // 连接
+  public $uids = [];      // Uid
+  
   /* 构造函数 */
   function __construct() {
     $this->clients = new \SplObjectStorage;
@@ -24,35 +26,57 @@ class Socket implements MessageComponentInterface {
 
   /* 消息 */
   function getMsg(string $uid, array $msg) {
+    // 验证
+    if(!isset($msg['uid'])) return;
+    $gid = isset($msg['gid'])?$msg['gid']:'';
+    $fid = isset($msg['fid'])?$msg['fid']:'';
+    $title = isset($msg['title'])?trim($msg['title']):'';
+    $content = isset($msg['content'])?trim($msg['content']):'';
+    if($gid=='' || $title=='' || $content=='') {
+      $msg['code'] = 4000;
+      $msg['uid'] = $uid;
+      return $this->send($msg);
+    }
     // 群发
-    if($uid=='0') return $this->sendAll($msg);
+    if($msg['uid']=='0') return $this->sendAll($msg);
     // 时间
     $time = time();
     if(!isset($msg['time'])) $msg['time']=date('Y-m-d H:i:s', $time);
     // 保存
-    $m = new UserMsg();
-    $m->Values([
-      'format'=> $msg['format'],
-      'gid'=> $msg['gid'],
-      'uid'=> $msg['fid'],
-      'fid'=> $uid,
-      'ctime'=> $time,
-      'utime'=> $time,
-      'is_new'=> json_encode([$uid]),
-      'title'=> $msg['title'],
-      'content'=> $msg['content'],
-    ]);
-    if($m->Insert()){
-      $msg['code'] = 0;
-      $msg['id'] = $m->GetID();
-      $msg['uid'] = $msg['fid'];
-      $msg['fid'] = $uid;
-    }else{
-      $msg['code'] = 500;
-      $msg['id'] = 0;
+    if($gid==0 || $fid==0) {
+      $m = new UserMsg();
+      $m->Values([
+        'gid'=> $gid,
+        'format'=> isset($msg['format'])?$msg['format']:0,
+        'uid'=> $msg['uid'],
+        'fid'=> isset($msg['fid'])?$msg['fid']:$uid,
+        'ctime'=> $time,
+        'utime'=> $time,
+        'is_new'=> $uid?json_encode([$uid]):'',
+        'content'=> $content,
+      ]);
+      if($m->Insert()){
+        $msg['code'] = 0;
+        $msg['id'] = $m->GetID();
+        $msg['uid'] = $msg['uid'];
+        $msg['fid'] = $uid;
+      }else{
+        $msg['code'] = 5000;
+        $msg['uid'] = $uid;
+      }
     }
-    // 发送
-    return $this->send($msg);
+    // 消息
+    if($gid==0 || $fid==0) {
+      return $this->send($msg);
+    } elseif($gid==1 && $fid!=0) {
+      $res = file_get_contents(cfg::$chatbot.urlencode(trim($msg['content'])));
+      $data = json_decode($res);
+      // 自动回复
+      $msg['fid'] = 0;
+      $msg['title'] = cfg::$name[1];
+      $msg['content'] = $data->data->info->text;
+      return $this->send($msg);
+    }
   }
 
   /* 路由 */
@@ -64,13 +88,14 @@ class Socket implements MessageComponentInterface {
     }elseif($data['type']=='online'){
       // 是否在线
       $list = [];
+      $uids = array_keys($this->uids);
       foreach ($data['ids'] as $id) {
-        $list[(string)$id] = in_array($id, array_keys($this->uids));
+        $list[(string)$id] = in_array($id, $uids);
       }
-      $from->send(json_encode(['code'=>0, 'type'=>'online', 'data'=>$list]));
+      $from->send($this->GetJSON(['code'=>0, 'type'=>'online', 'data'=>['total'=>count($uids), 'list'=>$list]]));
     }else{
       // 心跳包
-      $from->send(json_encode(['code'=>0, 'type'=>'', 'msg'=>'成功']));
+      $from->send($this->GetJSON(['code'=>0, 'type'=>'']));
     }
   }
 
@@ -87,8 +112,21 @@ class Socket implements MessageComponentInterface {
     if(!isset($data['uid']) || !isset($this->uids[$data['uid']])) return;
     $id = $this->uids[$data['uid']];
     foreach ($this->clients as $conn) {
-      if($conn->resourceId==$id) return $conn->send(json_encode($data));
+      if($conn->resourceId==$id) return $conn->send($this->GetJSON($data));
     }
+  }
+
+  /* 返回JSON */
+  function GetJSON(array $data=[]): string {
+    // 语言
+    $lang = $this->lang?:'en_US';
+    if($lang && isset($data['code']) && !isset($data['msg'])) {
+      $name = 'Config\\Langs\\'.$lang;
+      $class = new $name();
+      $action = 'code_'.$data['code'];
+      $data['msg'] = $class::$$action;
+    }
+    return json_encode($data);
   }
 
   /* 连接 */
@@ -131,9 +169,11 @@ class Socket implements MessageComponentInterface {
     foreach($param as $val) $data[] = $val;
     $arr = Util::UrlToArray($data[5]);
     if(empty($arr)) return '';
+    $lang = isset($arr['lang'])?$arr['lang']:'en_US';
     $channel = isset($arr['channel'])?$arr['channel']:'';
     $token = isset($arr['token'])?$arr['token']:'';
     if(empty($channel) || empty($token)) return '';
+    $this->lang = $lang;
     // 验证
     if($token==Env::$key){
       return '0';
