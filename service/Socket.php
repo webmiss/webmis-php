@@ -5,6 +5,7 @@ use Config\Env;
 use Config\Socket as cfg;
 use Service\AdminToken;
 use Service\ApiToken;
+use Library\Baidu\Builder;
 use Util\Util;
 
 use Model\UserMsg;
@@ -69,12 +70,11 @@ class Socket implements MessageComponentInterface {
     if($gid==0 || $fid==0) {
       return $this->send($msg);
     } elseif($gid==1 && $fid!=0) {
-      $res = file_get_contents(cfg::$chatbot.urlencode(trim($msg['content'])));
-      $data = json_decode($res);
+      $res = Builder::GetAnswer(['query'=> $msg['content']]);
       // 自动回复
       $msg['fid'] = 0;
       $msg['title'] = cfg::$name[1];
-      $msg['content'] = $data->data->info->text;
+      $msg['content'] = $res?:'Error';
       return $this->send($msg);
     }
   }

@@ -17,9 +17,10 @@ class Curl extends Base {
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-    curl_setopt($ch,CURLOPT_HTTPHEADER,$headerArr);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headerArr);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);//暂时关闭ssl申请
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  // 关闭ssl
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
     // 数据
     curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
     $res = curl_exec($ch);
