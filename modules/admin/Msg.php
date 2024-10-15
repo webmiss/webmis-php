@@ -42,20 +42,29 @@ class Msg extends Base {
     $key = self::JsonName($json, 'key');
     // 验证
     $msg = AdminToken::Verify($token, '');
-    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if($msg!='') return self::GetJSON(['code'=>4001]);
     if(empty($key)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+      return self::GetJSON(['code'=>4000]);
     }
+    $admin = AdminToken::Token($token);
     // 查询
     $m = new UserInfo();
-    $m->Columns('uid', 'name', 'img');
+    $m->Columns('uid', 'name as title', 'img');
     $m->Where('name like ?', '%'.$key.'%');
     $m->Limit(0,10);
     $list = $m->Find();
     foreach($list as $k=>$v){
+      $list[$k]['gid'] = 0;
+      $list[$k]['fid'] = $v['uid'];
+      $list[$k]['uid'] = $admin->uid;
       $list[$k]['img'] = Data::Img($v['img']);
     }
-    return self::GetJSON(['code'=>0, 'msg'=>'成功', 'list'=>$list]);
+    // Ai助理
+    $list = array_merge([
+      ['gid'=>1, 'fid'=>0, 'uid'=>1, 'title'=>cfg::$name[1], 'img'=>''],
+    ], $list);
+    // 返回
+    return self::GetJSON(['code'=>0, 'data'=>$list]);
   }
 
   /* 阅读 */
