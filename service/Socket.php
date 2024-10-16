@@ -30,52 +30,70 @@ class Socket implements MessageComponentInterface {
     // 验证
     if(!isset($msg['uid'])) return;
     $gid = isset($msg['gid'])?$msg['gid']:'';
-    $fid = isset($msg['fid'])?$msg['fid']:'';
-    $title = isset($msg['title'])?trim($msg['title']):'';
-    $content = isset($msg['content'])?trim($msg['content']):'';
+    $fid = isset($msg['fid'])?$msg['fid']:$uid;
+    $title = isset($msg['data']['title'])?trim($msg['data']['title']):'';
+    $content = isset($msg['data']['content'])?trim($msg['data']['content']):'';
+    $format = isset($msg['data']['format'])?$msg['data']['format']:0;
+    $img = isset($msg['data']['img'])?trim($msg['data']['img']):'';
     if($gid=='' || $title=='' || $content=='') {
-      $msg['code'] = 4000;
-      $msg['uid'] = $uid;
-      return $this->send($msg);
+      return $this->send($uid, ['code'=>4000, 'type'=>$msg['type'], 'data'=>$msg['data']]);
     }
     // 群发
-    if($msg['uid']=='0') return $this->sendAll($msg);
-    // 时间
+    // if($msg['uid']=='0') return $this->sendAll($msg);
+    // 数据
     $time = time();
-    if(!isset($msg['time'])) $msg['time']=date('Y-m-d H:i:s', $time);
+    $data = ['time'=>date('Y-m-d H:i:s'), 'data'=>[]];
+    $data['gid'] = $gid;
+    $data['fid'] = $fid;
+    $data['type'] = $msg['type'];
+    $data['data']['gid'] = $gid;
+    $data['data']['fid'] = $fid;
+    $data['data']['uid'] = $msg['uid'];
+    $data['data']['time'] = $data['time'];
+    $data['data']['title'] = $title;
+    $data['data']['format'] = $format;
+    $data['data']['content'] = $content;
+    $data['data']['img'] = $img;
     // 保存
     if($gid==0 || $fid==0) {
       $m = new UserMsg();
       $m->Values([
         'gid'=> $gid,
-        'format'=> isset($msg['format'])?$msg['format']:0,
+        'format'=> $format,
         'uid'=> $msg['uid'],
-        'fid'=> isset($msg['fid'])?$msg['fid']:$uid,
+        'fid'=> $fid,
         'ctime'=> $time,
         'utime'=> $time,
         'is_new'=> $uid?json_encode([$uid]):'',
         'content'=> $content,
       ]);
       if($m->Insert()){
-        $msg['code'] = 0;
-        $msg['id'] = $m->GetID();
-        $msg['uid'] = $msg['uid'];
-        $msg['fid'] = $uid;
+        $data['code'] = 0;
+        $data['data']['id'] = $m->GetID();
       }else{
-        $msg['code'] = 5000;
-        $msg['uid'] = $uid;
+        return $this->send($uid, ['code'=>5000, 'type'=>$msg['type'], 'data'=>$msg['data']]);
       }
     }
     // 消息
-    if($gid==0 || $fid==0) {
-      return $this->send($msg);
-    } elseif($gid==1 && $fid!=0) {
-      $res = Builder::GetAnswer(['query'=> $msg['content']]);
+    if($gid==0) {
+      // 发对方
+      $this->send($msg['uid'], $data);
+      // 发自己
+      $data['fid'] = $msg['uid'];
+      $this->send($uid, $data);
+    } elseif($gid==1) {
+      // 百度Ai
+      $res = Builder::GetAnswer(['query'=> $content]);
       // 自动回复
-      $msg['fid'] = 0;
-      $msg['title'] = cfg::$name[1];
-      $msg['content'] = $res?:'Error';
-      return $this->send($msg);
+      $data['code'] = 0;
+      $data['fid'] = 0;
+      $data['data']['id'] = 0;
+      $data['data']['fid'] = 0;
+      $data['data']['uid'] = 0;
+      $data['data']['img'] = cfg::$service[1]['img'];
+      $data['data']['title'] = cfg::$service[1]['title'];
+      $data['data']['content'] = $res?:'Error';
+      $this->send($uid, $data);
     }
   }
 
@@ -108,9 +126,9 @@ class Socket implements MessageComponentInterface {
   }
 
   /* 单发 */
-  function send(array $data) {
-    if(!isset($data['uid']) || !isset($this->uids[$data['uid']])) return;
-    $id = $this->uids[$data['uid']];
+  function send(int $uid, array $data) {
+    if(!isset($uid) || !isset($this->uids[$uid])) return;
+    $id = $this->uids[$uid];
     foreach ($this->clients as $conn) {
       if($conn->resourceId==$id) return $conn->send($this->GetJSON($data));
     }

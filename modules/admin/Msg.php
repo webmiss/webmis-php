@@ -17,7 +17,7 @@ class Msg extends Base {
     $uid = $_GET['uid'];
     $msg = $_GET['msg'];
     if(empty($uid) || $msg=='') return;
-    Socket::Send('admin', ['gid'=>1, 'uid'=>$uid, 'fid'=>0, 'type'=>'msg', 'title'=>cfg::$name[1], 'content'=>$msg]);
+    Socket::Send('admin', ['gid'=>1, 'uid'=>$uid, 'fid'=>0, 'type'=>'msg', 'title'=>cfg::$service[1]['title'], 'content'=>$msg]);
   }
 
   /* 列表 */
@@ -61,7 +61,7 @@ class Msg extends Base {
     }
     // Ai助理
     $list = array_merge([
-      ['gid'=>1, 'fid'=>0, 'uid'=>1, 'title'=>cfg::$name[1], 'img'=>''],
+      ['gid'=>1, 'fid'=>0, 'uid'=>1, 'title'=>cfg::$service[1]['title'], 'img'=>cfg::$service[1]['img']],
     ], $list);
     // 返回
     return self::GetJSON(['code'=>0, 'data'=>$list]);

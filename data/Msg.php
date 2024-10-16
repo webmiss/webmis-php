@@ -33,14 +33,16 @@ class Msg extends Base {
     $uinfo = self::GetUserInfo(array_keys($uids));
     // 数据
     $list = [];
+    $isAi = false;
     foreach($all as $v){
       // 未读消息
       $n = $v['is_new']&&in_array($uid, json_decode($v['is_new']))?0:1;
       $num += $n;
       // 系统信息
       if($v['gid']){
-        $title = cfg::$name[1];
-        $img = '';
+        if($v['gid']==1) $isAi = true;
+        $title = cfg::$service[$v['gid']]['title'];
+        $img = cfg::$service[$v['gid']]['img'];
         // 信息
         $tid = 'g_'.$v['gid'];
         $list[$tid]['type'] = 'group';
@@ -78,6 +80,27 @@ class Msg extends Base {
     }
     // 排序
     $list = array_values($list);
+    // Ai助理
+    if(!$isAi) $list = array_merge([[
+      'type'=> 'msg',
+      'gid'=> 1,
+      'fid'=> 0,
+      'uid'=> 0,
+      'time'=> date('Y-m-d H:i:s'),
+      'title'=> cfg::$service[1]['title'],
+      'content'=> cfg::$service[1]['content'],
+      'img'=> cfg::$service[1]['img'],
+      'list'=> [[
+        'id'=> 0,
+        'gid'=> 1,
+        'fid'=> 0,
+        'uid'=> 0,
+        'time'=> date('Y-m-d H:i:s'),
+        'title'=> cfg::$service[1]['title'],
+        'content'=> cfg::$service[1]['content'],
+        'img'=> cfg::$service[1]['img'],
+      ]],
+    ]], $list);
     $list = Util::AarraySort($list, 'time');
     return [$list, $num];
   }
