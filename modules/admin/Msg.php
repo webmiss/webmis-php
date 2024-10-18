@@ -60,7 +60,7 @@ class Msg extends Base {
       $list[$k]['img'] = Data::Img($v['img']);
     }
     // Ai助理
-    $list = array_merge([
+    if(!$list) $list = array_merge([
       ['gid'=>1, 'fid'=>0, 'uid'=>1, 'title'=>cfg::$service[1]['title'], 'img'=>cfg::$service[1]['img']],
     ], $list);
     // 返回

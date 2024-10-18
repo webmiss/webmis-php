@@ -5,7 +5,6 @@ use Service\Base;
 use Config\Baidu;
 use Library\Curl;
 use Library\Redis;
-use Util\Util;
 
 /* 百度Ai */
 class Builder extends Base {
