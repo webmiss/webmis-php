@@ -196,8 +196,8 @@ class Model extends Base {
     return [$this->sql, $args];
   }
   /* 查询-多条 */
-  function Find(): array {
-    list($sql, $args) = $this->SelectSQL();
+  function Find(array $param=[]): array {
+    list($sql, $args) = $param?$param:$this->SelectSQL();
     $conn = $this->DBConn();
     $stmt = $this->Exec($conn, $sql, $args);
     $data = $stmt?$stmt->fetchAll(\PDO::FETCH_ASSOC):[];
@@ -214,9 +214,9 @@ class Model extends Base {
     return $data;
   }
   /* 查询-单条 */
-  function FindFirst() {
+  function FindFirst(array $param=[]): array {
     $this->limit = '1';
-    list($sql, $args) = $this->SelectSQL();
+    list($sql, $args) = $param?$param:$this->SelectSQL();
     $conn = $this->DBConn();
     $stmt = $this->Exec($conn, $sql, $args);
     $data = $this->nums>0?$stmt->fetch(\PDO::FETCH_ASSOC):[];
