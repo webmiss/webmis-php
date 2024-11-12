@@ -214,7 +214,7 @@ class Model extends Base {
     return $data;
   }
   /* 查询-单条 */
-  function FindFirst(array $param=[]): array {
+  function FindFirst(array $param=[]) {
     $this->limit = '1';
     list($sql, $args) = $param?$param:$this->SelectSQL();
     $conn = $this->DBConn();
