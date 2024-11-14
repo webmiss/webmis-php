@@ -154,9 +154,9 @@ class Model extends Base {
   }
 
   /* 分页 */
-  function Page(int $page, int $limit): void {
+  function Page(int $page, int $limit): string {
     $start = ($page - 1) * $limit;
-    $this->limit = $start . ',' . $limit;
+    return $this->limit = $start . ',' . $limit;
   }
 
   /* 查询-SQL */
@@ -215,7 +215,7 @@ class Model extends Base {
   }
   /* 查询-单条 */
   function FindFirst(array $param=[]) {
-    $this->limit = '1';
+    if(!$param) $this->limit = '1';
     list($sql, $args) = $param?$param:$this->SelectSQL();
     $conn = $this->DBConn();
     $stmt = $this->Exec($conn, $sql, $args);
