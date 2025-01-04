@@ -200,6 +200,10 @@ class Model extends Base {
     list($sql, $args) = $param?$param:$this->SelectSQL();
     $conn = $this->DBConn();
     $stmt = $this->Exec($conn, $sql, $args);
+    return $this->DataAll($stmt);
+  }
+  /* 查询-多条数据 */
+  function DataAll($stmt) {
     $data = $stmt?$stmt->fetchAll(\PDO::FETCH_ASSOC):[];
     // 转换类型
     if(count($this->columnsType)==0) return $data;
@@ -219,6 +223,10 @@ class Model extends Base {
     list($sql, $args) = $param?$param:$this->SelectSQL();
     $conn = $this->DBConn();
     $stmt = $this->Exec($conn, $sql, $args);
+    return $this->Data($stmt);
+  }
+  /* 查询-多条数据 */
+  function Data($stmt) {
     $data = $this->nums>0?$stmt->fetch(\PDO::FETCH_ASSOC):[];
     // 转换类型
     if(count($this->columnsType)==0) return $data;
