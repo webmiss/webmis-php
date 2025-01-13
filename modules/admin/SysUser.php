@@ -77,6 +77,17 @@ class SysUser extends Base {
   /* 搜索条件 */
   static private function getWhere(array $d): string {
     $where = [];
+    // 时间
+    $stime = isset($d['stime'])?trim($d['stime']):date('Y-m-d');
+    if($stime){
+      $start = strtotime($stime.' 00:00:00');
+      $where[] = 'a.ltime>='.$start;
+    }
+    $etime = isset($d['etime'])?trim($d['etime']):date('Y-m-d');
+    if($etime){
+      $end = strtotime($etime.' 23:59:59');
+      $where[] = 'a.ltime<='.$end;
+    }
     // 关键字
     $key = isset($d['key'])?trim($d['key']):'';
     if($key){

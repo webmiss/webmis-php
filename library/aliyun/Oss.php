@@ -85,8 +85,8 @@ class Oss extends Base {
     ];
   }
 
-  /* 签名直传 */
-  static function Policy(string $dir, string $file, int $expireTime=0, int $maxSize=0): array {
+  /* 签名直传-回调方式 */
+  static function Policy(string $file, int $expireTime=0, int $maxSize=0): array {
     $ram = Aliyun::RAM();
     $cfg = Aliyun::OSS();
     // 默认值
@@ -95,15 +95,13 @@ class Oss extends Base {
     // 数据
     $res = self::PolicySign($expireTime, $maxSize);
     $res['host'] = 'https://'.$cfg['Bucket'].'.'.$cfg['Endpoint'];
-    $res['dir'] = $dir;
-    $res['file'] = $file;
+    $res['key'] = $file;
     $res['max_size'] = $maxSize;
     // 回调
     $callbackBody = json_encode([
-      'dir'=> $dir,
-      'file'=> $file,
+      'key'=> $file,
       'expire'=> $res['expire'],
-      'sign'=> md5($dir.'&'.$file.'&'.$res['expire'].'&'.$ram['AccessKeySecret']),
+      'sign'=> md5($file.'&'.$res['expire'].'&'.$ram['AccessKeySecret']),
     ]);
     $callbackData = json_encode([
       'callbackUrl'=> $cfg['CallbackUrl'],
@@ -115,11 +113,11 @@ class Oss extends Base {
   }
 
   /* 签名直传-验证 */
-  static function PolicyVerify(string $dir, string $file, string $expire, string $sign): bool {
+  static function PolicyVerify(string $file, string $expire, string $sign): bool {
     // 配置
     $ram = Aliyun::RAM();
     // 验证
-    $signTmp = md5($dir.'&'.$file.'&'.$expire.'&'.$ram['AccessKeySecret']);
+    $signTmp = md5($file.'&'.$expire.'&'.$ram['AccessKeySecret']);
     if($sign != $signTmp) return false;
     // 是否超时
     $now = time();
