@@ -228,9 +228,9 @@ class SysMenus extends Base {
         $v['status']?self::GetLang('enable'):self::GetLang('disable'),
         '&nbsp;'.$v['ctime'],
         '&nbsp;'.$v['utime'],
-        $v['action'],
         $v['en_US'],
         $v['zh_CN'],
+        $v['action'],
         $v['remark'],
       ]);
     }

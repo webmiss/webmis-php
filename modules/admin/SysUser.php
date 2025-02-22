@@ -177,7 +177,7 @@ class SysUser extends Base {
       $one = $m->FindFirst();
       if($one) return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('sys_user_is_exist')]);
       // 帐号
-      $user = ['password'=>md5($param['passwd']), 'status'=>$param['status'], 'rtime'=>time()];
+      $user = ['password'=>md5($param['passwd']), 'status'=>$param['status'], 'rtime'=>time(), 'ltime'=>time()];
       $user[$uname] = $param['uname'];
       $m1 = new User();
       $m1->Values($user);
