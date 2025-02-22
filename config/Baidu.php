@@ -17,9 +17,9 @@ class Baidu {
   /* Ai-模型 */
   static function Builder(): array {
     return [
-      'AppId'=> '3e66d07a-410d-4eac-9ae5-4280d9daf687',
-      'Authorization'=> 'bce-v3/ALTAK-oVHJSughcuRo4KZGLKuxp/e6efe47a053a2138fb1856b77ff151b162e9311e',
-      'conversation_id'=> 'baidu_conversation_id',            // Redis名称
+      'api_key'=> '8LXwrNzJe7Pp0mi2z0AKGRs3',
+      'secret_key'=> 'tN47BUUKpsxzCddhdTcnWwoePmA2Wrpl',
+      'access_token'=> 'baidu_access_token',                  // Redis名称
       'refresh_time'=> 3600*24*6                              // 刷新间隔(秒)
     ];
   }

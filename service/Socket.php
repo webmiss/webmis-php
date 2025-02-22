@@ -83,7 +83,7 @@ class Socket implements MessageComponentInterface {
       $this->send($uid, $data);
     } elseif($gid==1) {
       // 百度Ai
-      $res = Builder::GetAnswer(['query'=> $content]);
+      $res = Builder::GetMsg([['role'=>'user', 'content'=>$content]]);
       // 自动回复
       $data['code'] = 0;
       $data['fid'] = 0;
