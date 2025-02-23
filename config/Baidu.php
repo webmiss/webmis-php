@@ -17,8 +17,8 @@ class Baidu {
   /* Ai-模型 */
   static function Builder(): array {
     return [
-      'api_key'=> '8LXwrNzJe7Pp0mi2z0AKGRs3',
-      'secret_key'=> 'tN47BUUKpsxzCddhdTcnWwoePmA2Wrpl',
+      'api_key'=> 'bRFQ2cfyIkuYcYSnkACaneKk',
+      'secret_key'=> 'vu8EU7SZakk674A5azTJjvOhcQViIT9G',
       'access_token'=> 'baidu_access_token',                  // Redis名称
       'refresh_time'=> 3600*24*6                              // 刷新间隔(秒)
     ];
