@@ -37,6 +37,7 @@ class Admin {
       $router->post('sys_file/down', "SysFile@Down");
       $router->post('sys_file/remove', "SysFile@Remove");
       // 系统用户
+      $router->post('sys_user/total', "SysUser@Total");
       $router->post('sys_user/list', "SysUser@List");
       $router->post('sys_user/save', "SysUser@Save");
       $router->post('sys_user/del', "SysUser@Del");
@@ -44,6 +45,7 @@ class Admin {
       $router->post('sys_user/get_select', "SysUser@GetSelect");
       $router->post('sys_user/get_perm', "SysUser@GetPerm");
       // 系统菜单
+      $router->post('sys_menus/total', "SysMenus@Total");
       $router->post('sys_menus/list', "SysMenus@List");
       $router->post('sys_menus/save', "SysMenus@Save");
       $router->post('sys_menus/del', "SysMenus@Del");
@@ -51,12 +53,14 @@ class Admin {
       $router->post('sys_menus/get_menus_all', "SysMenus@GetMenusAll");
       $router->post('sys_menus/get_menus_perm', "SysMenus@GetMenusPerm");
       // 系统角色
+      $router->post('sys_role/total', "SysRole@Total");
       $router->post('sys_role/list', "SysRole@List");
       $router->post('sys_role/save', "SysRole@Save");
       $router->post('sys_role/del', "SysRole@Del");
       $router->post('sys_role/export', "SysRole@Export");
       $router->post('sys_role/get_perm', "SysRole@GetPerm");
       // 静态页面
+      $router->post('web_html/total', "WebHtml@Total");
       $router->post('web_html/list', "WebHtml@List");
       $router->post('web_html/save', "WebHtml@Save");
       $router->post('web_html/del', "WebHtml@Del");

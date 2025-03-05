@@ -13,12 +13,37 @@ class SysRole extends Base {
   private static $menus = [];   // 全部菜单
   private static $perms = [];   // 用户权限
   // 导出
-  static private $export_max = 500000;          //导出-最大数
-  static private $export_path = 'upload/tmp/';  //导出-目录
-  static private $export_filename = '';         //导出-文件名
+  static private $export_path = 'upload/tmp/';  // 目录
+  static private $export_filename = '';         // 文件名
+
+  /* 统计 */
+  static function Total(): string {
+    // 参数
+    $json = self::Json();
+    $token = self::JsonName($json, 'token');
+    $data = self::JsonName($json, 'data');
+    // 验证
+    $msg = AdminToken::Verify($token, '');
+    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if(empty($data) || !is_array($data)) {
+      return self::GetJSON(['code'=>4000]);
+    }
+    // 条件
+    $where = self::getWhere($data);
+    // 统计
+    $m = new SysRoleM();
+    $m->Columns('count(*) AS total');
+    $m->Where($where);
+    $one = $m->FindFirst();
+    $total = [
+      'total'=> $one?(int)$one['total']:0,
+    ];
+    // 返回
+    return self::GetJSON(['code'=>0, 'time'=>date('Y/m/d H:i:s'), 'data'=>$total]);
+  }
 
   /* 列表 */
-	static function List() {
+	static function List(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -34,12 +59,8 @@ class SysRole extends Base {
     }
     // 条件
     $where = self::getWhere($data);
-    // 统计
-    $m = new SysRoleM();
-    $m->Columns('count(*) AS total');
-    $m->Where($where);
-    $total = $m->FindFirst();
     // 查询
+    $m = new SysRoleM();
     $m->Columns('id', 'name', 'status', 'perm', 'remark', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
     $m->Where($where);
     $m->Order($order?:'id DESC');
@@ -49,7 +70,7 @@ class SysRole extends Base {
       $list[$k]['status'] = $v['status']?true:false;
     }
     // 返回
-    return self::GetJSON(['code'=>0, 'time'=>date('Y/m/d H:i:s'), 'data'=>['total'=>$total, 'list'=>$list]]);
+    return self::GetJSON(['code'=>0, 'time'=>date('Y/m/d H:i:s'), 'data'=>$list]);
   }
   /* 搜索条件 */
   static private function getWhere(array $d): string {
@@ -154,12 +175,6 @@ class SysRole extends Base {
     }
     // 条件
     $where = self::getWhere($data);
-    // 统计
-    $m = new SysRoleM();
-    $m->Columns('count(*) AS total');
-    $m->Where($where);
-    $t = $m->FindFirst();
-    if($t['total']>self::$export_max) return self::GetJSON(['code'=>5000, 'msg'=>self::GetLang('export_limit', self::$export_max)]);
     // 查询
     $m = new SysRoleM();
     $m->Columns('id', 'name', 'status', 'remark', 'perm', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');

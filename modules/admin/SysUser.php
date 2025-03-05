@@ -23,12 +23,41 @@ class SysUser extends Base {
     '1'=> '开发',
   ];
   // 导出
-  static private $export_max = 500000;          //导出-最大数
-  static private $export_path = 'upload/tmp/';  //导出-目录
-  static private $export_filename = '';         //导出-文件名
+  static private $export_path = 'upload/tmp/';  // 目录
+  static private $export_filename = '';         // 文件名
+
+  /* 统计 */
+  static function Total(): string {
+    // 参数
+    $json = self::Json();
+    $token = self::JsonName($json, 'token');
+    $data = self::JsonName($json, 'data');
+    // 验证
+    $msg = AdminToken::Verify($token, '');
+    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if(empty($data) || !is_array($data)) {
+      return self::GetJSON(['code'=>4000]);
+    }
+    // 条件
+    $where = self::getWhere($data);
+    // 统计
+    $m = new User();
+    $m->Columns('count(*) AS total');
+    $m->Table('user as a');
+    $m->LeftJoin('user_info as b', 'a.id=b.uid');
+    $m->LeftJoin('sys_perm as c', 'a.id=c.uid');
+    $m->LeftJoin('sys_role as d', 'c.role=d.id');
+    $m->Where($where);
+    $one = $m->FindFirst();
+    $total = [
+      'total'=> $one?(int)$one['total']:0,
+    ];
+    // 返回
+    return self::GetJSON(['code'=>0, 'time'=>date('Y/m/d H:i:s'), 'data'=>$total]);
+  }
 
   /* 列表 */
-	static function List() {
+	static function List(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -44,16 +73,12 @@ class SysUser extends Base {
     }
     // 条件
     $where = self::getWhere($data);
-    // 统计
+    // 查询
     $m = new User();
-    $m->Columns('count(*) AS total');
     $m->Table('user as a');
     $m->LeftJoin('user_info as b', 'a.id=b.uid');
     $m->LeftJoin('sys_perm as c', 'a.id=c.uid');
     $m->LeftJoin('sys_role as d', 'c.role=d.id');
-    $m->Where($where);
-    $total = $m->FindFirst();
-    // 查询
     $m->Columns(
       'a.id', 'a.uname', 'a.email', 'a.tel', 'a.status', 'FROM_UNIXTIME(a.rtime) as rtime', 'FROM_UNIXTIME(a.ltime) as ltime', 'FROM_UNIXTIME(a.utime) as utime',
       'b.type', 'b.nickname', 'b.department', 'b.position', 'b.name', 'b.gender', 'b.img', 'b.remark', 'FROM_UNIXTIME(b.birthday, "%Y-%m-%d") as birthday',
@@ -72,7 +97,7 @@ class SysUser extends Base {
       $list[$k]['img'] = Data::Img($v['img']);
     }
     // 返回
-    return self::GetJSON(['code'=>0, 'time'=>date('Y/m/d H:i:s'), 'data'=>['total'=>$total, 'list'=>$list]]);
+    return self::GetJSON(['code'=>0, 'time'=>date('Y/m/d H:i:s'), 'data'=>$list]);
   }
   /* 搜索条件 */
   static private function getWhere(array $d): string {
@@ -286,17 +311,12 @@ class SysUser extends Base {
     }
     // 条件
     $where = self::getWhere($data);
-    // 统计
+    // 查询
     $m = new User();
     $m->Table('user as a');
     $m->LeftJoin('user_info as b', 'a.id=b.uid');
     $m->LeftJoin('sys_perm as c', 'a.id=c.uid');
     $m->LeftJoin('sys_role as d', 'c.role=d.id');
-    $m->Columns('count(*) AS total');
-    $m->Where($where);
-    $t = $m->FindFirst();
-    if($t['total']>self::$export_max) return self::GetJSON(['code'=>5000, 'msg'=>self::GetLang('export_limit', self::$export_max)]);
-    // 查询
     $m->Columns(
       'a.id', 'a.uname', 'a.email', 'a.tel', 'a.status', 'FROM_UNIXTIME(a.rtime) as rtime', 'FROM_UNIXTIME(a.ltime) as ltime', 'FROM_UNIXTIME(a.utime) as utime',
       'b.type', 'b.nickname', 'b.department', 'b.position', 'b.name', 'b.gender', 'b.img', 'b.remark', 'FROM_UNIXTIME(b.birthday, "%Y-%m-%d") as birthday',

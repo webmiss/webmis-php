@@ -12,12 +12,37 @@ class SysMenus extends Base {
   private static $menus = [];   //全部菜单
   private static $permAll = []; //用户权限
   // 导出
-  static private $export_max = 500000;          //导出-最大数
-  static private $export_path = 'upload/tmp/';  //导出-目录
-  static private $export_filename = '';         //导出-文件名
+  static private $export_path = 'upload/tmp/';  // 目录
+  static private $export_filename = '';         // 文件名
+
+  /* 统计 */
+  static function Total(): string {
+    // 参数
+    $json = self::Json();
+    $token = self::JsonName($json, 'token');
+    $data = self::JsonName($json, 'data');
+    // 验证
+    $msg = AdminToken::Verify($token, '');
+    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    if(empty($data) || !is_array($data)) {
+      return self::GetJSON(['code'=>4000]);
+    }
+    // 条件
+    $where = self::getWhere($data);
+    // 统计
+    $m = new SysMenu();
+    $m->Columns('count(*) AS total');
+    $m->Where($where);
+    $one = $m->FindFirst();
+    $total = [
+      'total'=> $one?(int)$one['total']:0,
+    ];
+    // 返回
+    return self::GetJSON(['code'=>0, 'time'=>date('Y/m/d H:i:s'), 'data'=>$total]);
+  }
 
   /* 列表 */
-	static function List() {
+	static function List(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -29,16 +54,12 @@ class SysMenus extends Base {
     $msg = AdminToken::Verify($token, $_SERVER['REQUEST_URI']);
     if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
     if(empty($data) || !is_array($data) || empty($page) || empty($limit)) {
-      return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
+      return self::GetJSON(['code'=>4000]);
     }
-    // 数据
+    // 条件
     $where = self::getWhere($data);
-    // 统计
-    $m = new SysMenu();
-    $m->Columns('count(*) AS total');
-    $m->Where($where);
-    $total = $m->FindFirst();
     // 查询
+    $m = new SysMenu();
     $m->Columns(
       'id', 'fid', 'title', 'en', 'ico', 'sort', 'url', 'controller', 'status', 'remark', 'action',
       'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime',
@@ -53,7 +74,7 @@ class SysMenus extends Base {
       $list[$k]['action'] = $v['action']?json_decode($v['action']):[];
     }
     // 返回
-    return self::GetJSON(['code'=>0, 'time'=>date('Y/m/d H:i:s'), 'data'=>['total'=>$total, 'list'=>$list]]);
+    return self::GetJSON(['code'=>0, 'time'=>date('Y/m/d H:i:s'), 'data'=>$list]);
   }
   /* 搜索条件 */
   static private function getWhere(array $d): string {
@@ -190,12 +211,6 @@ class SysMenus extends Base {
     }
     // 条件
     $where = self::getWhere($data);
-    // 统计
-    $m = new SysMenu();
-    $m->Columns('count(*) AS total');
-    $m->Where($where);
-    $t = $m->FindFirst();
-    if($t['total']>self::$export_max) return self::GetJSON(['code'=>5000, 'msg'=>self::GetLang('export_limit', self::$export_max)]);
     // 查询
     $m = new SysMenu();
     $m->Columns(
