@@ -18,10 +18,12 @@ class SysUser extends Base {
   private static $menus = [];   // 全部菜单
   private static $perms = [];   // 用户权限
   // 类型
-  static private $typeName = [
+  private static $type_name = [
     '0'=> '用户',
     '1'=> '开发',
   ];
+  // 状态
+  private static $status_name = ['0'=>'禁用', '1'=>'正常'];
   // 导出
   static private $export_path = 'upload/tmp/';  // 目录
   static private $export_filename = '';         // 文件名
@@ -92,7 +94,7 @@ class SysUser extends Base {
     // 数据
     foreach ($list as $k => $v) {
       $list[$k]['status'] = $v['status']?true:false;
-      $list[$k]['type_name'] = isset(self::$typeName[$v['type']])?self::$typeName[$v['type']]:'-';
+      $list[$k]['type_name'] = isset(self::$typeName[$v['type']])?self::$type_name[$v['type']]:'-';
       $list[$k]['role_name'] = $v['role_name']?:($v['perm']?'私有':'-');
       $list[$k]['img'] = Data::Img($v['img']);
     }
@@ -135,6 +137,9 @@ class SysUser extends Base {
     // 角色
     $role = isset($d['role'])&&!empty($d['role'])?$d['role']:[];
     if($role) $where[] = 'd.id in('.implode(',', $role).')';
+    // 状态
+    $status = isset($d['status'])&&!empty($d['status'])?$d['status']:[];
+    if($status) $where[] = 'a.status in("'.implode('","', $status).'")';
     // 用户名
     $uname = isset($d['uname'])?trim($d['uname']):'';
     if($uname!='') $where[] = '(a.uname="'.$uname.'" OR a.tel="'.$uname.'" OR a.email="'.$uname.'")';
@@ -342,7 +347,7 @@ class SysUser extends Base {
         $v['tel']?:$v['uname']??$v['email'],
         $v['status']?self::GetLang('enable'):self::GetLang('disable'),
         $v['role_name']?:($v['perm']?'私有':'-'),
-        self::$typeName[$v['type']],
+        self::$type_name[$v['type']],
         $v['nickname'],
         $v['name'],
         $v['gender']?:'-',
@@ -368,27 +373,25 @@ class SysUser extends Base {
     // 验证
     $msg = AdminToken::Verify($token, '');
     if($msg!='') return self::GetJSON(['code'=>4001]);
-    // 返回
-    return self::GetJSON(['code'=>0, 'data'=>[
-      'type'=> self::getType(),   // 类型
-      'role'=> self::getRole(),   // 角色
-    ]]);
-  }
-  /* 类型 */
-  private static function getType(): array {
-    $list = [];
-    foreach(self::$typeName as $k=>$v) $list[]=['label'=> $v, 'value'=> $k];
-    return $list;
-  }
-  /* 角色 */
-  private static function getRole(): array {
+    // 类型
+    $type_name = [];
+    foreach(self::$type_name as $k=>$v) $type_name[]=['label'=> $v, 'value'=> $k];
+    // 角色
     $m = new SysRole();
     $m->Columns('id', 'name');
     $m->Where('status=1');
     $all = $m->Find();
-    $list = [['label'=> '无', 'value'=> '']];
-    foreach($all as $k=>$v) $list[]=['label'=> $v['name'], 'value'=> $v['id']];
-    return $list;
+    $role_name = [['label'=> '无', 'value'=> '']];
+    foreach($all as $k=>$v) $role_name[]=['label'=> $v['name'], 'value'=> $v['id']];
+    // 状态
+    $status_name = [];
+    foreach(self::$status_name as $k=>$v) $status_name[]=['label'=> $v, 'value'=> $k];
+    // 返回
+    return self::GetJSON(['code'=>0, 'data'=>[
+      'type_name'=> $type_name,
+      'role_name'=> $role_name,
+      'status_name'=> $status_name,
+    ]]);
   }
 
   /* 权限菜单 */
