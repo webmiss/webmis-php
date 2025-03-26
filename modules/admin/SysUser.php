@@ -94,7 +94,7 @@ class SysUser extends Base {
     // 数据
     foreach ($list as $k => $v) {
       $list[$k]['status'] = $v['status']?true:false;
-      $list[$k]['type_name'] = isset(self::$typeName[$v['type']])?self::$type_name[$v['type']]:'-';
+      $list[$k]['type_name'] = isset(self::$type_name[$v['type']])?self::$type_name[$v['type']]:'-';
       $list[$k]['role_name'] = $v['role_name']?:($v['perm']?'私有':'-');
       $list[$k]['img'] = Data::Img($v['img']);
     }

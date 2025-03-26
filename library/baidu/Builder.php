@@ -62,7 +62,7 @@ class Builder extends Base {
     // 请求
     $access_token = $token_mode=='redis'?self::GetAccessTokenRedis():self::GetAccessToken();
     $res = Curl::Request(self::$api_url.'rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions_pro?access_token='.$access_token, json_encode($data), 'POST', $headers);
-    return isset($res->result)?$res->result:'';
+    return isset($res->result)?$res->result:$res->error_msg;
   }
   
 }
