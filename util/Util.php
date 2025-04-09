@@ -95,7 +95,13 @@ class Util extends Base {
 
   /* Trim */
   static function Trim(string $str): string {
-    return preg_replace('/(\s|\&nbsp\;||\xc2\xa0)/', '', $str);
+    return preg_replace('/(\s|\&nbsp\;| |\xc2\xa0)/', '', $str);
+  }
+
+  /* Time */
+  static function Time(): int {
+    list($t1, $t2) = explode(' ', microtime());
+    return (int)(($t1 + $t2) * 1000);
   }
 
 }

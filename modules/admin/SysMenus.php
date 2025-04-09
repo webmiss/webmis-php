@@ -67,7 +67,7 @@ class SysMenus extends Base {
     );
     $m->Where($where);
     $m->Page($page, $limit);
-    $m->Order($order?:'id DESC');
+    $m->Order($order?:'fid DESC', 'sort');
     $list = $m->Find();
     foreach($list as $k=>$v) {
       $list[$k]['status'] = $v['status']?true:false;
