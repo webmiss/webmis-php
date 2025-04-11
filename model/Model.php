@@ -41,7 +41,7 @@ class Model extends Base {
   }
 
   /* 连接池 */
-  function DBPool(array $cfg) {
+  function DBPool(array $cfg): ?object {
     try {
       // 配置文件
       $option = [
@@ -56,15 +56,15 @@ class Model extends Base {
       $conn->exec('SET NAMES "'.$cfg['charset'].'";');
       return $conn;
     } catch (\PDOException $e) {
-      $this->Print('[Model] Pool:', $e->getMessage());
+      self::Error('[Model] Pool: '.$e->getMessage());
       return null;
     }
   }
 
   /* 执行 */
-  function Exec($conn, string $sql, array $args=[]) {
-    if(empty($sql)){
-      $this->Print('[Model] Exec: SQL不能为空!');
+  function Exec($conn, string $sql, array $args=[]): ?object {
+    if(empty($sql)) {
+      self::Error('[Model] Exec: SQL不能为空!');
       return null;
     }
     try {
@@ -76,8 +76,7 @@ class Model extends Base {
       $this->id = $conn->lastInsertId();
       return $stmt;
     }catch (\Exception $e){
-      $this->Print('[Model] Exec:', $e->getMessage());
-      $this->Print('[Model] SQL:', $sql, $args);
+      self::Error('[Model] Exec: '.$e->getMessage());
       return null;
     }
   }
@@ -161,33 +160,33 @@ class Model extends Base {
 
   /* 查询-SQL */
   function SelectSQL(): array {
-    if($this->table==''){
-      $this->Print('Model[Select]: 表不能为空!');
+    if($this->table=='') {
+      self::Error('[Model] Select: 表不能为空!');
       return ['', $this->args];
     }
-    if($this->columns==''){
-      $this->Print('Model[Select]: 字段不能为空!');
+    if($this->columns=='') {
+      self::Error('[Model] Select]: 字段不能为空!');
       return ['', $this->args];
     }
     // 合成
     $this->sql = 'SELECT '.$this->columns.' FROM '.$this->table;
-    if($this->where != ''){
+    if($this->where != '') {
       $this->sql .= ' WHERE '.$this->where;
       $this->where = '';
     }
-    if($this->group != ''){
+    if($this->group != '') {
       $this->sql .= ' GROUP BY '.$this->group;
       $this->group = '';
     }
-    if($this->having != ''){
+    if($this->having != '') {
       $this->sql .= ' HAVING '.$this->having;
       $this->having = '';
     }
-    if($this->order != ''){
+    if($this->order != '') {
       $this->sql .= ' ORDER BY '.$this->order;
       $this->order = '';
     }
-    if($this->limit != ''){
+    if($this->limit != '') {
       $this->sql .= ' LIMIT '.$this->limit;
       $this->limit = '';
     }
@@ -200,16 +199,16 @@ class Model extends Base {
     list($sql, $args) = $param?$param:$this->SelectSQL();
     $conn = $this->DBConn();
     $stmt = $this->Exec($conn, $sql, $args);
-    return $this->DataAll($stmt);
+    return $stmt?$this->DataAll($stmt):[];
   }
   /* 查询-多条数据 */
-  function DataAll($stmt) {
+  function DataAll(object $stmt): array {
     $data = $stmt?$stmt->fetchAll(\PDO::FETCH_ASSOC):[];
     // 转换类型
     if(count($this->columnsType)==0) return $data;
     foreach($data as $k1=>$v1) {
-      foreach($v1 as $k2=>$v2){
-        if(isset($this->columnsType[$k2])){
+      foreach($v1 as $k2=>$v2) {
+        if(isset($this->columnsType[$k2])) {
           $data[$k1][$k2] = Type::ToType($this->columnsType[$k2], $v2);
         }
       }
@@ -218,16 +217,16 @@ class Model extends Base {
     return $data;
   }
   /* 查询-单条 */
-  function FindFirst(array $param=[]) {
+  function FindFirst(array $param=[]): array | bool {
     if(!$param) $this->limit = '1';
     list($sql, $args) = $param?$param:$this->SelectSQL();
     $conn = $this->DBConn();
     $stmt = $this->Exec($conn, $sql, $args);
-    return $this->Data($stmt);
+    return $stmt?$this->Data($stmt):false;
   }
-  /* 查询-多条数据 */
-  function Data($stmt) {
-    $data = $this->nums>0?$stmt->fetch(\PDO::FETCH_ASSOC):[];
+  /* 查询-单条数据 */
+  function Data(object $stmt): array | bool {
+    $data = $this->nums>0?$stmt->fetch(\PDO::FETCH_ASSOC):false;
     // 转换类型
     if(count($this->columnsType)==0) return $data;
     foreach($data as $k=>$v) {
@@ -240,9 +239,8 @@ class Model extends Base {
   }
 
   /* 添加-单条 */
-  function Values(array $data) {
-    list($keys, $vals) = [[], []];
-    $this->args = [];
+  function Values(array $data): void {
+    $keys = $vals = $this->args = [];
     foreach($data as $k=>$v){
       $keys[] = $k;
 		  $vals[] = '?';
@@ -252,9 +250,8 @@ class Model extends Base {
     $this->values = '(' . implode(', ', $vals). ')';
   }
   /* 添加-多条 */
-  function ValuesAll(array $data) {
-    list($keys, $vals, $alls) = [[], [], []];
-    $this->args = [];
+  function ValuesAll(array $data): void {
+    $keys = $vals = $alls = $this->args = [];
     foreach($data[0] as $k=>$v){
       $keys[] = $k;
 		  $vals[] = '?';
@@ -269,14 +266,14 @@ class Model extends Base {
     $this->values = implode(', ', $alls);
   }
   /* 添加-SQL */
-  function InsertSQL(): ?array {
+  function InsertSQL(): array {
     if($this->table==''){
-      $this->Print('[Model] Insert: 表不能为空!');
-      return ['',$this->args];
+      self::Error('[Model] Insert: 表不能为空!');
+      return ['', $this->args];
     }
     if($this->keys=='' || $this->values==''){
-      $this->Print('[Model] Insert: 数据不能为空!');
-      return ['',$this->args];
+      self::Error('[Model] Insert: 数据不能为空!');
+      return ['', $this->args];
     }
     $this->sql = 'INSERT INTO `' . $this->table . '`(' . $this->keys . ') VALUES ' . $this->values;
     $args = $this->args;
@@ -310,17 +307,17 @@ class Model extends Base {
   }
   /* 更新-SQL */
   function UpdateSQL(): array {
-    if($this->table == ''){
-      $this->Print('[Model] Update: 表不能为空!');
-      return ['', null];
+    if($this->table == '') {
+      self::Error('[Model] Update: 表不能为空!');
+      return ['', $this->args];
     }
-    if($this->data == ''){
-      $this->Print('[Model] Update: 数据不能为空!');
-      return ['', null];
+    if($this->data == '') {
+      self::Error('[Model] Update: 数据不能为空!');
+      return ['', $this->args];
     }
-    if($this->where == ''){
-      $this->Print('[Model] Update: 条件不能为空!');
-      return ['', null];
+    if($this->where == '') {
+      self::Error('[Model] Update: 条件不能为空!');
+      return ['', $this->args];
     }
     $this->sql = 'UPDATE ' . $this->table . ' SET ' . $this->data . ' WHERE ' . $this->where;
     $args = $this->args;
@@ -341,12 +338,12 @@ class Model extends Base {
   /* 删除-SQL */
   function DeleteSQL(): array {
     if($this->table == ''){
-      $this->Print('[Model] Delete: 表不能为空!');
-      return ['', null];
+      self::Error('[Model] Delete: 表不能为空!');
+      return ['', $this->args];
     }
     if($this->where == ''){
-      $this->Print('[Model] Delete: 条件不能为空!');
-      return ['', null];
+      self::Error('[Model] Delete: 条件不能为空!');
+      return ['', $this->args];
     }
     $this->sql = 'DELETE FROM `' . $this->table . '` WHERE ' . $this->where;
     $args = $this->args;
