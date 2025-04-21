@@ -6,17 +6,23 @@ use Middleware\Cors;
 
 class Api {
 
-  static function Init(){
+  static function Init() {
     // 允许跨域请求
     Cors::Init();
     // 路由
     $app = Container::getInstance();
-    $app['router']->group(['namespace'=>'App\Api', 'middleware'>['Middleware\Cors@Init']], function($router){
+    $app['router']->group(['namespace'=>'App\Api', 'prefix'=>'api'], function ($router) {
       // 首页
-      $router->get('/api', "Index@Index");
+      $router->get('', "Index@Index");
+      $router->post('index/version', "Index@Version");
       // 登录
-      $router->get('/api/user/login', "User@Login");
-      $router->get('/api/user/token', "User@Token");
+      $router->post('user/login', "User@Login");
+      $router->post('user/token', "User@Token");
+      $router->get('user/vcode/{uname}', "User@Vcode");
+      $router->post('user/get_vcode', "User@GetVcode");
+      $router->post('user/change_passwd', "User@ChangePasswd");
+      $router->post('user/change_uinfo', "User@ChangeUinfo");
+      $router->post('user/upimg', "User@Upimg");
     });
     
   }

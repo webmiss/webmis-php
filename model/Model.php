@@ -287,8 +287,8 @@ class Model extends Base {
   function Insert(): bool {
     list($sql, $args) = $this->InsertSQL();
     $conn = $this->DBConn();
-    $this->Exec($conn, $sql, $args);
-    return $this->nums>0?true:false;
+    $stmt = $this->Exec($conn, $sql, $args);
+    return $stmt?true:false;
   }
   /* 添加-自增ID */
   function LastInsertId($conn): int {
@@ -331,8 +331,8 @@ class Model extends Base {
   function Update(): bool {
     list($sql, $args) = $this->UpdateSQL();
     $conn = $this->DBConn();
-    $this->Exec($conn, $sql, $args);
-    return $this->nums>0?true:false;
+    $stmt = $this->Exec($conn, $sql, $args);
+    return $stmt?true:false;
   }
 
   /* 删除-SQL */
@@ -357,8 +357,8 @@ class Model extends Base {
   function Delete(): bool {
     list($sql, $args) = $this->DeleteSQL();
     $conn = $this->DBConn();
-    $this->Exec($conn, $sql, $args);
-    return $this->nums>0?true:false;
+    $stmt = $this->Exec($conn, $sql, $args);
+    return $stmt?true:false;
   }
 
 }

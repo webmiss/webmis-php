@@ -33,12 +33,6 @@ class ApiToken extends Base {
     return '';
   }
 
-  /* 权限 */
-  static function Perm($token, array $perm): bool {
-    $user = self::Token($token);
-    return in_array($user->type, $perm);
-  }
-
   /* 生成 */
   static function Create(array $data): ?string {
     $data['l_time'] = date('Y-m-d H:i:s');
