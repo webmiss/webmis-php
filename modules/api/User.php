@@ -118,7 +118,7 @@ class User extends Base {
     $model->LeftJoin('sys_role AS d', 'c.role=d.id');
     $model->Columns(
       'a.id', 'a.status', 'a.password', 'a.tel', 'a.email',
-      'b.type', 'b.nickname', 'b.department', 'b.position', 'b.name', 'b.gender', 'b.birthday', 'b.img', 'b.signature',
+      'b.type', 'b.nickname', 'b.department', 'b.position', 'b.name', 'b.gender', 'FROM_UNIXTIME(b.birthday, "%Y-%m-%d") as birthday', 'b.img', 'b.signature',
       'c.perm', 'd.perm as role_perm'
     );
     $model->Where($where);

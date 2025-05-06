@@ -14,6 +14,7 @@ class Api {
     $app['router']->group(['namespace'=>'App\Api', 'prefix'=>'api'], function ($router) {
       // 首页
       $router->get('', "Index@Index");
+      $router->post('index/html', "Index@GetHtml");
       $router->post('index/version', "Index@Version");
       // 登录
       $router->post('user/login', "User@Login");

@@ -63,6 +63,7 @@ class Model extends Base {
 
   /* 执行 */
   function Exec($conn, string $sql, array $args=[]): ?object {
+    if(!$conn) return null;
     if(empty($sql)) {
       self::Error('[Model] Exec: SQL不能为空!');
       return null;
