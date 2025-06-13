@@ -79,7 +79,7 @@ class Data extends Base {
     }
     // 保存图片
     $m = new UserInfo();
-    $m->Set(['img'=>$file]);
+    $m->Set(['img'=>$file.'?'.time()]);
     $m->Where('uid=?', $admin->uid);
     return $m->Update()?$file:'';
   }

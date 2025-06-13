@@ -24,6 +24,10 @@ class Api {
       $router->post('user/change_passwd', "User@ChangePasswd");
       $router->post('user/change_uinfo', "User@ChangeUinfo");
       $router->post('user/upimg', "User@Upimg");
+      // 消息
+      $router->post('msg/list', "Msg@List");
+      $router->post('msg/sea', "Msg@Sea");
+      $router->post('msg/read', "Msg@Read");
     });
     
   }

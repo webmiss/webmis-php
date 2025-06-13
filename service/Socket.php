@@ -26,88 +26,76 @@ class Socket implements MessageComponentInterface {
   }
 
   /* 消息 */
-  function getMsg(string $uid, array $msg) {
-    // 验证
-    if(!isset($msg['uid'])) return;
-    $gid = isset($msg['gid'])?$msg['gid']:'';
-    $fid = isset($msg['fid'])?$msg['fid']:$uid;
-    $title = isset($msg['data']['title'])?trim($msg['data']['title']):'';
-    $content = isset($msg['data']['content'])?trim($msg['data']['content']):'';
-    $format = isset($msg['data']['format'])?$msg['data']['format']:0;
-    $img = isset($msg['data']['img'])?trim($msg['data']['img']):'';
-    if($gid=='' || $title=='' || $content=='') {
-      return $this->send($uid, ['code'=>4000, 'type'=>$msg['type'], 'data'=>$msg['data']]);
+  function getMsg(int $fid, array $msg): void {
+    if(!isset($msg['gid']) || !isset($msg['type']) || !isset($msg['title']) || !isset($msg['content'])) {
+      $this->send($fid, ['code'=>4000, 'type'=>'msg', 'title'=>'错误', 'content'=>'参数错误!']);
+      return;
     }
-    // 群发
-    // if($msg['uid']=='0') return $this->sendAll($msg);
     // 数据
     $time = time();
-    $data = ['time'=>date('Y-m-d H:i:s'), 'data'=>[]];
-    $data['gid'] = $gid;
+    $uid = isset($msg['uid'])?$msg['uid']:0;
+    $data = ['id'=>0, 'time'=>date('Y-m-d H:i:s', $time)];
+    $data['gid'] = $msg['gid'];
     $data['fid'] = $fid;
-    $data['type'] = $msg['type'];
-    $data['data']['gid'] = $gid;
-    $data['data']['fid'] = $fid;
-    $data['data']['uid'] = $msg['uid'];
-    $data['data']['time'] = $data['time'];
-    $data['data']['title'] = $title;
-    $data['data']['format'] = $format;
-    $data['data']['content'] = $content;
-    $data['data']['img'] = $img;
-    // 保存
-    if($gid==0 || $fid==0) {
-      $m = new UserMsg();
-      $m->Values([
-        'gid'=> $gid,
-        'format'=> $format,
-        'uid'=> $msg['uid'],
-        'fid'=> $fid,
-        'ctime'=> $time,
-        'utime'=> $time,
-        'is_new'=> $uid?json_encode([$uid]):'',
-        'content'=> $content,
-      ]);
-      if($m->Insert()){
-        $data['code'] = 0;
-        $data['data']['id'] = $m->GetID();
-      }else{
-        return $this->send($uid, ['code'=>5000, 'type'=>$msg['type'], 'data'=>$msg['data']]);
-      }
+    $data['uid'] = $uid;
+    $data['title'] = trim($msg['title']);
+    $data['content'] = trim($msg['content']);
+    $data['format'] = isset($msg['format'])?$msg['format']:0;
+    $data['img'] = isset($msg['img'])?trim($msg['img']):'';
+    $data['loading'] = isset($msg['loading'])?$msg['loading']:0;
+    // 保存消息
+    $m = new UserMsg();
+    $m->Values([
+      'gid'=> $data['gid'],
+      'fid'=> $fid,
+      'uid'=> $uid,
+      'ctime'=> $time,
+      'utime'=> $time,
+      'format'=> $data['format'],
+      'title'=> $data['title'],
+      'content'=> $data['content'],
+      'is_new'=> json_encode([$fid]),
+      'pdate'=> date('Y-m-d', $time),
+    ]);
+    if($m->Insert()) {
+      $data['id'] = $m->GetID();
+    } else {
+      $data['code'] = 5000;
+      $this->send($fid, $data);
     }
-    // 消息
-    if($gid==0) {
-      // 发对方
-      $this->send($msg['uid'], $data);
+    // 智能机器人
+    $data['code'] = 0;
+    $data['type'] = 'msg';
+    if($data['gid']==1) {
       // 发自己
-      $data['fid'] = $msg['uid'];
-      $this->send($uid, $data);
-    } elseif($gid==1) {
+      $this->send($fid, $data);
       // 百度Ai
-      $res = Builder::GetMsg([['role'=>'user', 'content'=>$content]]);
-      // 自动回复
-      $data['code'] = 0;
+      $res = Builder::GetMsg([['role'=>'user', 'content'=>$data['content']]]);
+      $data['id'] = 0;
       $data['fid'] = 0;
-      $data['data']['id'] = 0;
-      $data['data']['fid'] = 0;
-      $data['data']['uid'] = 0;
-      $data['data']['img'] = cfg::$service[1]['img'];
-      $data['data']['title'] = cfg::$service[1]['title'];
-      $data['data']['content'] = $res?:'Error';
+      $data['title'] = 'Ai助理';
+      $data['content'] = $res;
+      $data['img'] = 'https://php.webmis.vip/upload/robot.jpg';
+      $data['loading'] += 1;
+      $this->send($fid, $data);
+    } elseif($uid && $fid) {
+      // 发对方
       $this->send($uid, $data);
+      // 发自己
+      $this->send($fid, $data);
     }
   }
 
   /* 路由 */
   function router(string $uid, $msg, $from): void {
-    $data = json_decode($msg, true);
-    if($data['type']=='msg'){
+    if($msg['type']=='msg'){
       // 消息
-      $this->getMsg($uid, $data);
-    }elseif($data['type']=='online'){
+      $this->getMsg($uid, $msg);
+    }elseif($msg['type']=='online'){
       // 是否在线
       $list = [];
       $uids = array_keys($this->uids);
-      foreach ($data['ids'] as $id) {
+      foreach ($msg['ids'] as $id) {
         $list[(string)$id] = in_array($id, $uids);
       }
       $from->send($this->GetJSON(['code'=>0, 'type'=>'online', 'data'=>['total'=>count($uids), 'list'=>$list]]));
@@ -151,16 +139,19 @@ class Socket implements MessageComponentInterface {
   function onOpen(ConnectionInterface $conn) {
     // 验证
     $uid = $this->verify((array)$conn->httpRequest->getUri());
-    if($uid=='') return $conn->close();
+    if($uid<0) return $conn->close();
     // 保存
     $this->clients->attach($conn);
     $this->uids[$uid] = $conn->resourceId;
   }
   /* 消息 */
   function onMessage(ConnectionInterface $from, $msg) {
+    // 内容
+    $msg = json_decode($msg, true);
     // 验证
     $uid = $this->verify((array)$from->httpRequest->getUri());
-    if($uid=='') return $from->close();
+    if($uid===0 && isset($msg['fid'])) $uid = $msg['fid'];
+    if($uid<0) return $from->close();
     // 路由
     $this->router($uid, $msg, $from);
   }
@@ -180,7 +171,7 @@ class Socket implements MessageComponentInterface {
   }
 
   /* 验证 */
-  private function verify($url): string {
+  private function verify($url): int {
     // 参数
     $param = $url;
     $data = [];
@@ -194,17 +185,17 @@ class Socket implements MessageComponentInterface {
     $this->lang = $lang;
     // 验证
     if($token==Env::$key){
-      return '0';
+      return 0;
     }elseif($channel=='admin'){
       $tData = AdminToken::Token($token);
-      if(empty($tData)) return '';
+      if(empty($tData)) return -1;
       return (string)$tData->uid;
     }elseif($channel=='api'){
       $tData = ApiToken::Token($token);
-      if(empty($tData)) return '';
+      if(empty($tData)) return -1;
       return (string)$tData->uid;
     }
-    return '';
+    return -1;
   }
 
 }

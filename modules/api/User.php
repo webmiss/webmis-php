@@ -172,7 +172,7 @@ class User extends Base {
       'name'=> $data['name'],
       'gender'=> $data['gender'],
       'birthday'=> $data['birthday'],
-      'img'=> Data::Img($data['img'], false),
+      'img'=> Data::Img($data['img']),
       'signature'=> $data['signature'],
     ];
     // 返回
@@ -203,7 +203,7 @@ class User extends Base {
       $uinfo = $m->FindFirst();
       $uinfo['uid'] = (string)$tData->uid;
       $uinfo['uname'] = $tData->uname;
-      $uinfo['img'] = Data::Img($uinfo['img'], false);
+      $uinfo['img'] = Data::Img($uinfo['img']);
     }
     // 返回
     return self::GetJSON(['code'=>0, 'data'=>['token_time'=>$tData->time, 'uinfo'=>$uinfo, 'isPasswd'=>$tData->isPasswd]]);
@@ -287,7 +287,7 @@ class User extends Base {
     $img = Data::UserImg($token, $base64);
     if(!$img) return self::GetJSON(['code'=>5000]);
     // 返回
-    return self::GetJSON(['code'=>0, 'data'=>Data::Img($img, false)]);
+    return self::GetJSON(['code'=>0, 'data'=>Data::Img($img)]);
   }
 
 }
