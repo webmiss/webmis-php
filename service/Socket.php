@@ -73,9 +73,9 @@ class Socket implements MessageComponentInterface {
       $res = Builder::GetMsg([['role'=>'user', 'content'=>$data['content']]]);
       $data['id'] = 0;
       $data['fid'] = 0;
-      $data['title'] = 'Ai助理';
+      $data['title'] = cfg::$service[$data['gid']]['title'];
       $data['content'] = $res;
-      $data['img'] = 'https://php.webmis.vip/upload/robot.jpg';
+      $data['img'] = cfg::$service[$data['gid']]['img'];
       $data['loading'] += 1;
       $this->send($fid, $data);
     } elseif($uid && $fid) {

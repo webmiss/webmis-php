@@ -112,8 +112,10 @@ class Msg extends Base {
   static function SeaUser(int $uid, string $key): array {
     // 查询
     $m = new UserInfo();
-    $m->Columns('uid', self::$name.' as title', 'img');
-    $m->Where(self::$name.' like ? AND uid<>?', '%'.$key.'%', $uid);
+    $m->Table('user_info AS a');
+    $m->LeftJoin('user AS b', 'a.uid=b.id');
+    $m->Columns('a.uid', 'a.'.self::$name.' as title', 'a.img');
+    $m->Where('a'.self::$name.' like ? AND a.uid<>? AND b.status=1', '%'.$key.'%', $uid);
     $m->Limit(0,10);
     $list = $m->Find();
     foreach($list as $k=>$v){
