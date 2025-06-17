@@ -5,7 +5,7 @@ use Config\Env;
 use Config\Socket as cfg;
 use Service\AdminToken;
 use Service\ApiToken;
-use Library\Baidu\Builder;
+use Library\Aliyun\Bailian;
 use Util\Util;
 
 use Model\UserMsg;
@@ -69,10 +69,11 @@ class Socket implements MessageComponentInterface {
     if($data['gid']==1) {
       // 发自己
       $this->send($fid, $data);
-      // 百度Ai
-      $res = Builder::GetMsg([['role'=>'user', 'content'=>$data['content']]]);
+      // 阿里云百炼
+      $res = Bailian::GetMsg([['role'=>'user', 'content'=>$data['content']]]);
       $data['id'] = 0;
       $data['fid'] = 0;
+      $data['uid'] = $fid;
       $data['title'] = cfg::$service[$data['gid']]['title'];
       $data['content'] = $res;
       $data['img'] = cfg::$service[$data['gid']]['img'];

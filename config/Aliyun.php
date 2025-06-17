@@ -25,4 +25,11 @@ class Aliyun {
     ];
   }
 
+  /* 百炼 */
+  static function BaiLian(): array {
+    return [
+      'ApiKey'=> '',
+    ];
+  }
+
 }

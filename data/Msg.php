@@ -115,7 +115,7 @@ class Msg extends Base {
     $m->Table('user_info AS a');
     $m->LeftJoin('user AS b', 'a.uid=b.id');
     $m->Columns('a.uid', 'a.'.self::$name.' as title', 'a.img');
-    $m->Where('a'.self::$name.' like ? AND a.uid<>? AND b.status=1', '%'.$key.'%', $uid);
+    $m->Where('a.'.self::$name.' like ? AND a.uid<>? AND b.status=1', '%'.$key.'%', $uid);
     $m->Limit(0,10);
     $list = $m->Find();
     foreach($list as $k=>$v){
