@@ -94,7 +94,7 @@ class Oss extends Base {
     if($maxSize==0) $maxSize = $cfg['MaxSize'];
     // 数据
     $res = self::PolicySign($expireTime, $maxSize);
-    $res['host'] = 'https://'.$cfg['Bucket'].'.'.$cfg['Endpoint'];
+    $res['host'] = 'https://'.$cfg['Bucket'].'.'.$cfg['Endpoint'].'/';
     $res['key'] = $file;
     $res['max_size'] = $maxSize;
     // 回调

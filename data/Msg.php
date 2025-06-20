@@ -44,7 +44,7 @@ class Msg extends Base {
           'format'=> $v['format'],
           'title'=> '',
           'img'=> '',
-          'content'=> $v['content'],
+          'content'=> $v['format']===0?$v['content']:json_decode($v['content'], true),
         ];
         // 群组
         if($v['gid']) {
@@ -79,6 +79,7 @@ class Msg extends Base {
     $info = self::GetInfo([$fid, $uid]);
     foreach($list as $k=>$v) {
       $list[$k]['is_new'] = $v['is_new']&&in_array($uid, json_decode($v['is_new']))?false:true;
+      if($v['format']!==0) $list[$k]['content'] = json_decode($v['content'], true);
       // 用户
       if(isset($info[$v['fid']])) {
         $list[$k]['title'] = $info[$v['fid']]['title'];

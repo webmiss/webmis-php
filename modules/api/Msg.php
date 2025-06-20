@@ -4,6 +4,7 @@ namespace App\Api;
 use Service\Base;
 use Service\ApiToken;
 use Data\Msg as MsgD;
+use Library\Aliyun\Oss;
 
 /* 消息 */
 class Msg extends Base {
@@ -78,6 +79,28 @@ class Msg extends Base {
     $res = MsgD::Read($admin->uid, $ids);
     // 返回
     return $res?self::GetJSON(['code'=>0]):self::GetJSON(['code'=>5000]);
+  }
+
+  /* Oss签名直传 */
+  static function OssSgin(): string {
+    // 参数
+    $json = self::Json();
+    $token = self::JsonName($json, 'token');
+    $filename = self::JsonName($json, 'filename');
+    // 验证
+    $msg = ApiToken::Verify($token, '');
+    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    // 文件
+    $file = 'msg/'.date('Y').'/'.date('m').'/'.date('d').'/'.date('YmdHis').rand(1000,9999);
+    // 后缀
+    $ext = '';
+    $arr = explode('.', $filename);
+    if(count($arr)>1) $ext = $arr[count($arr)-1];
+    if($ext) $file .= '.'.$ext;
+    // 签名
+    $res = Oss::Policy($file);
+    $res['ext'] = $ext;
+    return self::GetJSON(['code'=>0, 'data'=>$res]);
   }
 
 }

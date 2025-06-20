@@ -39,7 +39,7 @@ class Socket implements MessageComponentInterface {
     $data['fid'] = $fid;
     $data['uid'] = $uid;
     $data['title'] = trim($msg['title']);
-    $data['content'] = trim($msg['content']);
+    $data['content'] = is_string($msg['content'])?trim($msg['content']):$msg['content'];
     $data['format'] = isset($msg['format'])?$msg['format']:0;
     $data['img'] = isset($msg['img'])?trim($msg['img']):'';
     $data['loading'] = isset($msg['loading'])?$msg['loading']:0;
@@ -53,7 +53,7 @@ class Socket implements MessageComponentInterface {
       'utime'=> $time,
       'format'=> $data['format'],
       'title'=> $data['title'],
-      'content'=> $data['content'],
+      'content'=> is_array($data['content'])?json_encode($data['content']):$data['content'],
       'is_new'=> json_encode([$fid]),
       'pdate'=> date('Y-m-d', $time),
     ]);
@@ -69,16 +69,18 @@ class Socket implements MessageComponentInterface {
     if($data['gid']==1) {
       // 发自己
       $this->send($fid, $data);
-      // 阿里云百炼
-      $res = Bailian::GetMsg([['role'=>'user', 'content'=>$data['content']]]);
-      $data['id'] = 0;
-      $data['fid'] = 0;
-      $data['uid'] = $fid;
-      $data['title'] = cfg::$service[$data['gid']]['title'];
-      $data['content'] = $res;
-      $data['img'] = cfg::$service[$data['gid']]['img'];
-      $data['loading'] += 1;
-      $this->send($fid, $data);
+      if($data['format']===0) {
+        // 阿里云百炼
+        $res = Bailian::GetMsg([['role'=>'user', 'content'=>$data['content']]]);
+        $data['id'] = 0;
+        $data['fid'] = 0;
+        $data['uid'] = $fid;
+        $data['title'] = cfg::$service[$data['gid']]['title'];
+        $data['content'] = $res;
+        $data['img'] = cfg::$service[$data['gid']]['img'];
+        $data['loading'] += 1;
+        $this->send($fid, $data);
+      }
     } elseif($uid && $fid) {
       // 发对方
       $this->send($uid, $data);
@@ -89,7 +91,9 @@ class Socket implements MessageComponentInterface {
 
   /* 路由 */
   function router(string $uid, $msg, $from): void {
-    if($msg['type']=='msg'){
+    if(!isset($msg['type'])){
+      $from->send($this->GetJSON(['code'=>400, 'type'=>'类型错误']));
+    }elseif($msg['type']=='msg'){
       // 消息
       $this->getMsg($uid, $msg);
     }elseif($msg['type']=='online'){
