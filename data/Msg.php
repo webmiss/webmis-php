@@ -26,7 +26,7 @@ class Msg extends Base {
     $m = new UserMsg();
     $m->Partition($pname);
     $m->Columns('id', 'gid', 'fid', 'uid', 'format', 'is_new', 'content', 'FROM_UNIXTIME(ctime) as time');
-    $m->Where('(fid=? OR uid=?) AND ctime>=? AND ctime<=?', $uid, $uid, $start, $end);
+    $m->Where('(fid=? OR uid=?) AND ctime>=? AND ctime<=? AND is_del NOT LIKE "%\"'.$uid.'\"%"', $uid, $uid, $start, $end);
     $m->Order('id DESC');
     $all = $m->Find();
     $list = [];
@@ -71,7 +71,7 @@ class Msg extends Base {
   static function GetShow(int $gid, int $fid, int $uid, int $page=1, int $limit=30): array {
     $m = new UserMsg();
     $m->Columns('id', 'gid', 'fid', 'uid', 'format', 'is_new', 'content', 'FROM_UNIXTIME(ctime) as time');
-    $m->Where('gid=? AND (fid=? AND uid=? OR fid=? AND uid=?)', $gid, $fid, $uid, $uid, $fid);
+    $m->Where('gid=? AND (fid=? AND uid=? OR fid=? AND uid=?) AND is_del NOT LIKE "%\"'.$uid.'\"%"', $gid, $fid, $uid, $uid, $fid);
     $m->Page($page, $limit);
     $m->Order('id DESC');
     $list = $m->Find();
@@ -147,6 +147,23 @@ class Msg extends Base {
         $m->Where('id=?', $v['id']);
         $m->Update();
       }
+    }
+    return true;
+  }
+
+  /* 清空 */
+  static function Del($gid, $fid, $uid): bool {
+    $m = new UserMsg();
+    $m->Columns('id', 'is_del');
+    $m->Where('gid=? AND (fid=? AND uid=? OR fid=? AND uid=?) AND is_del NOT LIKE "%\"'.$uid.'\"%"', $gid, $fid, $uid, $uid, $fid);
+    $all = $m->Find();
+    foreach($all as $v) {
+      $tmp = $v['is_del']?json_decode($v['is_del']):[];
+      if(!in_array((string)$uid, $tmp)) $tmp[] = (string)$uid;
+      $m = new UserMsg();
+      $m->Set(['is_del'=>json_encode($tmp)]);
+      $m->Where('id=?', $v['id']);
+      $m->Update();
     }
     return true;
   }

@@ -9,7 +9,7 @@ use Library\Redis;
 class ApiToken extends Base {
 
   /* 验证 */
-  static function Verify(string $token, string $urlPerm): string {
+  static function Verify(string $token): string {
     // Token
     if($token=='') return 'Token不能为空!';
     $tData = Safety::Decode($token);
@@ -27,7 +27,6 @@ class ApiToken extends Base {
     if(Env::$api_token_auto){
       $redis = new Redis();
       $redis->Expire(Env::$api_token_prefix.'_token_'.$uid, Env::$api_token_time);
-      $redis->Expire(Env::$api_token_prefix.'_perm_'.$uid, Env::$api_token_time);
       $redis->Close();
     }
     return '';

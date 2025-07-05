@@ -21,7 +21,7 @@ class Msg extends Base {
   }
 
   /* 列表 */
-	static function List() {
+	static function List(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -55,7 +55,7 @@ class Msg extends Base {
   }
 
   /* 搜索 */
-	static function Sea() {
+	static function Sea(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -74,7 +74,7 @@ class Msg extends Base {
   }
 
   /* 阅读 */
-	static function Read() {
+	static function Read(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -88,6 +88,23 @@ class Msg extends Base {
     // 更新
     $admin = AdminToken::Token($token);
     $res = MsgD::Read($admin->uid, $ids);
+    // 返回
+    return $res?self::GetJSON(['code'=>0]):self::GetJSON(['code'=>5000]);
+  }
+
+  /* 清空 */
+	static function Del(): string {
+    // 参数
+    $json = self::Json();
+    $token = self::JsonName($json, 'token');
+    $gid = self::JsonName($json, 'gid');
+    $fid = self::JsonName($json, 'fid');
+    // 验证
+    $msg = AdminToken::Verify($token, '');
+    if($msg!='') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
+    // 更新
+    $admin = AdminToken::Token($token);
+    $res = MsgD::Del($gid, $fid, $admin->uid);
     // 返回
     return $res?self::GetJSON(['code'=>0]):self::GetJSON(['code'=>5000]);
   }

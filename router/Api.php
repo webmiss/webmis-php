@@ -28,6 +28,7 @@ class Api {
       $router->post('msg/list', "Msg@List");
       $router->post('msg/sea', "Msg@Sea");
       $router->post('msg/read', "Msg@Read");
+      $router->post('msg/del', "Msg@Del");
       $router->post('msg/oss_sgin', "Msg@OssSgin");
     });
     

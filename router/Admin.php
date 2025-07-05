@@ -29,6 +29,7 @@ class Admin {
       $router->post('msg/list', "Msg@List");
       $router->post('msg/sea', "Msg@Sea");
       $router->post('msg/read', "Msg@Read");
+      $router->post('msg/del', "Msg@Del");
       $router->post('msg/oss_sgin', "Msg@OssSgin");
       // 文件管理
       $router->post('sys_file/list', "SysFile@List");
