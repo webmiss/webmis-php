@@ -15,7 +15,7 @@
     "illuminate/routing": "10.x-dev",
     "illuminate/events": "10.x-dev",
     "firebase/php-jwt": "dev-main",
-    "textalk/websocket": "^1.4.2",
+    "phrity/websocket": "^3.5.0",
     "khanamiryan/qrcode-detector-decoder": "1.0.6",
     "cboden/ratchet": "v0.4.4",
     "milon/barcode": "dev-master",

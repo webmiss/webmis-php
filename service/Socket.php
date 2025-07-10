@@ -120,8 +120,8 @@ class Socket implements MessageComponentInterface {
 
   /* 单发 */
   function send(int $uid, array $data) {
-    if(!isset($uid) || !isset($this->uids[$uid])) return;
-    $id = $this->uids[$uid];
+    if(!isset($uid) || !isset($this->uids['u'.$uid])) return;
+    $id = $this->uids['u'.$uid];
     foreach ($this->clients as $conn) {
       if($conn->resourceId==$id) return $conn->send($this->GetJSON($data));
     }
@@ -147,7 +147,11 @@ class Socket implements MessageComponentInterface {
     if($uid<0) return $conn->close();
     // 保存
     $this->clients->attach($conn);
-    $this->uids[$uid] = $conn->resourceId;
+    if($uid==0) {
+      $this->uids['s'.$conn->resourceId] = $conn->resourceId;
+    } else {
+      $this->uids['u'.$uid] = $conn->resourceId;
+    }
   }
   /* 消息 */
   function onMessage(ConnectionInterface $from, $msg) {
@@ -163,10 +167,17 @@ class Socket implements MessageComponentInterface {
   /* 关闭 */
   function onClose(ConnectionInterface $conn) {
     $this->clients->detach($conn);
-    foreach($this->uids as $key=>$val) {
-      if($val==$conn->resourceId){
-        unset($this->uids[$key]);
-        break;
+    if(isset($this->uids['s'.$conn->resourceId])) {
+      // 系统
+      unset($this->uids['s'.$conn->resourceId]);
+      return;
+    } else {
+      // 用户
+      foreach($this->uids as $key=>$val) {
+        if($val==$conn->resourceId){
+          unset($this->uids[$key]);
+          return;
+        }
       }
     }
   }

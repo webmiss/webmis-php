@@ -3,9 +3,9 @@ namespace App\Admin;
 
 use Service\Base;
 use Service\AdminToken;
+use Service\Logs;
 use Config\Socket as cfg;
 use Data\Msg as MsgD;
-use Library\Socket;
 use Library\Aliyun\Oss;
 
 /* 消息 */
@@ -17,7 +17,9 @@ class Msg extends Base {
     $uid = $_GET['uid'];
     $msg = $_GET['msg'];
     if(empty($uid) || $msg=='') return;
-    Socket::Send('admin', ['gid'=>1, 'fid'=>$fid, 'uid'=>$uid, 'type'=>'msg', 'title'=>cfg::$service[1]['title'], 'content'=>$msg]);
+    for($i=0; $i<5; $i++) {
+      Logs::Msg(['gid'=>1, 'fid'=>$fid, 'uid'=>$uid, 'type'=>'msg', 'title'=>cfg::$service[1]['title'], 'content'=>$msg.$i]);
+    }
   }
 
   /* 列表 */

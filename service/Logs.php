@@ -1,6 +1,7 @@
 <?php
 namespace Service;
 
+use Config\Socket;
 use Library\FileEo;
 use Library\Redis;
 
@@ -12,10 +13,10 @@ class Logs extends Base {
     FileEo::WriterEnd($file, json_encode($content)."\n");
   }
 
-  /* 生产者 */
-  static function Log(array $data) {
+  /* 系统消息 */
+  static function Msg(array $data) {
     $redis = new Redis();
-    $redis->RPush('logs', json_encode($data));
+    $redis->RPush(Socket::$redis_name, json_encode($data));
     $redis->Close();
   }
 
