@@ -69,7 +69,7 @@ class Socket implements MessageComponentInterface {
     if($data['gid']==1) {
       // 发自己
       $this->send($fid, $data);
-      if($data['format']===0) {
+      if($fid && $data['format']===0) {
         // 阿里云百炼
         $res = Bailian::GetMsg([['role'=>'user', 'content'=>$data['content']]]);
         $data['id'] = 0;
