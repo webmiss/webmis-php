@@ -153,10 +153,6 @@ class User extends Base {
       'name'=>$data['name'],
       'type'=> $data['type'],
       'isPasswd'=> $isPasswd,
-      'brand'=> $data['brand'],
-      'shop'=> $data['shop'],
-      'partner'=> $data['partner'],
-      'partner_in'=> $data['partner_in']
     ]);
     // 用户信息
     $uinfo = [
