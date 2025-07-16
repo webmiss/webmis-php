@@ -6,7 +6,7 @@ class Socket {
 
   static $type = 'ws';                    // 类型
   static $host = '127.0.0.1';             // 主机
-  static $port = 9003;                    // 端口
+  static $port = 9001;                    // 端口
   static $redis_name = 'msg_contents';    // Redis名称
   static $redis_time = 3;                 // 读取间隔
   static $redis_leng = 1000;              // 读取条数
