@@ -20,6 +20,9 @@ elif [ "$s" == "install" ]; then
   } || {
     echo "> 请安装'composer'"
   }
+# Socket-运行(查看)
+elif [ "$s" == "socketShow" ]; then
+  ps -aux | grep "$cli Socket" | grep -v grep
 # Socket-运行(服务器)
 elif [ "$s" == "socketServer" ]; then
   php $cli Socket server
@@ -46,6 +49,7 @@ else
   echo "  serve               运行: php -S $ip:$port -t public"
   echo "  install             依赖包: composer install"
   echo "<WebSocket>"
+  echo "  socketShow          查看"
   echo "  socketServer        运行(服务器)"
   echo "  socketServerStart   启动(服务器)"
   echo "  socketServerStop    停止(服务器)"
