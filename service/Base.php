@@ -66,6 +66,7 @@ class Base {
 
   /* 异常错误 */
   static function Error($msg) {
+    self::Print($msg);
     throw new \InvalidArgumentException($msg);
   }
 

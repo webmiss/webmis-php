@@ -67,6 +67,41 @@ class Admin {
       $router->post('web_html/save', "WebHtml@Save");
       $router->post('web_html/del', "WebHtml@Del");
       $router->post('web_html/export', "WebHtml@Export");
+      // 组织架构
+      $router->post('erp_base_organization/total', "ErpBaseOrganization@Total");
+      $router->post('erp_base_organization/list', "ErpBaseOrganization@List");
+      $router->post('erp_base_organization/save', "ErpBaseOrganization@Save");
+      $router->post('erp_base_organization/del', "ErpBaseOrganization@Del");
+      $router->post('erp_base_organization/export', "ErpBaseOrganization@Export");
+      // 店铺管理
+      $router->post('erp_base_shop/total', "ErpBaseShop@Total");
+      $router->post('erp_base_shop/list', "ErpBaseShop@List");
+      $router->post('erp_base_shop/save', "ErpBaseShop@Save");
+      $router->post('erp_base_shop/del', "ErpBaseShop@Del");
+      $router->post('erp_base_shop/export', "ErpBaseShop@Export");
+      $router->post('erp_base_shop/get_select', "ErpBaseShop@GetSelect");
+      $router->post('erp_base_shop/pull', "ErpBaseShop@Pull");
+      // 主仓&分仓
+      $router->post('erp_base_partner/total', "ErpBasePartner@Total");
+      $router->post('erp_base_partner/list', "ErpBasePartner@List");
+      $router->post('erp_base_partner/save', "ErpBasePartner@Save");
+      $router->post('erp_base_partner/del', "ErpBasePartner@Del");
+      $router->post('erp_base_partner/export', "ErpBasePartner@Export");
+      $router->post('erp_base_partner/get_select', "ErpBasePartner@GetSelect");
+      $router->post('erp_base_partner/pull', "ErpBasePartner@Pull");
+      // 品牌管理
+      $router->post('erp_base_brand/total', "ErpBaseBrand@Total");
+      $router->post('erp_base_brand/list', "ErpBaseBrand@List");
+      $router->post('erp_base_brand/save', "ErpBaseBrand@Save");
+      $router->post('erp_base_brand/del', "ErpBaseBrand@Del");
+      $router->post('erp_base_brand/export', "ErpBaseBrand@Export");
+      $router->post('erp_base_brand/get_select', "ErpBaseBrand@GetSelect");
+      // 分类管理
+      $router->post('erp_base_category/total', "ErpBaseCategory@Total");
+      $router->post('erp_base_category/list', "ErpBaseCategory@List");
+      $router->post('erp_base_category/save', "ErpBaseCategory@Save");
+      $router->post('erp_base_category/del', "ErpBaseCategory@Del");
+      $router->post('erp_base_category/export', "ErpBaseCategory@Export");
     });
     
   }

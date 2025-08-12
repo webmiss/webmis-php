@@ -5,6 +5,7 @@ use Config\Env;
 use Service\Base;
 use Service\AdminToken;
 use Library\Export;
+use Util\Util;
 use Model\SysMenu;
 
 class SysMenus extends Base {
@@ -91,7 +92,7 @@ class SysMenus extends Base {
       $where[] = 'ctime<='.$end;
     }
     // 关键字
-    $key = isset($d['key'])?trim($d['key']):'';
+    $key = isset($d['key'])?Util::Trim($d['key']):'';
     if($key){
       $arr = [
         'fid="'.$key.'"',
