@@ -102,6 +102,15 @@ class Admin {
       $router->post('erp_base_category/save', "ErpBaseCategory@Save");
       $router->post('erp_base_category/del', "ErpBaseCategory@Del");
       $router->post('erp_base_category/export', "ErpBaseCategory@Export");
+      // 供应商
+      $router->post('erp_base_supplier/total', "ErpBaseSupplier@Total");
+      $router->post('erp_base_supplier/list', "ErpBaseSupplier@List");
+      $router->post('erp_base_supplier/save', "ErpBaseSupplier@Save");
+      $router->post('erp_base_supplier/del', "ErpBaseSupplier@Del");
+      $router->post('erp_base_supplier/export', "ErpBaseSupplier@Export");
+      $router->post('erp_base_supplier/import', "ErpBaseSupplier@Import");
+      $router->post('erp_base_supplier/get_select', "ErpBaseSupplier@GetSelect");
+      $router->post('erp_base_supplier/get_info', "ErpBaseSupplier@GetInfo");
     });
     
   }
