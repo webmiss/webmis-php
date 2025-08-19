@@ -20,4 +20,12 @@ class Logs extends Base {
     $redis->Close();
   }
 
+  /* 商品-日志 */
+  static function Goods(array $data) {
+    $data['pdate'] = date('Y-m-d');
+    $redis = new Redis();
+    $redis->RPush('logs_goods', json_encode($data));
+    $redis->Close();
+  }
+
 }

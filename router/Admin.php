@@ -111,6 +111,16 @@ class Admin {
       $router->post('erp_base_supplier/import', "ErpBaseSupplier@Import");
       $router->post('erp_base_supplier/get_select', "ErpBaseSupplier@GetSelect");
       $router->post('erp_base_supplier/get_info', "ErpBaseSupplier@GetInfo");
+      // 商品-资料
+      $router->post('erp_goods_info/total', "ErpGoodsInfo@Total");
+      $router->post('erp_goods_info/list', "ErpGoodsInfo@List");
+      $router->post('erp_goods_info/save', "ErpGoodsInfo@Save");
+      $router->post('erp_goods_info/del', "ErpGoodsInfo@Del");
+      $router->post('erp_goods_info/export', "ErpGoodsInfo@Export");
+      $router->post('erp_goods_info/import', "ErpGoodsInfo@Import");
+      $router->post('erp_goods_info/exchange', "ErpGoodsInfo@Exchange");
+      $router->post('erp_goods_info/status', "ErpGoodsInfo@Status");
+      $router->post('erp_goods_info/get_select', "ErpGoodsInfo@GetSelect");
     });
     
   }
