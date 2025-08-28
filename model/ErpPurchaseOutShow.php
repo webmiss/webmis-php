@@ -2,7 +2,7 @@
 namespace Model;
 
 /* 采购退货-明细 */
-class ErpPurchaseOut extends Model {
+class ErpPurchaseOutShow extends Model {
 
   /* 构造函数 */
   function __construct(){

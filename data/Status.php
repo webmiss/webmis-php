@@ -3,11 +3,31 @@ namespace Data;
 
 class Status {
 
+  /* 商品资料 */
+  static function Goods(string $name): array {
+    $data = [
+      'labels'=> ['瑞丽', '平洲', '四会', '缅甸'],
+      'type_name'=> ['-1'=>'资料', '0'=>'入库', '1'=>'采退', '2'=>'调拨', '3'=>'发货', '4'=>'售后', '5'=>'其它出', '6'=>'其它退'],
+      'price_name'=> [
+        'cost_price'=> '成本价',
+        'purchase_price'=> '采购价',
+        'supply_price'=> '供应链价',
+        'supplier_price'=> '人民币采购价',
+        'sale_price'=> '标签价',
+        'market_price'=> '吊牌价',
+        'order_price'=> '开单价',
+        'play_price'=> '实付价',
+      ],
+    ];
+    return $data[$name];
+  }
+
   /* 调拨单 */
   static function Allocate(string $name): array {
     $data = [
       // 调拨类型
       'type_name'=> [
+        '0'=> ['label'=>'其它', 'value'=>'0', 'info'=>'全时段'],
         '1'=> ['label'=>'早场 A轮', 'value'=>'1', 'info'=>'05:00-06:00'],
         '2'=> ['label'=>'早场 B轮', 'value'=>'2', 'info'=>'06:05-07:05'],
         '3'=> ['label'=>'上午场 A轮', 'value'=>'3', 'info'=>'08:20-09:20'],
@@ -18,27 +38,14 @@ class Status {
         '8'=> ['label'=>'晚场 B轮', 'value'=>'8', 'info'=>'18:05-19:05'],
         '9'=> ['label'=>'凌晨场 A轮', 'value'=>'9', 'info'=>'21:00-22:00'],
         '10'=> ['label'=>'凌晨场 B轮', 'value'=>'10', 'info'=>'22:10-23:10'],
-        '20'=> ['label'=>'下架选货', 'value'=>'20', 'info'=>'全时段'],
         '12'=> ['label'=>'视频拍摄', 'value'=>'12', 'info'=>'全时段'],
         '13'=> ['label'=>'线下送货', 'value'=>'13', 'info'=>'全时段'],
         '14'=> ['label'=>'福利品', 'value'=>'14', 'info'=>'全时段'],
         '15'=> ['label'=>'私域', 'value'=>'15', 'info'=>'全时段'],
         '16'=> ['label'=>'精准', 'value'=>'16', 'info'=>'全时段'],
-        '11'=> ['label'=>'追单', 'value'=>'11', 'info'=>'全时段'],
-        '17'=> ['label'=>'特殊', 'value'=>'17', 'info'=>'全时段'],
-        '18'=> ['label'=>'物资调拨', 'value'=>'18', 'info'=>'全时段'],
-        '19'=> ['label'=>'外借', 'value'=>'19', 'info'=>'全时段'],
-        '21'=> ['label'=>'云仓选货', 'value'=>'21', 'info'=>'全时段'],
-        '22'=> ['label'=>'缅甸', 'value'=>'22', 'info'=>'全时段'],
-        '23'=> ['label'=>'议价调拨', 'value'=>'23', 'info'=>'全时段'],
-        '24'=> ['label'=>'中缅集市-入库', 'value'=>'24', 'info'=>'全时段'],
-        '25'=> ['label'=>'中缅集市-出库', 'value'=>'25', 'info'=>'全时段'],
-        '0'=> ['label'=>'其它', 'value'=>'0', 'info'=>'全时段'],
       ],
       // 状态
       'state_name'=> ['0'=>'待确认', '1'=>'调拨中', '2'=>'完成'],
-      // 品质
-      'quality_name'=> ['1'=>'完美', '2'=>'小裂', '3'=>'大裂', '4'=>'挂件'],
     ];
     return $data[$name];
   }

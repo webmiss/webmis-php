@@ -119,7 +119,8 @@ class User extends Base {
     $model->Columns(
       'a.id', 'a.status', 'a.password', 'a.tel', 'a.email',
       'b.type', 'b.nickname', 'b.department', 'b.position', 'b.name', 'b.gender', 'FROM_UNIXTIME(b.birthday, "%Y-%m-%d") as birthday', 'b.img', 'b.signature',
-      'c.perm', 'd.perm as role_perm'
+      'c.role', 'c.perm', 'c.brand', 'c.shop', 'c.partner', 'c.partner_in', 
+      'd.perm as role_perm'
     );
     $model->Where($where);
     $data = $model->FindFirst();
@@ -139,7 +140,7 @@ class User extends Base {
     $redis->Expire(Env::$admin_token_prefix.'_vcode_'.$uname, 1);
     $redis->Close();
     // 默认密码
-    $isPasswd = $data['password']==md5('123456');
+    $isPasswd = $data['password']==md5(Env::$password);
     // 权限
     $perm = $data['role_perm'];
     if($data['perm']) $perm=$data['perm'];
@@ -158,6 +159,10 @@ class User extends Base {
       'name'=>$data['name'],
       'type'=> $data['type'],
       'isPasswd'=> $isPasswd,
+      'brand'=> $data['brand'],
+      'shop'=> $data['shop'],
+      'partner'=> $data['partner'],
+      'partner_in'=> $data['partner_in']
     ]);
     // 用户信息
     $uinfo = [
