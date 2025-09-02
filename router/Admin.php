@@ -111,6 +111,16 @@ class Admin {
       $router->post('erp_base_supplier/import', "ErpBaseSupplier@Import");
       $router->post('erp_base_supplier/get_select', "ErpBaseSupplier@GetSelect");
       $router->post('erp_base_supplier/get_info', "ErpBaseSupplier@GetInfo");
+      // 商品
+      $router->post('erp_goods/barcode', "ErpGoods@Barcode");
+      $router->post('erp_goods/barcode_print', "ErpGoods@BarcodePrint");
+      $router->post('erp_goods/info', "ErpGoods@Info");
+      $router->post('erp_goods/direct', "ErpGoods@Direct");
+      $router->post('erp_goods/direct_export', "ErpGoods@DirectExport");
+      $router->post('erp_goods/stock', "ErpGoods@Stock");
+      $router->post('erp_goods/logs', "ErpGoods@Logs");
+      $router->post('erp_goods/up_img', "ErpGoods@UpImg");
+      $router->post('erp_goods/remove_img', "ErpGoods@RemoveImg");
       // 商品-资料
       $router->post('erp_goods_info/total', "ErpGoodsInfo@Total");
       $router->post('erp_goods_info/list', "ErpGoodsInfo@List");
@@ -121,6 +131,11 @@ class Admin {
       $router->post('erp_goods_info/exchange', "ErpGoodsInfo@Exchange");
       $router->post('erp_goods_info/status', "ErpGoodsInfo@Status");
       $router->post('erp_goods_info/get_select', "ErpGoodsInfo@GetSelect");
+      // 商品-日志
+      $router->post('erp_goods_log/total', "ErpGoodsLog@Total");
+      $router->post('erp_goods_log/list', "ErpGoodsLog@List");
+      $router->post('erp_goods_log/del', "ErpGoodsLog@Del");
+      $router->post('erp_goods_log/export', "ErpGoodsLog@Export");
     });
     
   }

@@ -326,19 +326,12 @@ class ErpGoodsInfo extends Base {
           'sku_id'=> $sku_id,
           'content'=> '更新商品: ' . $sku_id . $msg,
         ]);
-        // 聚水谭数据
-        $tmp = $param;
-        $tmp['sku_id'] = $sku_id;
-        $tmp['i_id'] = isset($tmp['i_id'])?$tmp['i_id']:$info[$sku_id]['i_id'];
-        $tmp['name'] = isset($tmp['name'])?$tmp['name']:$info[$sku_id]['name'];
-        $biz[] = $tmp;
       }
     }
     // 更新明细
     if(isset($param['other_price'])) unset($param['other_price']);
     if(isset($param['other_price1'])) unset($param['other_price1']);
     $res = Goods::GoodsUpdateShow($sku, $param);
-    Stock::JuShuiTanGoods(json_encode($biz));
     // 返回
     if($res) return self::GetJSON(['code'=> 0]);
     else return self::GetJSON(['code'=> 5000]);

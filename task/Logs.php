@@ -2,33 +2,39 @@
 namespace Task;
 
 use Library\Redis;
-use Service\Logs as LogsService;
+use Model\ErpGoodsLogs;
 
 /* 日志 */
 class Logs extends Base {
 
-  /* 首页 */
-  static function Index(){
+  /* 商品-日志 */
+  static function Goods(){
+    $n=1000; $t=10; $key='logs_goods';
     while(true){
       $redis = new Redis();
-      $data = $redis->BLPop('logs', 10);
-      $redis->Close();
-      if(empty($data)) continue;
-      // 保存
-      $msg = $data[1];
-      $res = self::logsWrite($msg);
-      if(!$res){
-        LogsService::File('upload/erp/Logs.json', json_decode($msg, true));
+      $data = $redis->LRange($key, 0, $n);
+      if(!$data){
+        $redis->Close();
+        sleep($t);
+        continue;
       }
+      // 数据
+      $msg = [];
+      foreach($data as $v){
+        $res = $redis->LPop($key);
+        $tmp = $res?json_decode($res, true):[];
+        if(!isset($tmp['ctime']) || !isset($tmp['operator_id']) || !isset($tmp['operator_name']) || !isset($tmp['sku_id']) || !isset($tmp['content'])) continue;
+        $msg[] = $tmp;
+      }
+      $redis->Close();
+      self::goodsWrite($msg);
     }
   }
-
-  /* 写入 */
-  static private function logsWrite(string $msg){
-    // 数据
-    $data = json_decode($msg, true);
-    self::Print($data);
-    return true;
+  /* 商品-写入日志 */
+  static private function goodsWrite(array $data){
+    $m = new ErpGoodsLogs();
+    $m->ValuesAll($data);
+    $m->Insert();
   }
 
 }

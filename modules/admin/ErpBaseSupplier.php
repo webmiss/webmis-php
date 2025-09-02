@@ -2,18 +2,16 @@
 namespace App\Admin;
 
 use Config\Env;
-use Library\Export;
-use Model\ErpBaseSupplier as ErpBaseSupplierM;
 use Service\AdminToken;
 use Service\Base;
+use Data\Status;
+use Library\Export;
 use Util\Util;
+
+use Model\ErpBaseSupplier as ErpBaseSupplierM;
 
 class ErpBaseSupplier extends Base {
 
-  // 城市
-  static private $city_name = ['平洲', '瑞丽', '四会', '缅甸'];
-  // 状态
-  static private $status_name = ['1'=>'正常', '0'=>'禁用'];
   // 导出
   static private $export_path = 'upload/tmp/';  // 目录
   static private $export_filename = '';         // 文件名
@@ -62,7 +60,7 @@ class ErpBaseSupplier extends Base {
     $where = self::getWhere($param, $token);
     // 统计
     $m = new ErpBaseSupplierM();
-    $m->Columns('id', 'supplier_id', 'name', 'status', 'tel', 'city', 'depositbank', 'bankacount', 'acountnumber', 'alipay_id', 'alipay_name', 'remark', 'operator_name', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime', 'FROM_UNIXTIME(btime) as btime');
+    $m->Columns('id', 'supplier_id', 'name', 'status', 'tel', 'city', 'depositbank', 'bankacount', 'acountnumber', 'alipay_id', 'alipay_name', 'remark', 'operator_name', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
     $m->Where($where);
     $m->Order($order?''.$order:'utime DESC, id DESC');
     $m->Page($page, $limit);
@@ -249,12 +247,12 @@ class ErpBaseSupplier extends Base {
         $v['id'],
         $v['supplier_id'],
         $v['name'],
-        self::$status_name[$v['status']],
+        Status::Supplier('status_name')[$v['status']],
         $v['tel'],
         $v['city'],
         $v['depositbank'],
         $v['bankacount'],
-        $v['acountnumber'],
+        '&nbsp;'.$v['acountnumber'],
         $v['alipay_name'],
         $v['alipay_id'],
         '&nbsp;'.$v['ctime'],
@@ -280,10 +278,10 @@ class ErpBaseSupplier extends Base {
     if($msg!='') return self::GetJSON(['code'=>4001]);
     // 区域
     $city_name = [];
-    foreach(self::$city_name as $v) $city_name[]=['label'=>$v, 'value'=>$v];
+    foreach(Status::Supplier('city_name') as $v) $city_name[]=['label'=>$v, 'value'=>$v];
     // 状态
     $status_name = [];
-    foreach(self::$status_name as $k=>$v) $status_name[]=['label'=>$v, 'value'=>$k];
+    foreach(Status::Supplier('status_name') as $k=>$v) $status_name[]=['label'=>$v, 'value'=>$k];
     // 返回
     return self::GetJSON(['code'=>0, 'data'=>['city_name'=> $city_name, 'status_name'=>$status_name]]);
   }

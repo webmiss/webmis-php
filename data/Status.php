@@ -3,6 +3,15 @@ namespace Data;
 
 class Status {
 
+  /* 供应商 */
+  static function Supplier(string $name): array {
+    $data = [
+      'city_name'=> ['平洲', '瑞丽', '四会', '缅甸'],
+      'status_name'=> ['1'=>'正常', '0'=>'禁用'],
+    ];
+    return $data[$name];
+  }
+
   /* 商品资料 */
   static function Goods(string $name): array {
     $data = [

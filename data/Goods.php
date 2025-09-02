@@ -469,9 +469,9 @@ class Goods extends Base {
     $list = [];
     // 数据-入库
     $m = new ErpPurchaseInShow();
-    $m->Table($pname?'erp_purchase_show_in PARTITION('.$pname.') as a':'erp_purchase_show_in as a');
+    $m->Table($pname?'erp_purchase_in_show PARTITION('.$pname.') as a':'erp_purchase_in_show as a');
     $m->LeftJoin('erp_purchase_in as b', 'a.pid=b.id');
-    $m->Columns('a.type', 'a.pid', 'b.wms_co_id', 'a.num', 'a.state', 'FROM_UNIXTIME(a.ctime) as ctime', 'FROM_UNIXTIME(b.utime) as utime', 'b.creater_name AS creater', 'b.operator_name AS operator', 'b.remark');
+    $m->Columns('a.type', 'a.pid', 'b.wms_co_id', 'a.num', 'a.status', 'FROM_UNIXTIME(a.ctime) as ctime', 'FROM_UNIXTIME(b.utime) as utime', 'b.creator_name AS creator', 'b.operator_name AS operator', 'b.remark');
     $m->Where('a.sku_id=?', $sku_id);
     $all = $m->Find();
     $list = array_merge($list, $all);
@@ -479,9 +479,9 @@ class Goods extends Base {
     foreach ($all as $v) $total['num_in'] += $v['num'];
     // 数据-退货
     $m = new ErpPurchaseOutShow();
-    $m->Table($pname?'erp_purchase_show_out PARTITION('.$pname.') as a':'erp_purchase_show_out as a');
+    $m->Table($pname?'erp_purchase_out_show PARTITION('.$pname.') as a':'erp_purchase_out_show as a');
     $m->LeftJoin('erp_purchase_out as b', 'a.pid=b.id');
-    $m->Columns('a.type', 'a.pid', 'b.wms_co_id', 'a.num', 'a.state', 'FROM_UNIXTIME(a.ctime) as ctime', 'FROM_UNIXTIME(b.utime) as utime', 'b.creater_name AS creater', 'b.operator_name AS operator', 'b.remark');
+    $m->Columns('a.type', 'a.pid', 'b.wms_co_id', 'a.num', 'a.status', 'FROM_UNIXTIME(a.ctime) as ctime', 'FROM_UNIXTIME(b.utime) as utime', 'b.creator_name AS creator', 'b.operator_name AS operator', 'b.remark');
     $m->Where('a.sku_id=?', $sku_id);
     $all = $m->Find();
     $list = array_merge($list, $all);
@@ -489,9 +489,9 @@ class Goods extends Base {
     foreach ($all as $v) $total['num_out'] += $v['num'];
     // 数据-调拨
     $m = new ErpPurchaseAllocateShow();
-    $m->Table($pname?'erp_purchase_show_allocate PARTITION('.$pname.') as a':'erp_purchase_show_allocate as a');
+    $m->Table($pname?'erp_purchase_allocate_show PARTITION('.$pname.') as a':'erp_purchase_allocate_show as a');
     $m->LeftJoin('erp_purchase_allocate as b', 'a.pid=b.id');
-    $m->Columns('a.type', 'a.pid', 'b.go_co_id', 'b.link_co_id', 'a.num', 'a.ratio', 'a.state', 'FROM_UNIXTIME(a.ctime) as ctime', 'FROM_UNIXTIME(b.utime) as utime', 'b.creater_name AS creater', 'b.operator_name AS operator', 'b.remark');
+    $m->Columns('a.type', 'a.pid', 'b.go_co_id', 'b.link_co_id', 'a.num', 'a.status', 'FROM_UNIXTIME(a.ctime) as ctime', 'FROM_UNIXTIME(b.utime) as utime', 'b.creator_name AS creator', 'b.operator_name AS operator', 'b.remark');
     $m->Where('a.sku_id=?', $sku_id);
     $all = $m->Find();
     $list = array_merge($list, $all);
@@ -499,29 +499,27 @@ class Goods extends Base {
     foreach ($all as $v) $total['allocate'] += $v['num'];
     // 数据-发货
     $m = new ErpOrderShow();
-    $m->Table($pname?'erp_purchase_show_order PARTITION('.$pname.') as a':'erp_purchase_show_order as a');
-    $m->LeftJoin('erp_order_out as b', 'a.pid=b.id');
-    $m->Columns('a.type','a.pid','a.wms_co_id','a.num','a.ratio','a.state','FROM_UNIXTIME(a.ctime) as ctime','FROM_UNIXTIME(a.utime) as utime','a.operator_name AS creater','a.operator_name AS operator','b.remark');
-    $m->Where('a.type="3" AND a.sku_id=?', $sku_id);
+    if($pname) $m->Partition($pname);
+    $m->Columns('type','pid','wms_co_id','num','ratio','status','FROM_UNIXTIME(ctime) as ctime','FROM_UNIXTIME(utime) as utime','operator_name AS creator','operator_name AS operator','seller_words as remark');
+    $m->Where('type="3" AND sku_id=?', $sku_id);
     $all = $m->Find();
     $list = array_merge($list, $all);
     $total['num_order'] = 0;
     foreach ($all as $v) $total['num_order'] += $v['num'];
     // 数据-售后
     $m = new ErpOrderShow();
-    $m->Table($pname?'erp_purchase_show_order PARTITION('.$pname.') as a':'erp_purchase_show_order as a');
-    $m->LeftJoin('erp_order_refund as b', 'a.pid=b.id');
-    $m->Columns('a.type', 'a.pid', 'a.wms_co_id', 'a.num', 'a.state', 'FROM_UNIXTIME(a.ctime) as ctime', 'FROM_UNIXTIME(a.utime) as utime', 'a.operator_name AS creater', 'a.operator_name AS operator', 'b.remark');
-    $m->Where('a.type="4" AND a.sku_id=?', $sku_id);
+    if($pname) $m->Partition($pname);
+    $m->Columns('type', 'pid', 'wms_co_id', 'num', 'status', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime', 'operator_name AS creator', 'operator_name AS operator', 'seller_words as remark');
+    $m->Where('type="4" AND sku_id=?', $sku_id);
     $all = $m->Find();
     $list = array_merge($list, $all);
     $total['num_refund'] = 0;
     foreach ($all as $v) $total['num_refund'] += $v['num'];
     // 数据-其它
     $m = new ErpOrderShow();
-    $m->Table($pname?'erp_purchase_show_order PARTITION('.$pname.') as a':'erp_purchase_show_order as a');
-    $m->LeftJoin('erp_other_inout as b', 'a.pid=b.id');
-    $m->Columns('a.type', 'a.pid', 'b.wms_co_id', 'a.num', 'a.state', 'FROM_UNIXTIME(a.ctime) as ctime', 'FROM_UNIXTIME(a.utime) as utime', 'b.creator_name AS creater', 'b.operator_name AS operator', 'b.remark');
+    $m->Table($pname?'erp_order_show PARTITION('.$pname.') as a':'erp_order_show as a');
+    $m->LeftJoin('erp_order_inout as b', 'a.pid=b.id');
+    $m->Columns('a.type', 'a.pid', 'b.wms_co_id', 'a.num', 'a.status', 'FROM_UNIXTIME(a.ctime) as ctime', 'FROM_UNIXTIME(a.utime) as utime', 'b.creator_name AS creator', 'b.operator_name AS operator', 'b.remark');
     $m->Where('a.type in("5", "6") AND a.sku_id=?', $sku_id);
     $all = $m->Find();
     $list = array_merge($list, $all);
@@ -556,7 +554,7 @@ class Goods extends Base {
     $info['pid'] = $info['id'];
     $info['warehouse'] = '';
     $info['state'] = '1';
-    $info['creater'] = 'SYS';
+    $info['creator'] = 'SYS';
     $info['operator'] = 'SYS';
     $info['remark'] = '';
     $goods[] = $info;
