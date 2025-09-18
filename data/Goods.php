@@ -260,7 +260,7 @@ class Goods extends Base {
       $m = new ErpPurchaseInShow();
       $m->Partition($pname);
       $m->Columns('pid', 'num', 'sku_id');
-      $m->Where('sku_id in("'.implode('","', $sku).'") AND state="0"'.($wms_co_id?' AND wms_co_id='.$wms_co_id:''));
+      $m->Where('sku_id in("'.implode('","', $sku).'") AND status=0'.($wms_co_id?' AND wms_co_id='.$wms_co_id:''));
       $all = $m->Find();
       if($all) {
         $res['num'] = (int)$all[0]['num'];
@@ -276,7 +276,7 @@ class Goods extends Base {
       $m = new ErpPurchaseAllocateShow();
       $m->Partition($pname);
       $m->Columns('pid', 'num', 'sku_id');
-      $m->Where('sku_id in("'.implode('","', $sku).'") AND state="0"'.($wms_co_id?' AND go_co_id='.$wms_co_id:''));
+      $m->Where('sku_id in("'.implode('","', $sku).'") AND status=0'.($wms_co_id?' AND go_co_id='.$wms_co_id:''));
       $all = $m->Find();
       if($all) {
         $res['num'] = (int)$all[0]['num'];
@@ -292,7 +292,7 @@ class Goods extends Base {
       $m = new ErpPurchaseOutShow();
       $m->Partition($pname);
       $m->Columns('pid', 'num', 'sku_id');
-      $m->Where('sku_id in("'.implode('","', $sku).'") AND state="0"'.($wms_co_id?' AND wms_co_id='.$wms_co_id:''));
+      $m->Where('sku_id in("'.implode('","', $sku).'") AND status=0'.($wms_co_id?' AND wms_co_id='.$wms_co_id:''));
       $all = $m->Find();
       if($all) {
         $res['num'] = (int)$all[0]['num'];
@@ -553,7 +553,7 @@ class Goods extends Base {
     $info['type_name'] = Status::Goods('type_name')[$info['type']];
     $info['pid'] = $info['id'];
     $info['warehouse'] = '';
-    $info['state'] = '1';
+    $info['status'] = '1';
     $info['creator'] = 'SYS';
     $info['operator'] = 'SYS';
     $info['remark'] = '';

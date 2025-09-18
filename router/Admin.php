@@ -136,6 +136,60 @@ class Admin {
       $router->post('erp_goods_log/list', "ErpGoodsLog@List");
       $router->post('erp_goods_log/del', "ErpGoodsLog@Del");
       $router->post('erp_goods_log/export', "ErpGoodsLog@Export");
+      // 商品-库存
+      $router->post('erp_goods_stock/total', "ErpGoodsStock@Total");
+      $router->post('erp_goods_stock/list', "ErpGoodsStock@List");
+      $router->post('erp_goods_stock/save', "ErpGoodsStock@Save");
+      $router->post('erp_goods_stock/del', "ErpGoodsStock@Del");
+      $router->post('erp_goods_stock/export', "ErpGoodsStock@Export");
+      $router->post('erp_goods_stock/get_select', "ErpGoodsStock@GetSelect");
+      // 库存-采购入库
+      $router->post('erp_purchase_in/total', "ErpPurchaseIn@Total");
+      $router->post('erp_purchase_in/list', "ErpPurchaseIn@List");
+      $router->post('erp_purchase_in/save', "ErpPurchaseIn@Save");
+      $router->post('erp_purchase_in/del', "ErpPurchaseIn@Del");
+      $router->post('erp_purchase_in/push', "ErpPurchaseIn@Push");
+      $router->post('erp_purchase_in/revoke', "ErpPurchaseIn@Revoke");
+      $router->post('erp_purchase_in/export', "ErpPurchaseIn@Export");
+      $router->post('erp_purchase_in/get_select', "ErpPurchaseIn@GetSelect");
+      $router->post('erp_purchase_in/goods_list', "ErpPurchaseIn@GoodsList");
+      $router->post('erp_purchase_in/goods_add', "ErpPurchaseIn@GoodsAdd");
+      $router->post('erp_purchase_in/goods_remove', "ErpPurchaseIn@GoodsRemove");
+      $router->post('erp_purchase_in/goods_num', "ErpPurchaseIn@GoodsNum");
+      $router->post('erp_purchase_in/goods_safety', "ErpPurchaseIn@GoodsSafety");
+      $router->post('erp_purchase_in/goods_price', "ErpPurchaseIn@GoodsPrice");
+      // 库存-入库等待
+      $router->post('erp_purchase_in_push/total', "ErpPurchaseInPush@Total");
+      $router->post('erp_purchase_in_push/list', "ErpPurchaseInPush@List");
+      $router->post('erp_purchase_in_push/push', "ErpPurchaseInPush@Push");
+      $router->post('erp_purchase_in_push/revoke', "ErpPurchaseInPush@Revoke");
+      $router->post('erp_purchase_in_push/export', "ErpPurchaseInPush@Export");
+      $router->post('erp_purchase_in_push/get_select', "ErpPurchaseInPush@GetSelect");
+      $router->post('erp_purchase_in_push/goods_list', "ErpPurchaseInPush@GoodsList");
+      // 库存-采购退货
+      $router->post('erp_purchase_out/total', "ErpPurchasesOut@Total");
+      $router->post('erp_purchase_out/list', "ErpPurchasesOut@List");
+      $router->post('erp_purchase_out/save', "ErpPurchasesOut@Save");
+      $router->post('erp_purchase_out/del', "ErpPurchasesOut@Del");
+      $router->post('erp_purchase_out/push', "ErpPurchasesOut@Push");
+      $router->post('erp_purchase_out/revoke', "ErpPurchasesOut@Revoke");
+      $router->post('erp_purchase_out/explode', "ErpPurchasesOut@Explode");
+      $router->post('erp_purchase_out/export', "ErpPurchasesOut@Export");
+      $router->post('erp_purchase_out/get_select', "ErpPurchasesOut@GetSelect");
+      $router->post('erp_purchase_out/goods_list', "ErpPurchasesOut@GoodsList");
+      $router->post('erp_purchase_out/goods_add', "ErpPurchasesOut@GoodsAdd");
+      $router->post('erp_purchase_out/goods_remove', "ErpPurchasesOut@GoodsRemove");
+      $router->post('erp_purchase_out/goods_num', "ErpPurchasesOut@GoodsNum");
+      $router->post('erp_purchase_out/goods_safety', "ErpPurchasesOut@GoodsSafety");
+      $router->post('erp_purchase_out/goods_price', "ErpPurchasesOut@GoodsPrice");
+      // 库存-退货等待
+      $router->post('erp_purchase_out_push/total', "ErpPurchasesOutPush@Total");
+      $router->post('erp_purchase_out_push/list', "ErpPurchasesOutPush@List");
+      $router->post('erp_purchase_out_push/push', "ErpPurchasesOutPush@Push");
+      $router->post('erp_purchase_out_push/revoke', "ErpPurchasesOutPush@Revoke");
+      $router->post('erp_purchase_out_push/export', "ErpPurchasesOutPush@Export");
+      $router->post('erp_purchase_out_push/get_select', "ErpPurchasesOutPush@GetSelect");
+      $router->post('erp_purchase_out_push/goods_list', "ErpPurchasesOutPush@GoodsList");
     });
     
   }

@@ -31,6 +31,15 @@ class Status {
     return $data[$name];
   }
 
+  /* 采购入库 */
+  static function PurchaseIn(string $name): array {
+    $data = [
+      'type_name'=> ['0'=>'普通入库', '1'=>'当天上架', '2'=>'刷货入库', '3'=>'快速入库'],
+      'status_name'=> ['0'=>'待确认', '1'=>'待入库', '2'=>'完成'],
+    ];
+    return $data[$name];
+  }
+
   /* 调拨单 */
   static function Allocate(string $name): array {
     $data = [
@@ -54,7 +63,7 @@ class Status {
         '16'=> ['label'=>'精准', 'value'=>'16', 'info'=>'全时段'],
       ],
       // 状态
-      'state_name'=> ['0'=>'待确认', '1'=>'调拨中', '2'=>'完成'],
+      'status_name'=> ['0'=>'待确认', '1'=>'调拨中', '2'=>'完成'],
     ];
     return $data[$name];
   }
