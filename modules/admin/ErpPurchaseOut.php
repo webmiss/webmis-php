@@ -36,7 +36,7 @@ class ErpPurchaseOut extends Base {
       return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
     }
     // 条件
-    list($where, $operator) = self::getWhere($data, $token, true);
+    $where = self::getWhere($data, $token);
     // 统计
     $m = new ErpPurchaseOutM();
     $m->Columns('count(*) AS total', 'sum(num) AS num', 'sum(sale_price) AS sale_price', 'sum(market_price) AS market_price');
@@ -47,7 +47,6 @@ class ErpPurchaseOut extends Base {
       'num'=> $one?(int)$one['num']:0,
       'sale_price'=> $one?(float)$one['sale_price']:0,
       'market_price'=> $one?(float)$one['market_price']:0,
-      'operator'=> $operator?:'',
     ];
     // 返回
     return self::GetJSON(['code'=>0, 'time'=>date('Y/m/d H:i:s'), 'data'=>$total]);
@@ -76,8 +75,8 @@ class ErpPurchaseOut extends Base {
     $list = $m->Find();
     // 数据
     self::$partner_name = Partner::GetList(['type=0']);
-    self::$type_name = Status::PurchaseIn('type_name');
-    self::$status_name = Status::PurchaseIn('status_name');
+    self::$type_name = Status::PurchaseOut('type_name');
+    self::$status_name = Status::PurchaseOut('status_name');
     foreach($list as $k=>$v) {
       $list[$k]['wms_co_name'] = self::$partner_name[$v['wms_co_id']]['name'];
       $list[$k]['type_name'] = self::$type_name[$v['type']];
@@ -148,7 +147,6 @@ class ErpPurchaseOut extends Base {
     $creator_name = isset($d['creator_name'])?trim($d['creator_name']):'';
     if($creator_name) $where[] = 'creator_name like "%'.$creator_name.'%"';
     // 操作员
-    $operator = [];
     $operator_name = isset($d['operator_name'])?trim($d['operator_name']):'';
     if($operator_name) $where[] = 'operator_name like "%'.$operator_name.'%"';
     // 备注
@@ -501,8 +499,8 @@ class ErpPurchaseOut extends Base {
     ]);
     // 内容
     self::$partner_name = Partner::GetList();
-    self::$type_name = Status::PurchaseIn('type_name');
-    self::$status_name = Status::PurchaseIn('status_name');
+    self::$type_name = Status::PurchaseOut('type_name');
+    self::$status_name = Status::PurchaseOut('status_name');
     foreach($list as $v){
       $tmp = isset($goods[$v['sku_id']])?$goods[$v['sku_id']]:[];
       $html .= Export::ExcelData([
@@ -575,11 +573,11 @@ class ErpPurchaseOut extends Base {
     }
     // 类型
     $type_name = [];
-    self::$type_name = Status::PurchaseIn('type_name');
+    self::$type_name = Status::PurchaseOut('type_name');
     foreach(self::$type_name as $k=>$v) $type_name[]=['label'=>$v, 'value'=>$k];
     // 状态
     $status_name = [];
-    self::$status_name = Status::PurchaseIn('status_name');
+    self::$status_name = Status::PurchaseOut('status_name');
     foreach(self::$status_name as $k=>$v) $status_name[]=['label'=>$v, 'value'=>$k];
     // 返回
     return self::GetJSON(['code'=>0, 'data'=>[
@@ -729,29 +727,36 @@ class ErpPurchaseOut extends Base {
     $one = $m->FindFirst();
     if(!$one) return self::GetJSON(['code'=>4000, 'msg'=>'该状态不可用!']);
     // 数据
-    $list = $values = [];
+    $msg = '';
+    $list = $values = $err = [];
     $admin = AdminToken::Token($token);
     foreach($data as $v) {
-      if(!isset($v['sku_id'])) return self::GetJSON(['code'=>4000, 'msg'=>'必须填写商品编码!']);
+      if(!isset($v['sku_id'])) {
+        $msg = '必须填写商品编码'; continue;
+      }
       $sku_id = strtoupper(Util::Trim($v['sku_id']));
       $num = isset($v['num'])?(int)$v['num']:1;
       $list[$sku_id]=['num'=>$num, 'ctime'=>date('Y-m-d H:i:s'), 'utime'=>date('Y-m-d H:i:s'), 'operator_name'=>$admin->name];
     }
-    // 是否进行中
+    if(!$list) return self::GetJSON(['code'=>5000, 'msg'=>$msg, 'data'=>$list]);
+    // 检测: 进行中、库存
     $sku = array_keys($list);
-    $res = Goods::IsAfoot($sku);
-    if($res) return self::GetJSON(['code'=>5000, 'msg'=>$res['msg']]);
-    // 是否库存
-    $stock = Goods::IsStockAll($sku, $wms_co_id);
-    foreach($list as $k=>$v) {
-      if(!isset($stock[$k])) return self::GetJSON(['code'=>4000, 'msg'=>'[ '.$k.' ]无库存!']);
-      if($stock[$k]==0) return self::GetJSON(['code'=>4000, 'msg'=>'[ '.$k.' ]库存为“0”']);
-      if($stock[$k]<$v['num']) return self::GetJSON(['code'=>4000, 'msg'=>'[ '.$k.' ]可用库存“'.$stock[$k].'”']);
+    list($res_list, $res_msg) = Goods::IsSafety($sku, ['afoot'=>'all', 'stock'=>$wms_co_id]);
+    if($res_list) {
+      $msg = $res_msg;
+      $err = array_merge($err, $res_list);
+      foreach($res_list as $v) unset($list[$v]);
     }
+    if(!$list) return self::GetJSON(['code'=>5000, 'msg'=>$msg, 'data'=>$list, 'err'=>$err]);
     // 资料
     $info = Goods::GoodsInfoAll($sku);
     foreach($list as $k=>$v) {
-      if(!isset($info[$k])) return self::GetJSON(['code'=>4000, 'msg'=>'[ '.$k.' ]无商品资料']);
+      if(!isset($info[$k])) {
+        unset($list[$k]);
+        $msg = '[ '.$k.' ]无商品资料';
+        $err = array_merge($err, [$k]);
+        continue;
+      }
       $values[] = [
         'pid'=> $id,
         'sku_id'=> $k,
@@ -767,6 +772,7 @@ class ErpPurchaseOut extends Base {
         'supplier_name'=> $info[$k]['supplier_name'],
       ];
     }
+    if(!$values) return self::GetJSON(['code'=>5000, 'msg'=>$msg, 'data'=>$list, 'err'=>$err]);
     // 是否存在
     $pname = sData::PartitionName(strtotime($ctime), time());
     $m = new ErpPurchaseOutShow();
@@ -819,7 +825,8 @@ class ErpPurchaseOut extends Base {
       $list[$k] = $tmp;
     }
     // 返回
-    return self::GetJSON(['code'=>0, 'data'=>$list]);
+    if($msg) return self::GetJSON(['code'=>5000, 'msg'=>$msg, 'data'=>$list, 'err'=>$err]);
+    else return self::GetJSON(['code'=>0, 'data'=>$list]);
   }
 
   /* 商品-移除 */

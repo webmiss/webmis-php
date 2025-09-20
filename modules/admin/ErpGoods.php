@@ -10,6 +10,7 @@ use Service\Logs;
 use Data\Partner;
 use Data\Goods as GoodsD;
 use Library\Export;
+use Library\Qrcode;
 use Util\Util;
 use Milon\Barcode\DNS1D;
 
@@ -41,7 +42,10 @@ class ErpGoods extends Base {
       // 条形码
       $d = new DNS1D();
       $d->setStorPath('upload/tmp');
-      $list[$sku_id]['barcode'] = 'data:image/png;base64,' . $d->getBarcodePNG($sku_id, 'C128', 9, 360);
+      $list[$sku_id]['barcode'] = 'data:image/png;base64,'.$d->getBarcodePNG($sku_id, 'C128', 9, 360);
+      // 二维码
+      $qrcode = Qrcode::Create(['text'=>$sku_id]);
+      $list[$sku_id]['qrcode'] = 'data:image/png;base64,'.base64_encode($qrcode);
     }
     // 商品资料
     $info = GoodsD::GoodsInfoAll($sku, 'data', [-1, 3], [

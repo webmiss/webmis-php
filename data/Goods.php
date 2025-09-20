@@ -250,8 +250,44 @@ class Goods extends Base {
     return $msg;
   }
 
+  /**
+  * 扫码检测
+  * @param array $mode ['afoot'=>'all', 'stock'=>$wms_co_id]
+  */
+  static function IsSafety(array $sku, array $mode=[]): array {
+    $msg = ''; $list = [];
+    // 是否进行中
+    if(isset($mode['afoot'])) {
+      $res = Goods::IsAfoot($sku, $mode['afoot']);
+      if($res) {
+        $msg = $res['msg'];
+        $tmp = array_keys($res['list']);
+        $list = array_merge($list, $tmp);
+        $sku = array_values(array_diff($sku, $tmp));
+      }
+    }
+    // 是否库存
+    if(isset($mode['stock'])) {
+      $stock = Goods::IsStockAll($sku, $mode['stock']);
+      foreach($sku as $sku_id) {
+        if(!isset($stock[$sku_id])) {
+          $msg = '[ '.$sku_id.' ]无库存!';
+          $tmp = [$sku_id];
+          $list = array_merge($list, $tmp);
+          $sku = array_values(array_diff($sku, $tmp));
+        } elseif($stock[$sku_id]===0) {
+          $msg = '[ '.$sku_id.' ]库存为“0”';
+          $tmp = [$sku_id];
+          $list = array_merge($list, $tmp);
+          $sku = array_values(array_diff($sku, $tmp));
+        }
+      }
+    }
+    return [$list, $msg];
+  }
+
   /* 是否进行中 */
-  static function IsAfoot(array $sku, int $wms_co_id=0, $type='all'): array {
+  static function IsAfoot(array $sku, $type='all', int $wms_co_id=0): array {
     $res = [];
     // 分区
     $pname = date('d')>=15?'p'.substr(date('Ym'), 2, 4):'p'.substr(date('Ym', strtotime('-1 month')), 2, 4).',p'.substr(date('Ym'), 2, 4);

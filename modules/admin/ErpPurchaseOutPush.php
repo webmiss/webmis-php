@@ -76,8 +76,8 @@ class ErpPurchaseOutPush extends Base {
     $list = $m->Find();
     // 数据
     self::$partner_name = Partner::GetList(['type=0']);
-    self::$type_name = Status::PurchaseIn('type_name');
-    self::$status_name = Status::PurchaseIn('status_name');
+    self::$type_name = Status::PurchaseOut('type_name');
+    self::$status_name = Status::PurchaseOut('status_name');
     foreach($list as $k=>$v) {
       $list[$k]['wms_co_name'] = self::$partner_name[$v['wms_co_id']]['name'];
       $list[$k]['type_name'] = self::$type_name[$v['type']];
@@ -254,8 +254,6 @@ class ErpPurchaseOutPush extends Base {
         foreach($list as $d) {
           // 库存、聚水谭
           Stock::Goods(json_encode(['bizs'=>[$k=>$d], 'goods'=>true]));
-          Stock::JuShuiTan(json_encode(['bizs'=>[$k=>$d]]));
-          // Task::Popen('php ../cli.php Stock JuShuiTan', ['bizs'=>[$k=>$d]]);
           // 日志
           foreach($d as $sku) {
             Logs::Goods([
@@ -337,8 +335,8 @@ class ErpPurchaseOutPush extends Base {
     ]);
     // 内容
     self::$partner_name = Partner::GetList();
-    self::$type_name = Status::PurchaseIn('type_name');
-    self::$status_name = Status::PurchaseIn('status_name');
+    self::$type_name = Status::PurchaseOut('type_name');
+    self::$status_name = Status::PurchaseOut('status_name');
     foreach($list as $v){
       $tmp = isset($goods[$v['sku_id']])?$goods[$v['sku_id']]:[];
       $html .= Export::ExcelData([
@@ -411,11 +409,11 @@ class ErpPurchaseOutPush extends Base {
     }
     // 类型
     $type_name = [];
-    self::$type_name = Status::PurchaseIn('type_name');
+    self::$type_name = Status::PurchaseOut('type_name');
     foreach(self::$type_name as $k=>$v) $type_name[]=['label'=>$v, 'value'=>$k];
     // 状态
     $status_name = [];
-    self::$status_name = Status::PurchaseIn('status_name');
+    self::$status_name = Status::PurchaseOut('status_name');
     foreach(self::$status_name as $k=>$v) $status_name[]=['label'=>$v, 'value'=>$k];
     // 返回
     return self::GetJSON(['code'=>0, 'data'=>[

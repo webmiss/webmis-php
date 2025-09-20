@@ -622,7 +622,7 @@ class ErpPurchaseIn extends Base {
     if(!$one) return self::GetJSON(['code'=>4000, 'msg'=>'该状态不可用!']);
     // 数据
     $msg = '';
-    $list = $values = [];
+    $list = $values = $err = [];
     $admin = AdminToken::Token($token);
     foreach($data as $v) {
       if(!isset($v['sku_id'])) {
@@ -632,17 +632,25 @@ class ErpPurchaseIn extends Base {
       $num = isset($v['num'])?(int)$v['num']:1;
       $list[$sku_id]=['num'=>$num, 'ctime'=>date('Y-m-d H:i:s'), 'utime'=>date('Y-m-d H:i:s'), 'operator_name'=>$admin->name];
     }
-    if(!$list) return self::GetJSON(['code'=>5000, 'msg'=>$msg]);
-    // 是否进行中
+    if(!$list) return self::GetJSON(['code'=>5000, 'msg'=>$msg, 'data'=>$list]);
+    // 检测: 进行中
     $sku = array_keys($list);
-    $res = Goods::IsAfoot($sku);
-    if($res) $msg = $res['msg'];
-    // 分区
-    $pname = sData::PartitionName(strtotime($ctime), time());
+    list($res_list, $res_msg) = Goods::IsSafety($sku, ['afoot'=>'all']);
+    if($res_list) {
+      $msg = $res_msg;
+      $err = array_merge($err, $res_list);
+      foreach($res_list as $v) unset($list[$v]);
+    }
+    if(!$list) return self::GetJSON(['code'=>5000, 'msg'=>$msg, 'data'=>$list, 'err'=>$err]);
     // 资料
     $info = Goods::GoodsInfoAll($sku);
     foreach($list as $k=>$v) {
-      if(!isset($info[$k])) return self::GetJSON(['code'=>4000, 'msg'=>'[ '.$k.' ]无商品资料']);
+      if(!isset($info[$k])) {
+        unset($list[$k]);
+        $msg = '[ '.$k.' ]无商品资料';
+        $err = array_merge($err, [$k]);
+        continue;
+      }
       $values[] = [
         'pid'=> $id,
         'sku_id'=> $k,
@@ -658,11 +666,13 @@ class ErpPurchaseIn extends Base {
         'supplier_name'=> $info[$k]['supplier_name'],
       ];
     }
+    if(!$values) return self::GetJSON(['code'=>5000, 'msg'=>$msg, 'data'=>$list, 'err'=>$err]);
     // 是否存在
+    $pname = sData::PartitionName(strtotime($ctime), time());
     $m = new ErpPurchaseInShow();
     if($pname) $m->Partition($pname);
     $m->Columns('id', 'sku_id');
-    $m->Where('pid=? AND wms_co_id=? AND sku_id in("'.implode('","', $sku).'")', $id, $wms_co_id);
+    $m->Where('pid=? AND wms_co_id=? AND sku_id in("'.implode('","', array_keys($list)).'")', $id, $wms_co_id);
     $all = $m->Find();
     $in_sku = [];
     foreach($all as $v) $in_sku[$v['sku_id']]=$v['id'];
@@ -688,7 +698,7 @@ class ErpPurchaseIn extends Base {
     $m = new ErpPurchaseInShow();
     if($pname) $m->Partition($pname);
     $m->Columns('id', 'sku_id');
-    $m->Where('pid=? AND wms_co_id=? AND sku_id in("'.implode('","', $sku).'")', $id, $wms_co_id);
+    $m->Where('pid=? AND wms_co_id=? AND sku_id in("'.implode('","', array_keys($list)).'")', $id, $wms_co_id);
     $all = $m->Find();
     $ids = [];
     foreach($all as $v) $ids[$v['sku_id']]=$v['id'];
@@ -709,7 +719,8 @@ class ErpPurchaseIn extends Base {
       $list[$k] = $tmp;
     }
     // 返回
-    return self::GetJSON(['code'=>0, 'data'=>$list]);
+    if($msg) return self::GetJSON(['code'=>5000, 'msg'=>$msg, 'data'=>$list, 'err'=>$err]);
+    else return self::GetJSON(['code'=>0, 'data'=>$list]);
   }
 
   /* 商品-移除 */

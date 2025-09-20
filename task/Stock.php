@@ -4,7 +4,7 @@ namespace Task;
 use Service\Logs;
 use Library\Jushuitan\Erp;
 use Data\Goods;
-use Model\ErpGoods;
+use Model\ErpGoodsInfo;
 use Model\ErpPurchaseStock;
 
 /* 商品库存 */
@@ -67,11 +67,11 @@ class Stock extends Base {
       foreach($list as $v) {
         // 商品库存
         if($param['goods']) {
-          $m = new ErpGoods();
+          $m = new ErpGoodsInfo();
           $conn = $m->DBConn();
           $num = $v['num']>0?($param['type']=='adjust'?'num+'.$v['num']:$v['num']):($param['type']=='adjust'?'num-'.-$v['num']:$v['num']);
-          $res = $m->Exec($conn, 'UPDATE erp_goods SET num='.$num.' WHERE sku_id="'.$v['sku_id'].'"');
-          if(!$res) Logs::File('upload/erp/GoodsNum.json', ['action'=>'update', 'table'=>'erp_goods', 'sku_id'=>$v['sku_id'], 'num'=>$num]);
+          $res = $m->Exec($conn, 'UPDATE erp_goods_info SET num='.$num.' WHERE sku_id="'.$v['sku_id'].'"');
+          if(!$res) Logs::File('upload/erp/GoodsNum.json', ['action'=>'update', 'table'=>'erp_goods_info', 'sku_id'=>$v['sku_id'], 'num'=>$num]);
         }
         // 分仓库存
         $key = $v['wms_co_id'].'_'.$v['sku_id'];

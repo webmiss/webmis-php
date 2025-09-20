@@ -252,8 +252,6 @@ class ErpPurchaseInPush extends Base {
         foreach($list as $d) {
           // 库存、聚水谭
           Stock::Goods(json_encode(['bizs'=>[$k=>$d], 'goods'=>true]));
-          Stock::JuShuiTan(json_encode(['bizs'=>[$k=>$d]]));
-          // Task::Popen('php ../cli.php Stock JuShuiTan', ['bizs'=>[$k=>$d]]);
           // 日志
           foreach($d as $sku) {
             Logs::Goods([

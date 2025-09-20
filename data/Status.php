@@ -40,6 +40,15 @@ class Status {
     return $data[$name];
   }
 
+  /* 采购退货 */
+  static function PurchaseOut(string $name): array {
+    $data = [
+      'type_name'=> ['0'=>'普通退货', '1'=>'当天下架', '2'=>'客服退货'],
+      'status_name'=> ['0'=>'待确认', '1'=>'待退货', '2'=>'完成'],
+    ];
+    return $data[$name];
+  }
+
   /* 调拨单 */
   static function Allocate(string $name): array {
     $data = [
@@ -64,6 +73,15 @@ class Status {
       ],
       // 状态
       'status_name'=> ['0'=>'待确认', '1'=>'调拨中', '2'=>'完成'],
+    ];
+    return $data[$name];
+  }
+
+  /* 其它出入库 */
+  static function OrderInout(string $name): array {
+    $data = [
+      'type_name'=> ['0'=>'销售', '1'=>'退货'],
+      'status_name'=> ['0'=>'待确认', '1'=>'已确认'],
     ];
     return $data[$name];
   }

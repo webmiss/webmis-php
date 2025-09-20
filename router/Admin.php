@@ -167,29 +167,29 @@ class Admin {
       $router->post('erp_purchase_in_push/get_select', "ErpPurchaseInPush@GetSelect");
       $router->post('erp_purchase_in_push/goods_list', "ErpPurchaseInPush@GoodsList");
       // 库存-采购退货
-      $router->post('erp_purchase_out/total', "ErpPurchasesOut@Total");
-      $router->post('erp_purchase_out/list', "ErpPurchasesOut@List");
-      $router->post('erp_purchase_out/save', "ErpPurchasesOut@Save");
-      $router->post('erp_purchase_out/del', "ErpPurchasesOut@Del");
-      $router->post('erp_purchase_out/push', "ErpPurchasesOut@Push");
-      $router->post('erp_purchase_out/revoke', "ErpPurchasesOut@Revoke");
-      $router->post('erp_purchase_out/explode', "ErpPurchasesOut@Explode");
-      $router->post('erp_purchase_out/export', "ErpPurchasesOut@Export");
-      $router->post('erp_purchase_out/get_select', "ErpPurchasesOut@GetSelect");
-      $router->post('erp_purchase_out/goods_list', "ErpPurchasesOut@GoodsList");
-      $router->post('erp_purchase_out/goods_add', "ErpPurchasesOut@GoodsAdd");
-      $router->post('erp_purchase_out/goods_remove', "ErpPurchasesOut@GoodsRemove");
-      $router->post('erp_purchase_out/goods_num', "ErpPurchasesOut@GoodsNum");
-      $router->post('erp_purchase_out/goods_safety', "ErpPurchasesOut@GoodsSafety");
-      $router->post('erp_purchase_out/goods_price', "ErpPurchasesOut@GoodsPrice");
+      $router->post('erp_purchase_out/total', "ErpPurchaseOut@Total");
+      $router->post('erp_purchase_out/list', "ErpPurchaseOut@List");
+      $router->post('erp_purchase_out/save', "ErpPurchaseOut@Save");
+      $router->post('erp_purchase_out/del', "ErpPurchaseOut@Del");
+      $router->post('erp_purchase_out/push', "ErpPurchaseOut@Push");
+      $router->post('erp_purchase_out/revoke', "ErpPurchaseOut@Revoke");
+      $router->post('erp_purchase_out/explode', "ErpPurchaseOut@Explode");
+      $router->post('erp_purchase_out/export', "ErpPurchaseOut@Export");
+      $router->post('erp_purchase_out/get_select', "ErpPurchaseOut@GetSelect");
+      $router->post('erp_purchase_out/goods_list', "ErpPurchaseOut@GoodsList");
+      $router->post('erp_purchase_out/goods_add', "ErpPurchaseOut@GoodsAdd");
+      $router->post('erp_purchase_out/goods_remove', "ErpPurchaseOut@GoodsRemove");
+      $router->post('erp_purchase_out/goods_num', "ErpPurchaseOut@GoodsNum");
+      $router->post('erp_purchase_out/goods_safety', "ErpPurchaseOut@GoodsSafety");
+      $router->post('erp_purchase_out/goods_price', "ErpPurchaseOut@GoodsPrice");
       // 库存-退货等待
-      $router->post('erp_purchase_out_push/total', "ErpPurchasesOutPush@Total");
-      $router->post('erp_purchase_out_push/list', "ErpPurchasesOutPush@List");
-      $router->post('erp_purchase_out_push/push', "ErpPurchasesOutPush@Push");
-      $router->post('erp_purchase_out_push/revoke', "ErpPurchasesOutPush@Revoke");
-      $router->post('erp_purchase_out_push/export', "ErpPurchasesOutPush@Export");
-      $router->post('erp_purchase_out_push/get_select', "ErpPurchasesOutPush@GetSelect");
-      $router->post('erp_purchase_out_push/goods_list', "ErpPurchasesOutPush@GoodsList");
+      $router->post('erp_purchase_out_push/total', "ErpPurchaseOutPush@Total");
+      $router->post('erp_purchase_out_push/list', "ErpPurchaseOutPush@List");
+      $router->post('erp_purchase_out_push/push', "ErpPurchaseOutPush@Push");
+      $router->post('erp_purchase_out_push/revoke', "ErpPurchaseOutPush@Revoke");
+      $router->post('erp_purchase_out_push/export', "ErpPurchaseOutPush@Export");
+      $router->post('erp_purchase_out_push/get_select', "ErpPurchaseOutPush@GetSelect");
+      $router->post('erp_purchase_out_push/goods_list', "ErpPurchaseOutPush@GoodsList");
     });
     
   }
