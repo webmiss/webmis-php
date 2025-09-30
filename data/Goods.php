@@ -73,33 +73,11 @@ class Goods extends Base {
     if(empty($sku)) return [];
     // 字段
     if(!$columns) $columns = [
-      'id',
-      'img',
-      'sku_id',
-      'i_id',
-      'owner',
-      'name',
-      'short_name',
-      'properties_value',
-      'cost_price',
-      'purchase_price',
-      'supply_price',
-      'supplier_price',
-      'sale_price',
-      'market_price',
-      'other_price',
-      'other_price1',
-      'unit',
-      'weight',
-      'num',
-      'category',
-      'labels',
-      'brand',
-      'supplier_id',
-      'supplier_name',
-      'ratio',
-      'FROM_UNIXTIME(ctime) as ctime',
-      'FROM_UNIXTIME(utime) as utime',
+      'id', 'img', 'sku_id', 'i_id', 'owner', 'name', 'short_name', 'properties_value', 'unit', 'weight', 'num',
+      'cost_price', 'purchase_price', 'supply_price', 'supplier_price', 'sale_price', 'market_price', 'other_price', 'other_price1',
+      'ratio', 'ratio_cost', 'ratio_purchase', 'ratio_supply', 'ratio_supplier', 'ratio_sale', 'ratio_market',
+      'category', 'labels', 'brand', 'supplier_id', 'supplier_name',
+      'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime',
     ];
     // 商品资料
     $m = new ErpGoodsInfo();
@@ -243,7 +221,11 @@ class Goods extends Base {
   /* 商品-资料比较 */
   static function GoodsInfoDiff(array $now, array $old): string {
     $msg = '';
-    $columns = ['sku_id', 'i_id', 'name', 'short_name', 'properties_value', 'cost_price', 'purchase_price', 'supply_price', 'supplier_price', 'sale_price', 'market_price', 'other_price', 'other_price1', 'unit', 'weight', 'num', 'labels', 'labels', 'category', 'brand', 'owner', 'supplier_name'];
+    $columns = [
+      'sku_id', 'i_id', 'name', 'short_name', 'properties_value',  'unit', 'weight', 'num', 'labels', 'labels', 'category', 'brand', 'owner', 'supplier_name',
+      'cost_price', 'purchase_price', 'supply_price', 'supplier_price', 'sale_price', 'market_price', 'other_price', 'other_price1',
+      'ratio', 'ratio_cost', 'ratio_cost', 'ratio_purchase', 'ratio_supply', 'ratio_supplier', 'ratio_sale', 'ratio_market',
+    ];
     foreach ($columns as $name) {
       if(isset($now[$name]) && isset($old[$name]) && $now[$name] != $old[$name]) $msg .= ' ['.$old[$name].']>['.$now[$name].']';
     }
@@ -527,7 +509,7 @@ class Goods extends Base {
     $m = new ErpPurchaseAllocateShow();
     $m->Table($pname?'erp_purchase_allocate_show PARTITION('.$pname.') as a':'erp_purchase_allocate_show as a');
     $m->LeftJoin('erp_purchase_allocate as b', 'a.pid=b.id');
-    $m->Columns('a.type', 'a.pid', 'b.go_co_id', 'b.link_co_id', 'a.num', 'a.status', 'FROM_UNIXTIME(a.ctime) as ctime', 'FROM_UNIXTIME(b.utime) as utime', 'b.creator_name AS creator', 'b.operator_name AS operator', 'b.remark');
+    $m->Columns('a.type', 'a.pid', 'b.go_co_id', 'b.link_co_id', 'a.num', 'a.ratio', 'a.ratio_sale', 'a.ratio_market', 'a.status', 'FROM_UNIXTIME(a.ctime) as ctime', 'FROM_UNIXTIME(b.utime) as utime', 'b.creator_name AS creator', 'b.operator_name AS operator', 'b.remark');
     $m->Where('a.sku_id=?', $sku_id);
     $all = $m->Find();
     $list = array_merge($list, $all);
@@ -536,7 +518,7 @@ class Goods extends Base {
     // 数据-发货
     $m = new ErpOrderShow();
     if($pname) $m->Partition($pname);
-    $m->Columns('type','pid','wms_co_id','num','ratio','status','FROM_UNIXTIME(ctime) as ctime','FROM_UNIXTIME(utime) as utime','operator_name AS creator','operator_name AS operator','seller_words as remark');
+    $m->Columns('type', 'pid', 'wms_co_id', 'num', 'ratio', 'ratio_sale', 'ratio_market', 'status', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime', 'operator_name AS creator', 'operator_name AS operator', 'seller_words as remark');
     $m->Where('type="3" AND sku_id=?', $sku_id);
     $all = $m->Find();
     $list = array_merge($list, $all);
@@ -562,7 +544,7 @@ class Goods extends Base {
     $total['other_out'] = $total['other_in'] = 0;
     foreach ($all as $v) {
       if($v['type']=='5') $total['other_out'] += $v['num'];
-      elseif($v['type'=='6']) $total['other_in'] += $v['num'];
+      elseif($v['type']=='6') $total['other_in'] += $v['num'];
     }
     // 数据
     $partner_all = Partner::GetList();
@@ -581,6 +563,8 @@ class Goods extends Base {
       if(in_array($v['type'], [3, 4])) $v['remark'] = '-';
       // 折扣
       $v['ratio'] = isset($v['ratio'])?$v['ratio']:'1.00';
+      $v['ratio_sale'] = isset($v['ratio_sale'])?$v['ratio_sale']:'1.00';
+      $v['ratio_market'] = isset($v['ratio_market'])?$v['ratio_market']:'1.00';
       // 数据
       $list[$k] = $v;
     }

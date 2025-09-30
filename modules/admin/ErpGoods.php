@@ -49,19 +49,10 @@ class ErpGoods extends Base {
     }
     // 商品资料
     $info = GoodsD::GoodsInfoAll($sku, 'data', [-1, 3], [
-      'sku_id',
-      'name',
-      'short_name',
-      'properties_value',
-      'purchase_price',
-      'sale_price',
-      'market_price',
-      'unit',
-      'weight',
-      'ratio',
-      'brand',
-      'owner',
-      'i_id'
+      'sku_id', 'name', 'short_name', 'properties_value', 'unit', 'weight',
+      'purchase_price', 'sale_price', 'market_price',
+      'ratio', 'ratio_purchase', 'ratio_sale', 'ratio_market',
+      'brand', 'owner', 'i_id'
     ]);
     foreach($list as $k=>$v) {
       if(isset($info[$k])) {
@@ -120,24 +111,11 @@ class ErpGoods extends Base {
   /* 商品信息 */
   private static function getGoodsInfo(string $sku_id): array {
     return GoodsD::GoodsInfo($sku_id, 'data', [
-      'sku_id',
-      'i_id',
-      'name',
-      'short_name',
-      'properties_value',
-      'sale_price',
-      'market_price',
-      'num',
-      'unit',
-      'weight',
-      'ratio',
-      'labels',
-      'category',
-      'brand',
-      'owner',
-      'img',
-      'FROM_UNIXTIME(ctime) as ctime',
-      'FROM_UNIXTIME(utime) as utime'
+      'sku_id', 'i_id', 'name', 'short_name', 'properties_value', 'unit', 'weight',
+      'sale_price', 'market_price', 'num',
+      'ratio', 'ratio_sale', 'ratio_market',
+      'labels', 'category', 'brand', 'owner', 'img',
+      'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime'
     ]);
   }
 

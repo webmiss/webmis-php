@@ -181,7 +181,7 @@ class ErpGoodsStock extends Base {
       if(strstr($sku_id, '%')){
         $where[] = 'sku_id like "'.$sku_id.'"';
       }else{
-        $arr = explode(' ', $sku_id);
+        $arr = array_values(array_filter(explode(' ', $sku_id)));
         foreach($arr as $k=>$v) $arr[$k]=Util::Trim($v);
         $where[] = 'sku_id in("'.implode('","', $arr).'")';
       }

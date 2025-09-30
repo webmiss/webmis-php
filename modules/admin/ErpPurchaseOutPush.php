@@ -154,14 +154,14 @@ class ErpPurchaseOutPush extends Base {
     if($operator_name) $where[] = 'operator_name like "%'.$operator_name.'%"';
     // 备注
     $remark = isset($d['remark'])?trim($d['remark']):'';
-    if($remark!='') $where[] = 'a.remark like "%'.$remark.'%"';
+    if($remark!='') $where[] = 'remark like "%'.$remark.'%"';
     // 返回
     return implode(' AND ', $where);
   }
   /* 搜索条件-PID */
   static function getPid(string $sku_id, $start, $end) {
     // 条件
-    $arr = explode(' ', $sku_id);
+    $arr = array_values(array_filter(explode(' ', $sku_id)));
     foreach($arr as $k=>$v) $arr[$k]=Util::Trim($v);
     $w = '';
     if($start) $w .= 'utime >= '.$start.' AND ';
@@ -331,7 +331,7 @@ class ErpPurchaseOutPush extends Base {
     // 表头
     $html = Export::ExcelTop();
     $html .= Export::ExcelTitle([
-      '单号', '类型', '退货仓库', '图片', '商品编码', '暗码', '商品名称', '颜色及规格', '供应链价(元)', '标签价(元)', '吊牌价(W)', '数量', '折扣', '单位', '重量', '标签', '商品分类', '品牌', '款式编码', '采购员', '状态', '制单员', '操作员', '创建时间', '修改时间', '备注'
+      '单号', '类型', '退货仓库', '图片', '商品编码', '暗码', '商品名称', '颜色及规格', '供应链价(元)', '供应链折扣', '标签价(元)', '标签折扣', '吊牌价(W)', '吊牌折扣', '数量', '折扣', '单位', '重量', '标签', '商品分类', '品牌', '款式编码', '采购员', '状态', '制单员', '操作员', '创建时间', '修改时间', '备注'
     ]);
     // 内容
     self::$partner_name = Partner::GetList();
@@ -348,9 +348,12 @@ class ErpPurchaseOutPush extends Base {
         '&nbsp;'.($tmp['short_name']?$tmp['short_name']:'-'),
         $tmp['name']?$tmp['name']:'-',
         '&nbsp;'.($tmp['properties_value']?$tmp['properties_value']:'-'),
-        $tmp['supply_price']>0?round($tmp['supply_price']*$v['num']*$tmp['ratio'], 2):'-',
-        $tmp['sale_price']>0?round($tmp['sale_price']*$v['num']*$tmp['ratio'], 2):'-',
-        $tmp['market_price']>0?round($tmp['market_price']*$v['num']*$tmp['ratio'], 2):'-',
+        $tmp['supply_price']>0?round($tmp['supply_price']*$v['num']*($tmp['ratio']<1?$tmp['ratio']:$tmp['ratio_supply']), 2):'-',
+        $tmp?$tmp['ratio_supply']:1.00,
+        $tmp['sale_price']>0?round($tmp['sale_price']*$v['num']*($tmp['ratio']<1?$tmp['ratio']:$tmp['ratio_sale']), 2):'-',
+        $tmp?$tmp['ratio_sale']:1.00,
+        $tmp['market_price']>0?round($tmp['market_price']*$v['num']*($tmp['ratio']<1?$tmp['ratio']:$tmp['market_price']), 2):'-',
+        $tmp?$tmp['ratio_market']:1.00,
         $v['num'],
         $tmp?$tmp['ratio']:1.00,
         $tmp['unit']?$tmp['unit']:'-',
@@ -477,6 +480,9 @@ class ErpPurchaseOutPush extends Base {
       $v['unit'] = $info['unit'];
       $v['weight'] = $info['weight'];
       $v['ratio'] = $info['ratio'];
+      $v['ratio_supply'] = $info['ratio_supply'];
+      $v['ratio_sale'] = $info['ratio_sale'];
+      $v['ratio_market'] = $info['ratio_market'];
       $v['labels'] = $info['labels'];
       $v['brand'] = $info['brand'];
       $v['owner'] = $info['owner'];

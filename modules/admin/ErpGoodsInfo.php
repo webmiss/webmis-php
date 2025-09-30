@@ -92,7 +92,11 @@ class ErpGoodsInfo extends Base {
     // 查询
     $m = new ErpGoodsInfoM();
     if($pname) $m->Partition($pname);
-    $m->Columns('id', 'img', 'sku_id', 'i_id', 'owner', 'name', 'short_name', 'properties_value', 'unit', 'weight', 'category', 'labels', 'brand', 'supplier_id', 'supplier_name', 'state', 'operator_id', 'operator_name', 'remark', 'cost_price', 'purchase_price', 'supply_price', 'supplier_price', 'sale_price', 'market_price', 'other_price', 'other_price1', 'num', 'ratio', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
+    $m->Columns(
+      'id', 'img', 'sku_id', 'i_id', 'owner', 'name', 'short_name', 'properties_value', 'unit', 'weight', 'category', 'labels', 'brand', 'supplier_id', 'supplier_name', 'operator_id', 'operator_name', 'remark', 'cost_price', 'purchase_price', 'supply_price', 'supplier_price', 'sale_price', 'market_price', 'other_price', 'other_price1', 'num',
+      'ratio', 'ratio_cost', 'ratio_purchase', 'ratio_supply', 'ratio_supplier', 'ratio_sale', 'ratio_market',
+      'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime'
+    );
     $m->Where($where);
     $m->Page($page, $limit);
     $m->Order($order ?: 'id DESC');
@@ -171,7 +175,7 @@ class ErpGoodsInfo extends Base {
       if(strstr($sku_id, '%')) {
         $where[] = 'sku_id like "' . $sku_id . '"';
       } else {
-        $arr = explode(' ', $sku_id);
+        $arr = array_values(array_filter(explode(' ', $sku_id)));
         foreach($arr as $k=> $v) $arr[$k] = trim($v);
         $where[] = 'sku_id in("' . implode('","', $arr) . '")';
       }
@@ -182,7 +186,7 @@ class ErpGoodsInfo extends Base {
       if(strstr($short_name, '%')) {
         $where[] = 'short_name like "' . $short_name . '"';
       } else {
-        $arr = explode(' ', $short_name);
+        $arr = array_values(array_filter(explode(' ', $short_name)));
         foreach($arr as $k=> $v) $arr[$k] = trim($v);
         $where[] = 'short_name in("' . implode('","', $arr) . '")';
       }
@@ -288,6 +292,12 @@ class ErpGoodsInfo extends Base {
     if(isset($data['weight']) && $data['weight'] != '') $param['weight'] = Util::Trim($data['weight']);
     if(isset($data['num']) && $data['num'] != '') $param['num'] = Util::Trim($data['num']);
     if(isset($data['ratio']) && $data['ratio'] != '') $param['ratio'] = Util::Trim($data['ratio']);
+    if(isset($data['ratio_cost']) && $data['ratio_cost'] != '') $param['ratio_cost'] = Util::Trim($data['ratio_cost']);
+    if(isset($data['ratio_purchase']) && $data['ratio_purchase'] != '') $param['ratio_purchase'] = Util::Trim($data['ratio_purchase']);
+    if(isset($data['ratio_supply']) && $data['ratio_supply'] != '') $param['ratio_supply'] = Util::Trim($data['ratio_supply']);
+    if(isset($data['ratio_supplier']) && $data['ratio_supplier'] != '') $param['ratio_supplier'] = Util::Trim($data['ratio_supplier']);
+    if(isset($data['ratio_sale']) && $data['ratio_sale'] != '') $param['ratio_sale'] = Util::Trim($data['ratio_sale']);
+    if(isset($data['ratio_market']) && $data['ratio_market'] != '') $param['ratio_market'] = Util::Trim($data['ratio_market']);
     if(isset($data['owner']) && $data['owner'] != '') $param['owner'] = Util::Trim($data['owner']);
     if(isset($data['i_id']) && $data['i_id'] != '') $param['i_id'] = Util::Trim($data['i_id']);
     if(isset($data['supplier_name']) && $data['supplier_name'] != '') $param['supplier_name'] = Util::Trim($data['supplier_name']);
@@ -386,7 +396,11 @@ class ErpGoodsInfo extends Base {
     // 查询
     $m = new ErpGoodsInfoM();
     if($pname) $m->Partition($pname);
-    $m->Columns('id', 'img', 'sku_id', 'i_id', 'owner', 'name', 'short_name', 'properties_value', 'cost_price', 'purchase_price', 'supply_price', 'supplier_price', 'sale_price', 'market_price', 'other_price', 'other_price1', 'unit', 'weight', 'num', 'ratio', 'labels', 'category', 'brand', 'supplier_name', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
+    $m->Columns(
+      'id', 'img', 'sku_id', 'i_id', 'owner', 'name', 'short_name', 'properties_value', 'cost_price', 'purchase_price', 'supply_price', 'supplier_price', 'sale_price', 'market_price', 'other_price', 'other_price1', 'unit', 'weight', 'num', 'labels', 'category', 'brand', 'supplier_name',
+      'ratio', 'ratio_cost', 'ratio_purchase', 'ratio_supply', 'ratio_supplier', 'ratio_sale', 'ratio_market',
+      'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime'
+    );
     $m->Where($where);
     $m->Order($order ?: 'utime DESC, id DESC');
     $list = $m->Find();
@@ -410,7 +424,7 @@ class ErpGoodsInfo extends Base {
     self::$export_filename = 'Goods_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
     $html = Export::ExcelTop();
     $html .= Export::ExcelTitle([
-      'ID', '图片', '商品编码', '暗码', '款式编码', '商品名称', '颜色及规格', '成本价(元)', '供应链价(元)', '标签价(元)', '采购价(W)', '人民币采购价(元)', '吊牌价(W)', '参照价(元)', '其它价格1', '单位', '重量', '折扣', '库存', '仓库名称', '标签', '商品分类', '品牌', '供应商', '采购员', '创建时间', '更新时间'
+      'ID', '图片', '商品编码', '暗码', '款式编码', '商品名称', '颜色及规格', '成本价(元)', '成本折扣', '供应链价(元)', '供应链折扣', '标签价(元)', '标签折扣', '采购价(W)', '采购折扣', '人民币采购价(元)', '人民币折扣', '吊牌价(W)', '吊牌折扣', '参照价(元)', '其它价格1', '单位', '重量', '折扣', '库存', '仓库名称', '标签', '商品分类', '品牌', '供应商', '采购员', '创建时间', '更新时间'
     ]);
     foreach($list as $v) {
       // 成本价
@@ -425,11 +439,17 @@ class ErpGoodsInfo extends Base {
         $v['name'],
         $v['properties_value'],
         $isPrice?$v['cost_price']:'***',
+        $v['ratio_cost'],
         $v['supply_price'],
+        $v['ratio_supply'],
         $v['sale_price'],
+        $v['ratio_sale'],
         $isPrice?$v['purchase_price']:'***',
+        $v['ratio_purchase'],
         $v['supplier_price'],
+        $v['ratio_supplier'],
         $v['market_price'],
+        $v['ratio_market'],
         $v['other_price'],
         $v['other_price1'],
         $v['unit'],

@@ -152,14 +152,14 @@ class ErpPurchaseIn extends Base {
     if($operator_name) $where[] = 'operator_name like "%'.$operator_name.'%"';
     // 备注
     $remark = isset($d['remark'])?trim($d['remark']):'';
-    if($remark!='') $where[] = 'a.remark like "%'.$remark.'%"';
+    if($remark!='') $where[] = 'remark like "%'.$remark.'%"';
     // 返回
     return implode(' AND ', $where);
   }
   /* 搜索条件-PID */
   static function getPid(string $sku_id, $start, $end) {
     // 条件
-    $arr = explode(' ', $sku_id);
+    $arr = array_values(array_filter(explode(' ', $sku_id)));
     foreach($arr as $k=>$v) $arr[$k]=Util::Trim($v);
     $w = '';
     if($start) $w .= 'utime >= '.$start.' AND ';
@@ -201,14 +201,14 @@ class ErpPurchaseIn extends Base {
     $param['brand'] = isset($data['brand'])&&$data['brand']?$data['brand'][0]:'';
     $param['remark'] = isset($data['remark'])?trim($data['remark']):'';
     if($param['type']=='' || $param['wms_co_id']=='' || $param['brand']=='') return self::GetJSON(['code'=>4000]);
-    // 模型
-    $m = new ErpPurchaseInM();
+    // 类型
     if(!$id) {
       // 添加
       $param['ctime'] = time();
       $param['utime'] = time();
       $param['creator_id'] = $admin->uid;
       $param['creator_name'] = $admin->name;
+      $m = new ErpPurchaseInM();
       $m->Values($param);
       if($m->Insert()) {
         $id = $m->GetID();
@@ -224,10 +224,17 @@ class ErpPurchaseIn extends Base {
         return self::GetJSON(['code'=>5000]);
       }
     }
+    // 单据
+    $m = new ErpPurchaseInM();
+    $m->Columns('id');
+    $m->Where('status="0" AND id=?', $id);
+    $info = $m->FindFirst();
+    if(!$info) return self::GetJSON(['code'=>4000, 'msg'=>'当前状态不可用!']);
     // 编辑
     $param['utime'] = time();
     $param['operator_id'] = $admin->uid;
     $param['operator_name'] = $admin->name;
+    $m = new ErpPurchaseInM();
     $m->Set($param);
     $m->Where('id=?', $id);
     if($m->Update()) {
@@ -402,7 +409,7 @@ class ErpPurchaseIn extends Base {
     // 表头
     $html = Export::ExcelTop();
     $html .= Export::ExcelTitle([
-      '单号', '类型', '入库仓库', '图片', '商品编码', '暗码', '商品名称', '颜色及规格', '供应链价(元)', '标签价(元)', '吊牌价(W)', '数量', '折扣', '单位', '重量', '标签', '商品分类', '品牌', '款式编码', '采购员', '状态', '制单员', '操作员', '创建时间', '修改时间', '备注'
+      '单号', '类型', '入库仓库', '图片', '商品编码', '暗码', '商品名称', '颜色及规格', '供应链价(元)', '供应链折扣', '标签价(元)', '标签折扣', '吊牌价(W)', '吊牌折扣', '数量', '折扣', '单位', '重量', '标签', '商品分类', '品牌', '款式编码', '采购员', '状态', '制单员', '操作员', '创建时间', '修改时间', '备注'
     ]);
     // 内容
     self::$partner_name = Partner::GetList();
@@ -419,9 +426,12 @@ class ErpPurchaseIn extends Base {
         '&nbsp;'.$tmp['short_name']?$tmp['short_name']:'-',
         $tmp['name']?$tmp['name']:'-',
         '&nbsp;'.$tmp['properties_value']?$tmp['properties_value']:'-',
-        $tmp['supply_price']>0?round($tmp['supply_price']*$v['num']*$tmp['ratio'], 2):'-',
-        $tmp['sale_price']>0?round($tmp['sale_price']*$v['num']*$tmp['ratio'], 2):'-',
-        $tmp['market_price']>0?round($tmp['market_price']*$v['num']*$tmp['ratio'], 2):'-',
+        $tmp['supply_price']>0?round($tmp['supply_price']*$v['num']*($tmp['ratio']<1?$tmp['ratio']:$tmp['ratio_supply']), 2):'-',
+        $tmp?$tmp['ratio_supply']:1.00,
+        $tmp['sale_price']>0?round($tmp['sale_price']*$v['num']*($tmp['ratio']<1?$tmp['ratio']:$tmp['ratio_sale']), 2):'-',
+        $tmp?$tmp['ratio_sale']:1.00,
+        $tmp['market_price']>0?round($tmp['market_price']*$v['num']*($tmp['ratio']<1?$tmp['ratio']:$tmp['market_price']), 2):'-',
+        $tmp?$tmp['ratio_market']:1.00,
         $v['num'],
         $tmp?$tmp['ratio']:1.00,
         $tmp['unit']?$tmp['unit']:'-',
@@ -548,6 +558,9 @@ class ErpPurchaseIn extends Base {
       $v['unit'] = $info['unit'];
       $v['weight'] = $info['weight'];
       $v['ratio'] = $info['ratio'];
+      $v['ratio_supply'] = $info['ratio_supply'];
+      $v['ratio_sale'] = $info['ratio_sale'];
+      $v['ratio_market'] = $info['ratio_market'];
       $v['labels'] = $info['labels'];
       $v['brand'] = $info['brand'];
       $v['owner'] = $info['owner'];
@@ -842,10 +855,10 @@ class ErpPurchaseIn extends Base {
     $num = $total = 0;
     $cost_price = $sale_price = $purchase_price = $market_price = 0;
     foreach($info as $k=>$v) {
-      $cost_price += $v['cost_price']*$list[$k]*$v['ratio'];
-      $sale_price += $v['sale_price']*$list[$k]*$v['ratio'];
-      $purchase_price += $v['purchase_price']*$list[$k]*$v['ratio'];
-      $market_price += $v['market_price']*$list[$k]*$v['ratio'];
+      $cost_price += $v['cost_price']*$list[$k]*($v['ratio']<1?$v['ratio']:$v['ratio_cost']);
+      $sale_price += $v['sale_price']*$list[$k]*($v['ratio']<1?$v['ratio']:$v['ratio_sale']);
+      $purchase_price += $v['purchase_price']*$list[$k]*($v['ratio']<1?$v['ratio']:$v['ratio_purchase']);
+      $market_price += $v['market_price']*$list[$k]*($v['ratio']<1?$v['ratio']:$v['ratio_market']);
       $num += $list[$k];
       $total++;
     }
