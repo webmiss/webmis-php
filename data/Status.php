@@ -3,6 +3,64 @@ namespace Data;
 
 class Status {
 
+  /* 店铺 */
+  static function Shop(string $name): array {
+    $data = [
+      'city_name'=> ['0'=>'其它', '1'=>'瑞丽', '2'=>'平洲'],
+      'class_name'=> ['0'=>'其它', '1'=>'线下', '2'=>'淘宝', '3'=>'抖音', '4'=>'视频号', '5'=>'视频小店', '6'=>'拼多多', '7'=>'快手'],
+      'status_name'=> ['0'=>'禁用', '1'=>'正常'],
+    ];
+    return $data[$name];
+  }
+
+  /* 主仓&分仓 */
+  static function Partner(string $name): array {
+    $data = [
+      'type_name'=> ['0'=>'主仓', '1'=>'分仓'],
+      'class_name'=> [
+        '0'=> '其它',
+        '1'=> '库房',
+        '2'=> '瑞丽',
+        '3'=> '平洲',
+        '4'=> '四会',
+        '5'=> '直播间',
+        '6'=> '客服仓',
+        '7'=> '私域仓',
+        '8'=> '送货仓',
+        '9'=> '福利仓',
+        '10'=> '视频仓',
+        '11'=> '物资仓',
+        '12'=> '借货',
+      ],
+      'status_name'=> ['0'=>'禁用', '1'=>'正常'],
+    ];
+    return $data[$name];
+  }
+
+  /* 品牌 */
+  static function Brand(string $name): array {
+    $data = [
+      'class_name'=> [
+        '0'=> '其它',
+        '1'=> '公司',
+        '2'=> '瑞丽',
+        '3'=> '平洲',
+        '4'=> '四会',
+        '5'=> '曼德勒'
+      ],
+      'status_name'=> ['0'=>'禁用', '1'=>'正常'],
+    ];
+    return $data[$name];
+  }
+
+  /* 分类 */
+  static function Category(string $name): array {
+    $data = [
+      'status_name'=> ['0'=>'禁用', '1'=>'正常'],
+    ];
+    return $data[$name];
+  }
+
   /* 供应商 */
   static function Supplier(string $name): array {
     $data = [
@@ -79,6 +137,15 @@ class Status {
 
   /* 其它出入库 */
   static function OrderInout(string $name): array {
+    $data = [
+      'type_name'=> ['0'=>'销售', '1'=>'退货'],
+      'status_name'=> ['0'=>'待确认', '1'=>'已确认'],
+    ];
+    return $data[$name];
+  }
+
+  /* 其它出入库 */
+  static function OtherInout(string $name): array {
     $data = [
       'type_name'=> ['0'=>'销售', '1'=>'退货'],
       'status_name'=> ['0'=>'待确认', '1'=>'已确认'],

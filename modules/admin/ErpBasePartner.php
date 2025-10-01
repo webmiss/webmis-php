@@ -6,32 +6,16 @@ use Service\Base;
 use Service\AdminToken;
 use Library\Export;
 use Library\Jushuitan\Erp;
+use Data\Status;
 use Util\Util;
 use Model\ErpBasePartner as ErpBasePartnerM;
 
 class ErpBasePartner extends Base {
 
-  // 类型
-  static private $type_name = ['0'=>'主仓', '1'=>'分仓'];
-  // 分类
-  static private $class_name = [
-    '0'=> '其它',
-    '1'=> '库房',
-    '2'=> '瑞丽',
-    '3'=> '平洲',
-    '4'=> '四会',
-    '5'=> '直播间',
-    '6'=> '客服仓',
-    '7'=> '私域仓',
-    '8'=> '送货仓',
-    '9'=> '福利仓',
-    '10'=> '视频仓',
-    '11'=> '物资仓',
-    '12'=> '借货',
-    '13'=> '正多',
-  ];
-  // 状态
-  private static $status_name = ['0'=>'禁用', '1'=>'正常'];
+  
+  static private $type_name = [];               // 类型
+  static private $class_name = [];              // 分类
+  private static $status_name = [];             // 状态
   // 导出
   static private $export_path = 'upload/tmp/';  // 目录
   static private $export_filename = '';         // 文件名
@@ -82,15 +66,16 @@ class ErpBasePartner extends Base {
     // 查询
     $m = new ErpBasePartnerM();
     $m->Columns(
-      'id', 'type', 'class', 'wms_co_id', 'name', 'sort', 'state', 'creator_name', 'operator_name', 'remark',
+      'id', 'type', 'class', 'wms_co_id', 'name', 'sort', 'status', 'creator_name', 'operator_name', 'remark',
       'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime',
     );
     $m->Where($where);
     $m->Order($order?:'id DESC');
     $m->Page($page, $limit);
     $list = $m->Find();
+    self::$type_name = Status::Partner('type_name');
     foreach($list as $k=>$v) {
-      $list[$k]['state'] = $v['state']?true:false;
+      $list[$k]['status'] = $v['status']?true:false;
       $list[$k]['type_name'] = self::$type_name[$v['type']];
     }
     // 返回
@@ -119,7 +104,7 @@ class ErpBasePartner extends Base {
     if($class) $where[] = 'class in("'.implode('","', $class).'")';
     // 状态
     $status = isset($d['status'])&&is_array($d['status'])?$d['status']:[];
-    if($status) $where[] = 'state in('.implode(',', $status).')';
+    if($status) $where[] = 'status in('.implode(',', $status).')';
     // 名称
     $name = isset($d['name'])?trim($d['name']):'';
     if($name) $where[] = 'name LIKE "%'.$name.'%"';
@@ -156,7 +141,7 @@ class ErpBasePartner extends Base {
     $param['class'] = isset($data['class'])&&$data['class']?$data['class'][0]:'';
     $param['wms_co_id'] = isset($data['wms_co_id'])?trim($data['wms_co_id']):'';
     $param['name'] = isset($data['name'])?trim($data['name']):'';
-    $param['state'] = isset($data['state'])&&$data['state']?1:0;
+    $param['status'] = isset($data['status'])&&$data['status']?1:0;
     $param['remark'] = isset($data['remark'])?trim($data['remark']):'';
     // 验证
     if(!is_numeric($param['sort'])) return self::GetJSON(['code'=>4000, 'msg'=>'请输入排序数字']);
@@ -233,7 +218,7 @@ class ErpBasePartner extends Base {
     // 查询
     $m = new ErpBasePartnerM();
     $m->Columns(
-      'id', 'type', 'class', 'wms_co_id', 'name', 'sort', 'state', 'creator_name', 'operator_name', 'remark',
+      'id', 'type', 'class', 'wms_co_id', 'name', 'sort', 'status', 'creator_name', 'operator_name', 'remark',
       'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime',
     );
     $m->Where($where);
@@ -248,6 +233,7 @@ class ErpBasePartner extends Base {
       'ID', '类型', '分类', '分仓ID', '仓库名称', '排序', '状态', '创建时间', '更新时间', '制单员', '操作员', '备注'
     ]);
     // 数据
+    self::$type_name = Status::Partner('type_name');
     foreach($list as $k=>$v){
       // 内容
       $html .= Export::ExcelData([
@@ -257,7 +243,7 @@ class ErpBasePartner extends Base {
         $v['wms_co_id'],
         $v['name'],
         $v['sort'],
-        $v['state']?self::GetLang('enable'):self::GetLang('disable'),
+        $v['status']?self::GetLang('enable'):self::GetLang('disable'),
         '&nbsp;'.$v['ctime'],
         '&nbsp;'.$v['utime'],
         $v['creator_name'],
@@ -281,13 +267,16 @@ class ErpBasePartner extends Base {
     if($msg!='') return self::GetJSON(['code'=>4001]);
     // 类型
     $type_name = [];
+    self::$type_name = Status::Partner('type_name');
     foreach(self::$type_name as $k=>$v) $type_name[]=['label'=>$v, 'value'=>$k];
     // 分类
     $class_name = [];
+    self::$class_name = Status::Partner('class_name');
     foreach(self::$class_name as $k=>$v) $class_name[]=['label'=>$v, 'value'=>$v];
     // 状态
     $status_name = [];
-    foreach(self::$status_name as $k=>$v) $status_name[]=['label'=> $v, 'value'=> $k];
+    self::$status_name = Status::Partner('status_name');
+    foreach(self::$status_name as $k=>$v) $status_name[]=['label'=>$v, 'value'=>$k];
     // 返回
     return self::GetJSON(['code'=>0, 'data'=>[
       'type_name'=> $type_name,

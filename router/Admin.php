@@ -80,7 +80,6 @@ class Admin {
       $router->post('erp_base_shop/del', "ErpBaseShop@Del");
       $router->post('erp_base_shop/export', "ErpBaseShop@Export");
       $router->post('erp_base_shop/get_select', "ErpBaseShop@GetSelect");
-      $router->post('erp_base_shop/pull', "ErpBaseShop@Pull");
       // 主仓&分仓
       $router->post('erp_base_partner/total', "ErpBasePartner@Total");
       $router->post('erp_base_partner/list', "ErpBasePartner@List");
@@ -88,7 +87,6 @@ class Admin {
       $router->post('erp_base_partner/del', "ErpBasePartner@Del");
       $router->post('erp_base_partner/export', "ErpBasePartner@Export");
       $router->post('erp_base_partner/get_select', "ErpBasePartner@GetSelect");
-      $router->post('erp_base_partner/pull', "ErpBasePartner@Pull");
       // 品牌管理
       $router->post('erp_base_brand/total', "ErpBaseBrand@Total");
       $router->post('erp_base_brand/list', "ErpBaseBrand@List");
@@ -102,6 +100,7 @@ class Admin {
       $router->post('erp_base_category/save', "ErpBaseCategory@Save");
       $router->post('erp_base_category/del', "ErpBaseCategory@Del");
       $router->post('erp_base_category/export', "ErpBaseCategory@Export");
+      $router->post('erp_base_category/get_select', "ErpBaseCategory@GetSelect");
       // 供应商
       $router->post('erp_base_supplier/total', "ErpBaseSupplier@Total");
       $router->post('erp_base_supplier/list', "ErpBaseSupplier@List");
@@ -190,6 +189,43 @@ class Admin {
       $router->post('erp_purchase_out_push/export', "ErpPurchaseOutPush@Export");
       $router->post('erp_purchase_out_push/get_select', "ErpPurchaseOutPush@GetSelect");
       $router->post('erp_purchase_out_push/goods_list', "ErpPurchaseOutPush@GoodsList");
+      // 调拨出
+      $router->post('erp_purchase_allocate_out/total', "ErpPurchaseAllocateOut@Total");
+      $router->post('erp_purchase_allocate_out/list', "ErpPurchaseAllocateOut@List");
+      $router->post('erp_purchase_allocate_out/save', "ErpPurchaseAllocateOut@Save");
+      $router->post('erp_purchase_allocate_out/del', "ErpPurchaseAllocateOut@Del");
+      $router->post('erp_purchase_allocate_out/push', "ErpPurchaseAllocateOut@Push");
+      $router->post('erp_purchase_allocate_out/revoke', "ErpPurchaseAllocateOut@Revoke");
+      $router->post('erp_purchase_allocate_out/export', "ErpPurchaseAllocateOut@Export");
+      $router->post('erp_purchase_allocate_out/get_select', "ErpPurchaseAllocateOut@GetSelect");
+      $router->post('erp_purchase_allocate_out/goods_list', "ErpPurchaseAllocateOut@GoodsList");
+      $router->post('erp_purchase_allocate_out/goods_add', "ErpPurchaseAllocateOut@GoodsAdd");
+      $router->post('erp_purchase_allocate_out/goods_remove', "ErpPurchaseAllocateOut@GoodsRemove");
+      $router->post('erp_purchase_allocate_out/goods_num', "ErpPurchaseAllocateOut@GoodsNum");
+      $router->post('erp_purchase_allocate_out/goods_safety', "ErpPurchaseAllocateOut@GoodsSafety");
+      $router->post('erp_purchase_allocate_out/goods_price', "ErpPurchaseAllocateOut@GoodsPrice");
+      // 调拨入
+      $router->post('erp_purchase_allocate_in/total', "ErpPurchaseAllocateIn@Total");
+      $router->post('erp_purchase_allocate_in/list', "ErpPurchaseAllocateIn@List");
+      $router->post('erp_purchase_allocate_in/push', "ErpPurchaseAllocateIn@Push");
+      $router->post('erp_purchase_allocate_in/revoke', "ErpPurchaseAllocateIn@Revoke");
+      $router->post('erp_purchase_allocate_in/export', "ErpPurchaseAllocateIn@Export");
+      $router->post('erp_purchase_allocate_in/get_select', "ErpPurchaseAllocateIn@GetSelect");
+      $router->post('erp_purchase_allocate_in/goods_list', "ErpPurchaseAllocateIn@GoodsList");
+      // 其它出入库
+      $router->post('erp_order_inout/total', "ErpOrderInout@Total");
+      $router->post('erp_order_inout/list', "ErpOrderInout@List");
+      $router->post('erp_order_inout/save', "ErpOrderInout@Save");
+      $router->post('erp_order_inout/del', "ErpOrderInout@Del");
+      $router->post('erp_order_inout/push', "ErpOrderInout@Push");
+      $router->post('erp_order_inout/export', "ErpOrderInout@Export");
+      $router->post('erp_order_inout/get_select', "ErpOrderInout@GetSelect");
+      $router->post('erp_order_inout/goods_list', "ErpOrderInout@GoodsList");
+      $router->post('erp_order_inout/goods_add', "ErpOrderInout@GoodsAdd");
+      $router->post('erp_order_inout/goods_remove', "ErpOrderInout@GoodsRemove");
+      $router->post('erp_order_inout/goods_num', "ErpOrderInout@GoodsNum");
+      $router->post('erp_order_inout/goods_safety', "ErpOrderInout@GoodsSafety");
+      $router->post('erp_order_inout/goods_price', "ErpOrderInout@GoodsPrice");
     });
     
   }

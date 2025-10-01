@@ -5,12 +5,14 @@ use Config\Env;
 use Service\Base;
 use Service\AdminToken;
 use Library\Export;
+use Data\Status;
 use Util\Util;
 use Model\ErpBaseCategory as ErpBaseCategoryM;
 
 /* 分类管理 */
 class ErpBaseCategory extends Base {
 
+  static private $status_name = [];             // 状态
   // 导出
   static private $export_path = 'upload/tmp/';  // 目录
   static private $export_filename = '';         // 文件名
@@ -61,7 +63,7 @@ class ErpBaseCategory extends Base {
     // 查询
     $m = new ErpBaseCategoryM();
     $m->Columns(
-      'id', 'name', 'sort', 'state', 'creator_name', 'operator_name', 'remark',
+      'id', 'name', 'sort', 'status', 'creator_name', 'operator_name', 'remark',
       'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime',
     );
     $m->Where($where);
@@ -69,7 +71,7 @@ class ErpBaseCategory extends Base {
     $m->Page($page, $limit);
     $list = $m->Find();
     foreach($list as $k=>$v) {
-      $list[$k]['state'] = $v['state']?true:false;
+      $list[$k]['status'] = $v['status']?true:false;
     }
     // 返回
     return self::GetJSON(['code'=>0, 'time'=>date('Y/m/d H:i:s'), 'data'=>$list]);
@@ -86,6 +88,9 @@ class ErpBaseCategory extends Base {
       ];
       $where[] = '('.implode(' OR ', $arr).')';
     }
+    // 状态
+    $status = isset($d['status'])&&is_array($d['status'])?$d['status']:[];
+    if($status) $where[] = 'status in('.implode(',', $status).')';
     // 名称
     $name = isset($d['name'])?trim($d['name']):'';
     if($name) $where[] = 'name LIKE "%'.$name.'%"';
@@ -119,7 +124,7 @@ class ErpBaseCategory extends Base {
     $id = isset($data['id'])&&$data['id']?trim($data['id']):'';
     $param['sort'] = isset($data['sort'])?$data['sort']:'';
     $param['name'] = isset($data['name'])?Util::Trim($data['name']):'';
-    $param['state'] = isset($data['state'])&&$data['state']?1:0;
+    $param['status'] = isset($data['status'])&&$data['status']?1:0;
     $param['remark'] = isset($data['remark'])?trim($data['remark']):'';
     // 验证
     if(!is_numeric($param['sort'])) return self::GetJSON(['code'=>4000, 'msg'=>'请输入排序数字']);
@@ -208,7 +213,7 @@ class ErpBaseCategory extends Base {
     // 查询
     $m = new ErpBaseCategoryM();
     $m->Columns(
-      'id', 'name', 'sort', 'state', 'creator_name', 'operator_name', 'remark',
+      'id', 'name', 'sort', 'status', 'creator_name', 'operator_name', 'remark',
       'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime',
     );
     $m->Where($where);
@@ -229,7 +234,7 @@ class ErpBaseCategory extends Base {
         $v['id'],
         $v['name'],
         $v['sort'],
-        $v['state']?self::GetLang('enable'):self::GetLang('disable'),
+        $v['status']?self::GetLang('enable'):self::GetLang('disable'),
         '&nbsp;'.$v['ctime'],
         '&nbsp;'.$v['utime'],
         $v['creator_name'],
@@ -241,6 +246,24 @@ class ErpBaseCategory extends Base {
     Export::ExcelFileEnd(self::$export_path, self::$export_filename, $html);
     // 返回
     return self::GetJSON(['code'=>0, 'data'=>['path'=>Env::BaseUrl(self::$export_path), 'filename'=>self::$export_filename]]);
+  }
+
+  /* 选项 */
+  static function GetSelect(): string {
+    // 参数
+    $json = self::Json();
+    $token = self::JsonName($json, 'token');
+    // 验证
+    $msg = AdminToken::Verify($token, '');
+    if($msg!='') return self::GetJSON(['code'=>4001]);
+    // 状态
+    $status_name = [];
+    self::$status_name = Status::Category('status_name');
+    foreach(self::$status_name as $k=>$v) $status_name[]=['label'=>$v, 'value'=>$k];
+    // 返回
+    return self::GetJSON(['code'=>0, 'data'=>[
+      'status_name'=> $status_name,
+    ]]);
   }
 
 }
