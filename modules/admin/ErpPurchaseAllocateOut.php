@@ -691,7 +691,6 @@ class ErpPurchaseAllocateOut extends Base {
         'sku_id'=> $k,
         'go_co_id'=> $go_co_id,
         'link_co_id'=> $link_co_id,
-        'type'=> $one['type'],
         'num'=> $v['num'],
         'ratio'=> isset($v['ratio'])?$v['ratio']:$info[$k]['ratio'],
         'ratio_cost'=> $info[$k]['ratio_cost'],

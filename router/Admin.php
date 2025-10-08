@@ -227,7 +227,5 @@ class Admin {
       $router->post('erp_order_inout/goods_safety', "ErpOrderInout@GoodsSafety");
       $router->post('erp_order_inout/goods_price', "ErpOrderInout@GoodsPrice");
     });
-    
   }
-
 }
