@@ -7,7 +7,7 @@ use Model\ErpBaseShop;
 class Shop {
 
   /* 列表 */
-  static function GetList(array $where=[], array $columns=['name'], string $order_by='sort DESC, name ASC'): array {
+  static function GetList(array $where=[], array $columns=['name', 'status'], string $order_by='status DESC, sort DESC, name ASC'): array {
     $m = new ErpBaseShop();
     $m->Columns('shop_id', ...$columns);
     $m->Where(implode(' AND ', $where));

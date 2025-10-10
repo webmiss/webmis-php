@@ -460,7 +460,7 @@ class ErpPurchaseAllocateIn extends Base {
     self::$partner_name = Partner::GetList();
     $go_co_name = $link_co_name = [];
     foreach(self::$partner_name as $k=>$v) {
-      $tmp = ['label'=>$v['name'], 'value'=>$k];
+      $tmp = ['label'=>$v['name'], 'value'=>$k, 'info'=>$v['status']?true:false];
       // 调出仓
       if($partner_perm) {
         if(in_array($k, $partner_perm)) $go_co_name[] = $tmp;

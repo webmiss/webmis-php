@@ -318,7 +318,7 @@ class ErpOrderInout extends Base {
     // 数据
     $id = implode(',', $data);
     $admin = AdminToken::Token($token);
-    self::$partner_name = Partner::GetList(['type=0']);
+    self::$partner_name = Partner::GetList();
     // 单据
     $m = new ErpOrderInoutM();
     $m->Columns('id', 'ctime', 'utime', 'wms_co_id', 'remark');
@@ -488,10 +488,10 @@ class ErpOrderInout extends Base {
     self::$type_name = Status::OtherInout('type_name');
     foreach(self::$type_name as $k=>$v) $type_name[]=['label'=>$v, 'value'=>$k];
     // 店铺
-    self::$shop_name = Shop::GetList([], ['name', 'status']);
+    self::$shop_name = Shop::GetList();
     $shop_name = $shop_to_name = [];
     foreach(self::$shop_name as $k=>$v) {
-      $tmp = ['label'=>$v['name'], 'value'=>$k, 'info'=>$v['status']?'正常':'禁用'];
+      $tmp = ['label'=>$v['name'], 'value'=>$k, 'info'=>$v['status']?true:false];
       if($shop_perm) {
         if(in_array($k, $shop_perm)) $shop_name[] = $tmp;
       } else {
@@ -504,7 +504,7 @@ class ErpOrderInout extends Base {
     self::$partner_name = Partner::GetList();
     $partner_name = [];
     foreach(self::$partner_name as $k=>$v) {
-      $tmp = ['label'=>$v['name'], 'value'=>$k];
+      $tmp = ['label'=>$v['name'], 'value'=>$k, 'info'=>$v['status']?true:false];
       if($partner_perm) {
         if(in_array($k, $partner_perm)) $partner_name[] = $tmp;
       } else $partner_name[] = $tmp;

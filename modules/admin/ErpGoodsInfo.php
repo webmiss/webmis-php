@@ -341,7 +341,13 @@ class ErpGoodsInfo extends Base {
     // 更新明细
     if(isset($param['other_price'])) unset($param['other_price']);
     if(isset($param['other_price1'])) unset($param['other_price1']);
-    $res = Goods::GoodsUpdateShow($sku, $param);
+    if(isset($param['ratio_cost'])) unset($param['ratio_cost']);
+    if(isset($param['ratio_purchase'])) unset($param['ratio_purchase']);
+    if(isset($param['ratio_supply'])) unset($param['ratio_supply']);
+    if(isset($param['ratio_supplier'])) unset($param['ratio_supplier']);
+    if(isset($param['ratio_sale'])) unset($param['ratio_sale']);
+    if(isset($param['ratio_market'])) unset($param['ratio_market']);
+    $res = $param?Goods::GoodsUpdateShow($sku, $param):true;
     // 返回
     if($res) return self::GetJSON(['code'=> 0]);
     else return self::GetJSON(['code'=> 5000]);

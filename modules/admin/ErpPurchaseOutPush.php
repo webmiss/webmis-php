@@ -75,7 +75,7 @@ class ErpPurchaseOutPush extends Base {
     $m->Order($order?:'status, utime DESC');
     $list = $m->Find();
     // 数据
-    self::$partner_name = Partner::GetList(['type=0']);
+    self::$partner_name = Partner::GetList();
     self::$type_name = Status::PurchaseOut('type_name');
     self::$status_name = Status::PurchaseOut('status_name');
     foreach($list as $k=>$v) {
@@ -200,7 +200,7 @@ class ErpPurchaseOutPush extends Base {
     // 数据
     $id = implode(',', $data);
     $admin = AdminToken::Token($token);
-    self::$partner_name = Partner::GetList(['type=0']);
+    self::$partner_name = Partner::GetList();
     // 单据
     $m = new ErpPurchaseOutM();
     $m->Columns('id', 'ctime', 'utime', 'wms_co_id', 'remark');
@@ -394,9 +394,9 @@ class ErpPurchaseOutPush extends Base {
     $brand_perm = $admin->brand?explode(',', $admin->brand):[];
     // 分仓
     $partner_name = [];
-    self::$partner_name = Partner::GetList(['type=0'], ['name', 'status']);
+    self::$partner_name = Partner::GetList(['type=0']);
     foreach(self::$partner_name as $k=>$v) {
-      $tmp = ['label'=>$v['name'], 'value'=>$k, 'info'=>$v['status']?'正常':'禁用'];
+      $tmp = ['label'=>$v['name'], 'value'=>$k, 'info'=>$v['status']?true:false];
       if($partner_perm) {
         if(in_array($k, $partner_perm)) $partner_name[] = $tmp;
       } else $partner_name[] = $tmp;
@@ -405,7 +405,7 @@ class ErpPurchaseOutPush extends Base {
     $brand_name = [];
     self::$brand_name = Brand::GetList();
     foreach(self::$brand_name as $k=>$v) {
-      $tmp = ['label'=>$v['name'], 'value'=>$k];
+      $tmp = ['label'=>$v['name'], 'value'=>$k, 'info'=>$v['status']?true:false];
       if($brand_perm) {
         if(in_array($k, $brand_perm)) $brand_name[] = $tmp;
       } else $brand_name[] = $tmp;

@@ -7,7 +7,7 @@ use Model\ErpBaseBrand;
 class Brand {
 
   /* 列表 */
-  static function GetList(array $where=[], array $columns=['value', 'rule'], string $order_by='sort DESC, id ASC'): array {
+  static function GetList(array $where=[], array $columns=['value', 'rule', 'status'], string $order_by='status DESC, sort DESC, id ASC'): array {
     $m = new ErpBaseBrand();
     $m->Columns('name', ...$columns);
     $m->Where(implode(' AND ', $where));

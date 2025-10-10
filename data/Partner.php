@@ -6,7 +6,7 @@ use Model\ErpBasePartner;
 class Partner {
 
   /* 列表 */
-  static function GetList(array $where = [], array $columns = ['name'], string $order_by = 'sort DESC, id ASC'): array {
+  static function GetList(array $where = [], array $columns = ['name', 'status'], string $order_by = 'status DESC, sort DESC, id ASC'): array {
     $m = new ErpBasePartner();
     $m->Columns('wms_co_id', ...$columns);
     $m->Where(implode(' AND ', $where));
@@ -18,4 +18,5 @@ class Partner {
     }
     return $data;
   }
+
 }

@@ -7,7 +7,7 @@ use Model\ErpBaseCategory;
 class Category {
 
   /* 列表 */
-  static function GetList(array $where=['status=1'], array $columns=['id', 'name'], string $order_by='sort DESC, name'): array {
+  static function GetList(array $where=[], array $columns=['id', 'name', 'status'], string $order_by='status DESC, sort DESC, name'): array {
     $m = new ErpBaseCategory();
     $m->Columns('name', ...$columns);
     $m->Where(implode(' AND ', $where));

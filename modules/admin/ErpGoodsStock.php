@@ -415,7 +415,7 @@ class ErpGoodsStock extends Base {
     // 分类
     $category = [];
     $all = Category::GetList();
-    foreach($all as $v) $category[] = ['label'=>$v['name'], 'value'=>$v['name']];
+    foreach($all as $v) $category[] = ['label'=>$v['name'], 'value'=>$v['name'], 'info'=>$v['status']?true:false];
     // 分仓
     $admin = AdminToken::Token($token);
     self::$partner_name = Partner::GetList();
@@ -424,11 +424,11 @@ class ErpGoodsStock extends Base {
       // 权限限制
       if($admin->partner) {
         $arr = explode(',', $admin->partner);
-        if(in_array($k, $arr)) $partner_name[]=['label'=>$v['name'], 'value'=>$k];
+        if(in_array($k, $arr)) $partner_name[]=['label'=>$v['name'], 'value'=>$k, 'info'=>$v['status']?true:false];
         continue;
       }
       // 全部
-      $partner_name[]=['label'=>$v['name'], 'value'=>$k];
+      $partner_name[]=['label'=>$v['name'], 'value'=>$k, 'info'=>$v['status']?true:false];
     }
     // 返回
     return self::GetJSON(['code'=>0, 'data'=>[
