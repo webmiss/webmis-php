@@ -14,8 +14,9 @@ class Admin {
     $app['router']->group(['namespace'=>'App\Admin', 'prefix' => 'admin'], function($router){
       // 首页
       $router->get('', "Index@Index");
-      $router->get('index/getConfig', "Index@GetConfig");
-      $router->post('index/getChart', "Index@GetChart");
+      $router->post('index/get_select', "Index@GetSelect");
+      $router->post('index/stock', "Index@Stock");
+      $router->post('index/list', "Index@List");
       // 登录
       $router->post('user/login', "User@Login");
       $router->post('user/token', "User@Token");

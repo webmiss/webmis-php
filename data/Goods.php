@@ -272,7 +272,7 @@ class Goods extends Base {
   static function IsAfoot(array $sku, $type='all', int $wms_co_id=0): array {
     $res = [];
     // 分区
-    $pname = date('d')>=15?'p'.substr(date('Ym'), 2, 4):'p'.substr(date('Ym', strtotime('-1 month')), 2, 4).',p'.substr(date('Ym'), 2, 4);
+    $pname = 'p'.substr(date('Ym', strtotime('-1 month')), 2, 4).',p'.substr(date('Ym'), 2, 4);
     if($type==='all' || $type==='in') {
       // 采购入库
       $m = new ErpPurchaseInShow();

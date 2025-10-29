@@ -472,7 +472,7 @@ class ErpPurchaseIn extends Base {
     $brand_perm = $admin->brand?explode(',', $admin->brand):[];
     // 分仓
     $partner_name = [];
-    self::$partner_name = Partner::GetList(['type=0', 'status=1']);
+    self::$partner_name = Partner::GetList(['type=0']);
     foreach(self::$partner_name as $k=>$v) {
       $tmp = ['label'=>$v['name'], 'value'=>$k, 'info'=>$v['status']?true:false];
       if($partner_perm) {
