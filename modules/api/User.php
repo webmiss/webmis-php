@@ -139,7 +139,7 @@ class User extends Base {
     $redis->Expire(Env::$api_token_prefix.'_vcode_'.$uname, 1);
     $redis->Close();
     // 默认密码
-    $isPasswd = $data['password']==md5('123456');
+    $isPasswd = $data['password']==md5(Env::$password);
     // 登录时间
     $ltime = time();
     $model->Table('user');

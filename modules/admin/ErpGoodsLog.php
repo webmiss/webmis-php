@@ -156,6 +156,7 @@ class ErpGoodsLog extends Base {
     list($where, $pname) = self::getWhere($param);
     // 查询
     $m = new ErpGoodsLogs();
+    if($pname) $m->Partition($pname);
     $m->Columns('id', 'sku_id', 'operator_id', 'operator_name', 'content', 'FROM_UNIXTIME(ctime) as ctime');
     $m->Where($where);
     $m->Order($order?:'ctime DESC');
