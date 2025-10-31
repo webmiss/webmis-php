@@ -87,7 +87,7 @@ class Index extends Base {
     $stime = self::JsonName($json, 'stime');
     $etime = self::JsonName($json, 'etime');
     $wms_co_id = self::JsonName($json, 'wms_co_id');
-    $type = $_GET['type']?trim($_GET['type']):'';
+    $type = isset($_GET['type'])?trim($_GET['type']):'';
     self::Print('type', $type);
     // 验证
     $msg = AdminToken::Verify($token, '');
