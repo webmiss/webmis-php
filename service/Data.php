@@ -59,7 +59,7 @@ class Data extends Base {
   }
 
   /* 图片地址 */
-  static function Img(string $img, bool $isTmp=true): string {
+  static function Img($img, bool $isTmp=true): string {
     if(!$img) return '';
     return $isTmp?Env::$img_url.$img:Env::$img_url.$img.'?'.date('YmdHis');
   }
@@ -68,9 +68,9 @@ class Data extends Base {
     return $sku_id?self::Img('img/sku/'.$sku_id.'.jpg', $isTmp):'';
   }
 
-  /* 用户头像 */
-  static function UserImg(string $token, string $base64, string $storage='local'): string {
-    // 限制格式
+  /* 图片信息-Base64 */
+  static function ImgBase64Info(string $base64): array {
+    // 类型
     $extAll = [
       'data:image/jpeg;base64' => 'jpg',
       'data:image/png;base64' => 'png',
@@ -78,17 +78,26 @@ class Data extends Base {
     ];
     $ct = explode(',', $base64);
     $ext = $extAll[$ct[0]];
-    if(!$ext) return self::GetJSON(['code'=>4000, 'msg'=>'只能上传JPG、PNG格式图片!']);
+    if(!$ext) return [];
+    // 返回
+    return [$ext, $ct[1], $ct[0]];
+  }
+
+  /* 用户头像 */
+  static function UserImg(string $token, string $base64, string $storage='local'): string {
+    // 限制格式
+    list($ext, $ct) = self::ImgBase64Info($base64);
+    if(!in_array($ext, ['jpg', 'png'])) return self::GetJSON(['code'=>4000, 'msg'=>'只能上传JPG、PNG格式图片!']);
     // 文件
     $admin = AdminToken::Token($token);
     $file = 'user/img/'.$admin->uid.'.'.$ext;
     // OSS
     if($storage=='oss'){
-      $res = Oss::PutObject($file, $ct[1]);
+      $res = Oss::PutObject($file, $ct);
       if(!$res) return '';
     }else{
       $file = 'upload/'.$file;
-      $res = Upload::Base64($file, $ct[1]);
+      $res = Upload::Base64($file, $ct);
       if(!$res) return '';
     }
     // 保存图片

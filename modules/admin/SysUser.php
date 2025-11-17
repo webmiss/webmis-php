@@ -263,10 +263,18 @@ class SysUser extends Base {
       $m2->Where('uid=?', $id);
       // 用户权限
       $m3 = new SysPerm();
-      $m3->Set(['uid'=>$id, 'utime'=>time(), 'role'=>$param['role'], 'perm'=>$param['perm']]);
+      $m3->Columns('uid');
+      $m3->Where('uid=?', $id);
+      $one = $m3->FindFirst();
+      $data = ['uid'=>$id, 'utime'=>time(), 'role'=>$param['role'], 'perm'=>$param['perm'], 'brand'=>$param['brand'], 'shop'=>$param['shop'], 'partner'=>$param['partner'], 'partner_in'=>$param['partner_in']];
+      if(!$one) {
+        $m3->Values($data);
+        $m3->Insert();
+      }
+      $m3->Set($data);
       $m3->Where('uid=?', $id);
       // 执行
-      if($m1->Update() && $m2->Update() && $m3-> Update()) {
+      if($m1->Update() && $m2->Update() && $m3->Update()) {
         return self::GetJSON(['code'=>0]);
       } else {
         return self::GetJSON(['code'=>5000]);

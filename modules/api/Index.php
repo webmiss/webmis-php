@@ -32,19 +32,25 @@ class Index extends Base {
     // 参数
     $json = self::Json();
     $os = self::JsonName($json, 'os');
-    $version = self::JsonName($json, 'version');
+    $local = self::JsonName($json, 'version');
     $os = strtolower($os);
     if(!in_array($os, ['android', 'ios'])) return self::GetJSON(['code'=>4000, 'msg'=>'['.$os.']该操作系统不支持更新!']);
     if($os==='android') {
+      $version = '3.0.0';
       $file = 'upload/app/vip.webmis.m.apk';
       $size = FileEo::FileSize($file);
     }else if($os==='ios') {
+      $version = '3.0.0';
       $file = 'itms-apps://itunes.apple.com/cn/app/tao-bao-sui-shi-sui-xiang/id387682726?mt=8';
       $size = FileEo::FileSize($file);
+    }else if($os==='web') {
+      $version = '3.0.1';
+      $file = 'https://m.webmis.vip';
+      $size = 0;
     }
     return self::GetJSON(['code'=>0, 'data'=>[
       'os'=> $os,
-      'version'=> '3.0.0',
+      'version'=> $version,
       'size'=> $size,
       'file'=> Env::BaseUrl($file),
     ]]);

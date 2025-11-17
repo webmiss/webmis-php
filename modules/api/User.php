@@ -195,7 +195,7 @@ class User extends Base {
         'FROM_UNIXTIME(a.ltime) as ltime', 'a.tel', 'a.email',
         'b.type', 'b.nickname', 'b.department', 'b.position', 'b.name', 'b.gender', 'b.img', 'b.signature', 'FROM_UNIXTIME(b.birthday, "%Y-%m-%d") as birthday'
       );
-      $m->Where('id=?', $tData->uid);
+      $m->Where('a.id=?', $tData->uid);
       $uinfo = $m->FindFirst();
       $uinfo['uid'] = (string)$tData->uid;
       $uinfo['uname'] = $tData->uname;

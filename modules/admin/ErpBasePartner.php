@@ -70,7 +70,7 @@ class ErpBasePartner extends Base {
       'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime',
     );
     $m->Where($where);
-    $m->Order($order?:'sort DESC, id DESC');
+    $m->Order($order?:'sort DESC, status DESC, name, id DESC');
     $m->Page($page, $limit);
     $list = $m->Find();
     self::$type_name = Status::Partner('type_name');
