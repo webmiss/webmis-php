@@ -5,6 +5,7 @@ use Config\Env;
 use Service\Base;
 use Service\Data;
 use Service\AdminToken;
+use Library\Redis;
 use Library\Safety;
 use Library\Export;
 use Model\User;
@@ -275,6 +276,12 @@ class SysUser extends Base {
       $m3->Where('uid=?', $id);
       // 执行
       if($m1->Update() && $m2->Update() && $m3->Update()) {
+        // 清除Token
+        $redis = new Redis();
+        $redis->Expire(Env::$admin_token_prefix.'_token_'.$id, 0);
+        $redis->Expire(Env::$api_token_prefix.'_token_'.$id, 0);
+        $redis->Close();
+        // 返回
         return self::GetJSON(['code'=>0]);
       } else {
         return self::GetJSON(['code'=>5000]);
