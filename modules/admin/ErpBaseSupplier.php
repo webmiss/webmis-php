@@ -4,6 +4,7 @@ namespace App\Admin;
 use Config\Env;
 use Service\AdminToken;
 use Service\Base;
+use Service\Logs;
 use Data\Status;
 use Library\Export;
 use Util\Util;
@@ -172,6 +173,7 @@ class ErpBaseSupplier extends Base {
     $param['alipay_id'] = isset($data['alipay_id'])?Util::Trim($data['alipay_id']):'';
     $param['alipay_name'] = isset($data['alipay_name'])?Util::Trim($data['alipay_name']):'';
     $param['remark'] = isset($data['remark'])?Util::Trim($data['remark']):'';
+    // 操作员
     $admin = AdminToken::Token($token);
     $param['operator_id'] = $admin->uid;
     $param['operator_name'] = $admin->name;
@@ -187,12 +189,32 @@ class ErpBaseSupplier extends Base {
       // 添加
       $param['ctime'] = time();
       $m->Values($param);
-      return $m->Insert()?self::GetJSON(['code'=>0]):self::GetJSON(['code'=>5000]);
+      if(!$m->Insert()) return self::GetJSON(['code'=>5000]);
+      // 日志
+      Logs::Goods([
+        'ctime'=> time(),
+        'operator_id'=> $admin->uid,
+        'operator_name'=> $admin->name,
+        'sku_id'=> $param['name'],
+        'content'=> '新增供应商: '.$param['name'],
+      ]);
+      // 返回
+      return self::GetJSON(['code'=>0]);
     }
     // 更新
     $m->Set($param);
     $m->Where('id=?', $id);
-    return $m->Update()?self::GetJSON(['code'=>0]):self::GetJSON(['code'=>5000]);
+    if(!$m->Update()) return self::GetJSON(['code'=>5000]);
+    // 日志
+    Logs::Goods([
+      'ctime'=> time(),
+      'operator_id'=> $admin->uid,
+      'operator_name'=> $admin->name,
+      'sku_id'=> $param['name'],
+      'content'=> '更新供应商: '.$param['name'],
+    ]);
+    // 返回
+    return self::GetJSON(['code'=>0]);
   }
 
   /* 删除 */
