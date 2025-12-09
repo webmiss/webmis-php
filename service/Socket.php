@@ -8,6 +8,7 @@ use Service\ApiToken;
 use Library\Aliyun\Bailian;
 use Util\Util;
 
+use Data\Goods;
 use Model\UserMsg;
 
 use Ratchet\MessageComponentInterface;
@@ -68,10 +69,13 @@ class Socket implements MessageComponentInterface {
     $data['type'] = 'msg';
     if($data['gid']==1) {
       // 发自己
-      $this->send($fid, $data);
+      $this->send($fid?:$uid, $data);
       if($fid && $data['format']===0) {
+        // 货品流向
+        $res = $this->getDirect($data['content']);
         // 阿里云百炼
-        $res = Bailian::GetMsg([['role'=>'user', 'content'=>$data['content']]]);
+        if(!$res) $res = Bailian::GetMsg([['role'=>'user', 'content'=>$data['content']]]);
+        // 回复
         $data['id'] = 0;
         $data['fid'] = 0;
         $data['uid'] = $fid;
@@ -87,6 +91,31 @@ class Socket implements MessageComponentInterface {
       // 发自己
       $this->send($fid, $data);
     }
+  }
+
+  /* 货品流向 */
+  function getDirect(string $msg): string {
+    $keys = ['流向', '货品', '商品'];
+    $is_key = false;
+    foreach($keys as $key) {
+      if(mb_strpos($msg, $key)) $is_key = true;
+    }
+    if(!$is_key) return '';
+    // 提取编码
+    $data = [];
+    preg_match_all('/[A-Z|a-z|0-9]{8,14}/', $msg, $sku);
+    foreach($sku[0] as $sku_id) {
+      $sku_id = strtoupper($sku_id);
+      // 查询流向
+      list($total, $list) = Goods::GoodsWork($sku_id, [-1, 36]);
+      // 数据
+      $data[] = '## 商品编码: '.$sku_id;
+      foreach($list as $row) {
+        $data[] = $row['ctime'].' '.$row['type_name'].' '.$row['warehouse'];
+      }
+      $data[] = '';
+    }
+    return implode("\n", $data);
   }
 
   /* 路由 */
@@ -187,17 +216,16 @@ class Socket implements MessageComponentInterface {
   }
 
   /* 验证 */
-  private function verify($url): int {
+  private function verify(array $param): int {
     // 参数
-    $param = $url;
     $data = [];
     foreach($param as $val) $data[] = $val;
-    $arr = Util::UrlToArray($data[5]);
-    if(empty($arr)) return '';
+    $arr = isset($data[5])?Util::UrlToArray($data[5]):[];
+    if(!$arr) return -1;
     $lang = isset($arr['lang'])?$arr['lang']:'en_US';
     $channel = isset($arr['channel'])?$arr['channel']:'';
     $token = isset($arr['token'])?$arr['token']:'';
-    if(empty($channel) || empty($token)) return '';
+    if(empty($channel) || empty($token)) return -1;
     $this->lang = $lang;
     // 验证
     if($token==Env::$key){
