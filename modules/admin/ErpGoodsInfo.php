@@ -305,6 +305,7 @@ class ErpGoodsInfo extends Base {
     if(isset($data['category']) && $data['category']) $param['category'] = $data['category'][0];
     if(isset($data['brand']) && $data['brand']) $param['brand'] = $data['brand'][0];
     if(!$param) return self::GetJSON(['code'=> 4000]);
+    $remark = isset($data['remark'])&&$data['remark']?' '.Util::Trim($data['remark']):'';
     // 商品资料
     $info = Goods::GoodsInfoAll($sku);
     $sku = array_keys($info);
@@ -334,7 +335,7 @@ class ErpGoodsInfo extends Base {
           'operator_id'=> $admin->uid,
           'operator_name'=> $admin->name,
           'sku_id'=> $sku_id,
-          'content'=> '更新商品: ' . $sku_id . $msg,
+          'content'=> '更新商品: ' . $sku_id . $msg.$remark,
         ]);
       }
     }
