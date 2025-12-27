@@ -14,6 +14,7 @@ class Admin {
     $app['router']->group(['namespace'=>'App\Admin', 'prefix' => 'admin'], function($router){
       // 首页
       $router->get('', "Index@Index");
+      $router->post('index/holiday', "Index@Holiday");
       $router->post('index/get_select', "Index@GetSelect");
       $router->post('index/stock', "Index@Stock");
       $router->post('index/list', "Index@List");

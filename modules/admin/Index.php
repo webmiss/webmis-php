@@ -29,6 +29,49 @@ class Index extends Base {
     return self::GetJSON(['code'=>0, 'msg'=>'PHP Admin']);
   }
 
+  /* 法定假期 */
+  static function Holiday(): string {
+    // 参数
+    $json = self::Json();
+    $date = self::JsonName($json, 'date');
+    // 假期
+    $holiday = [
+      '2026-01-01'=> ['holiday'=>true, 'name'=>'元旦'],
+      '2026-01-02'=> ['holiday'=>true, 'name'=>'元旦'],
+      '2026-01-03'=> ['holiday'=>true, 'name'=>'元旦'],
+      '2026-02-17'=> ['holiday'=>true, 'name'=>'春节'],
+      '2026-02-18'=> ['holiday'=>true, 'name'=>'春节'],
+      '2026-02-19'=> ['holiday'=>true, 'name'=>'春节'],
+      '2026-02-20'=> ['holiday'=>true, 'name'=>'春节'],
+      '2026-02-21'=> ['holiday'=>true, 'name'=>'春节'],
+      '2026-02-22'=> ['holiday'=>true, 'name'=>'春节'],
+      '2026-02-23'=> ['holiday'=>true, 'name'=>'春节'],
+      '2026-04-04'=> ['holiday'=>true, 'name'=>'清明节'],
+      '2026-04-05'=> ['holiday'=>true, 'name'=>'清明节'],
+      '2026-04-06'=> ['holiday'=>true, 'name'=>'清明节'],
+      '2026-05-01'=> ['holiday'=>true, 'name'=>'劳动节'],
+      '2026-05-02'=> ['holiday'=>true, 'name'=>'劳动节'],
+      '2026-05-03'=> ['holiday'=>true, 'name'=>'劳动节'],
+      '2026-05-04'=> ['holiday'=>true, 'name'=>'劳动节'],
+      '2026-05-05'=> ['holiday'=>true, 'name'=>'劳动节'],
+      '2026-06-20'=> ['holiday'=>true, 'name'=>'端午节'],
+      '2026-06-21'=> ['holiday'=>true, 'name'=>'端午节'],
+      '2026-06-22'=> ['holiday'=>true, 'name'=>'端午节'],
+      '2026-09-26'=> ['holiday'=>true, 'name'=>'中秋节'],
+      '2026-09-27'=> ['holiday'=>true, 'name'=>'中秋节'],
+      '2026-09-28'=> ['holiday'=>true, 'name'=>'中秋节'],
+      '2026-10-01'=> ['holiday'=>true, 'name'=>'国庆节'],
+      '2026-10-02'=> ['holiday'=>true, 'name'=>'国庆节'],
+      '2026-10-03'=> ['holiday'=>true, 'name'=>'国庆节'],
+      '2026-10-04'=> ['holiday'=>true, 'name'=>'国庆节'],
+      '2026-10-05'=> ['holiday'=>true, 'name'=>'国庆节'],
+      '2026-10-06'=> ['holiday'=>true, 'name'=>'国庆节'],
+      '2026-10-07'=> ['holiday'=>true, 'name'=>'国庆节'],
+    ];
+    // 返回
+    return self::GetJSON(['code'=>0, 'data'=>isset($holiday[$date])?$holiday[$date]:'']);
+  }
+
   /* 选项 */
   static function GetSelect(): string {
     // 参数
