@@ -1,48 +1,19 @@
 {
-  "name": "webmiss/php",
-  "type": "project",
-  "keywords": ["webmis", "php"],
-  "description": "The Webmis Project",
-  "license": "MIT",
-  "authors": [
-    {
-      "name": "webmis",
-      "email": "klingsoul@163.com"
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "App\\Config\\": "app/config/",
+            "APP\\Library\\": "app/library/",
+            "App\\Model\\": "app/models/",
+            "App\\Web\\": "app/modules/web/",
+            "App\\Admin\\": "app/modules/admin/",
+            "App\\Api\\": "app/modules/api/",
+            "App\\Task\\": "app/task/",
+            "App\\Util\\": "app/util/",
+            "Core\\": "core/"
+        }
+    },
+    "require": {
+        "php": ">=7.4"
     }
-  ],
-  "require": {
-    "php": ">=8.0",
-    "illuminate/routing": "10.x-dev",
-    "illuminate/events": "10.x-dev",
-    "firebase/php-jwt": "dev-main",
-    "phrity/websocket": "^3.5.0",
-    "khanamiryan/qrcode-detector-decoder": "1.0.6",
-    "cboden/ratchet": "v0.4.4",
-    "milon/barcode": "dev-master",
-    "gregwar/captcha": "dev-master",
-    "phpmailer/phpmailer": "dev-master",
-    "aliyuncs/oss-sdk-php": "^2.7.1",
-    "mpdf/mpdf": "^8.1.0"
-  },
-  "autoload": {
-    "psr-4": {
-      "Config\\": "config/",
-      "Config\\Langs\\": "config/langs",
-      "Data\\": "data/",
-      "Library\\": "library/",
-      "Library\\Aliyun\\": "library/aliyun/",
-      "Library\\Baidu\\": "library/baidu/",
-      "Library\\Tencent\\": "library/tencent/",
-      "Middleware\\": "middleware/",
-      "Model\\": "model/",
-      "App\\Home\\": "modules/home/",
-      "App\\Admin\\": "modules/admin/",
-      "App\\Api\\": "modules/api/",
-      "Router\\": "router/",
-      "Service\\": "service/",
-      "Task\\": "task/",
-      "Util\\": "util/"
-    }
-  },
-  "minimum-stability": "dev"
 }

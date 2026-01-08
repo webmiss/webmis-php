@@ -7,15 +7,13 @@ cli="cli.php"
 s=$1
 
 # 运行
-if [ "$s" == "serve" ]; then
-  {
+if [ "$s" == "serve" ]; then {
     php -S $ip:$port -t public
   } || {
     echo "> 请安装'php'"
   }
 # 安装
-elif [ "$s" == "install" ]; then
-  {
+elif [ "$s" == "install" ]; then {
     rm -fr composer.lock && composer install
   } || {
     echo "> 请安装'composer'"
