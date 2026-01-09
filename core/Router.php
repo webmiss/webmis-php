@@ -44,7 +44,7 @@ class Router extends Base {
   /* 执行 */
   public function run() {
     // 控制器
-    echo $controllerPath = 'App\\'.$this->module.'\\'.$this->controller;
+    $controllerPath = 'App\\'.$this->module.'\\'.$this->controller;
     // 控制器是否存在
     if(!class_exists($controllerPath)) {
       self::Print('[ '.$this->name.' ]', '控制器不存在 '.$controllerPath);

@@ -11,7 +11,7 @@ class Index extends Controller {
     // 参数
     $json = self::Json();
     $lang = self::JsonName($json, 'lang');
-    self::Print($lang, $uid);
+    self::Print('data', $lang, $uid);
     return 'Api';
   }
 

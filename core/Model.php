@@ -25,7 +25,7 @@ class Model extends Base {
   private $id = 0;              // 自增ID
   private $nums = 0;            // 条数
 
-  /* 数据库 */
+  /* 获取连接 */
   protected function DBConn(string $db='default'): object|null {
     // 配置
     $this->config = Db::config($db);

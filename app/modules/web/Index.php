@@ -2,6 +2,7 @@
 namespace APP\Web;
 
 use Core\Controller;
+use Core\Redis;
 use Core\View;
 use App\Config\Env;
 use App\Model\User;
@@ -16,6 +17,12 @@ class Index extends Controller {
     $m->Columns('id', 'uname');
     $data = $m->Find();
     self::Print($data);
+    // Redis
+    $redis = new Redis();
+    $res1 = $redis->Set('test', 'Test');
+    $val = $redis->Gets('test');
+    $res2 = $redis->Del('test');
+    self::Print($res1, $res2, $val);
     // 传参
     View::assign('title', Env::$title);
     View::assign('copy', Env::$copy);
