@@ -9,12 +9,16 @@
             "App\\Web\\": "app/modules/web/",
             "App\\Admin\\": "app/modules/admin/",
             "App\\Api\\": "app/modules/api/",
+            "App\\Service\\": "app/service/",
             "App\\Task\\": "app/task/",
             "App\\Util\\": "app/util/",
             "Core\\": "core/"
         }
     },
     "require": {
-        "php": ">=7.4"
+        "php": ">=7.4",
+        "cboden/ratchet": "^0.4.4",
+        "phrity/websocket": "^3.6",
+        "firebase/php-jwt": "^7.0"
     }
 }

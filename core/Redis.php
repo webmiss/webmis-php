@@ -10,9 +10,9 @@ class Redis extends Base {
   private $conn = null;         // 连接
 
   /* 获取连接 */
-  public function __construct(string $db='default') {
+  public function __construct(string $name='default') {
     // 配置
-    $this->config = RedisCfg::config($db);
+    $this->config = RedisCfg::config($name);
     // 连接
     if(!$this->conn) {
       try{

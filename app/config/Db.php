@@ -6,7 +6,7 @@ class Db {
 
   /* 配置 */
   static function config(string $name='default'): array {
-    $db = [
+    $data = [
       'default'=> [
         'driver'=> 'mysql',                                 // 类型
         'host'=> '127.0.0.1',                               // 主机
@@ -28,7 +28,7 @@ class Db {
         'persistent'=> true,                                // 持久链接
       ]
     ];
-    return $db[$name];
+    return $data[$name];
   }
 
 }

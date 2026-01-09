@@ -6,7 +6,7 @@ class Redis {
 
   /* 配置 */
   static function config(string $name='default'): array {
-    $db = [
+    $data = [
       'default'=> [
         'host'=> '127.0.0.1',       // 主机
         'port'=> 6379,              // 端口
@@ -20,7 +20,7 @@ class Redis {
         'db'=> 0,                   // 硬盘
       ]
     ];
-    return $db[$name];
+    return $data[$name];
   }
 
 }
