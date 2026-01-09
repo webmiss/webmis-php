@@ -9,11 +9,18 @@ class Controller extends Base {
     // 语言
     $lang = isset($_GET['lang'])&&$_GET['lang']?$_GET['lang']:'en_US';
     if($lang && isset($data['code']) && !isset($data['msg'])) {
-      $name = 'Config\\Langs\\'.$lang;
+      $name = 'App\\Config\\Langs\\'.$lang;
       $class = new $name();
       $action = 'code_'.$data['code'];
       $data['msg'] = $class::$$action;
     }
+    // 允许跨域请求
+    header('Access-Control-Allow-Origin: *');                                 // 域名
+    header('Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS');  // 请求方式
+    header('Access-Control-Allow-Headers: Content-Type, Content-Range, Content-Disposition, Content-Description');  //预检响应
+    header('Access-Control-Max-Age: 2592000');                                // OPTIONS(30天)
+    if($_SERVER['REQUEST_METHOD']=='OPTIONS')  exit;
+    // Json
     header('Content-type: application/json; charset=utf-8');
     return json_encode($data);
   }

@@ -3,6 +3,7 @@
         "psr-4": {
             "App\\": "app/",
             "App\\Config\\": "app/config/",
+            "App\\Config\\Langs\\": "app/config/langs/",
             "APP\\Library\\": "app/library/",
             "App\\Model\\": "app/models/",
             "App\\Web\\": "app/modules/web/",

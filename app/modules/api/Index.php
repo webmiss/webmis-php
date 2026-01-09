@@ -12,12 +12,7 @@ class Index extends Controller {
     $json = self::Json();
     $lang = self::JsonName($json, 'lang');
     self::Print('data', $lang, $uid);
-    return 'Api';
-  }
-
-  /* 测试 */
-  public function Test(): string {
-    return 'Test';
+    return self::GetJSON(['code'=>0, 'data'=>'Api']);
   }
 
 }
