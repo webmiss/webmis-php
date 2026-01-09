@@ -1,0 +1,10 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # 指向 public 目录
+    RewriteBase /mvc-framework/public
+    # 排除实际存在的文件/目录
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    # 所有请求转发到 index.php
+    RewriteRule ^(.*)$ index.php?_url=$1 [L,QSA]
+</IfModule>

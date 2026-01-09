@@ -16,29 +16,41 @@ class Router extends Base {
 
   /* 解析URL: /模块/控制器/方法/参数1/参数2... */
   private function parseUrl() {
-    if(isset($_SERVER['PATH_INFO'])) {
-      // URL
-      $url = trim($_SERVER['PATH_INFO'], '/');
-      $url = filter_var($url, FILTER_SANITIZE_URL);
-      $url = explode('/', $url);
-      // 模块
-      if(!empty($url[0])) {
-        $this->module = ucfirst($url[0]);
-        unset($url[0]);
+    $url = '';
+    if(isset($_SERVER['PATH_INFO'])) $url = $_SERVER['PATH_INFO'];
+    elseif(isset($_GET['_url'])) {
+      $tmp = explode('?', $_GET['_url']);
+      $url = $tmp[0];
+      // Get参数
+      if(count($tmp)===2) {
+        $params = [];
+        parse_str($tmp[1], $params);
+        foreach($params as $k=>$v) $_GET[$k]=$v;
       }
-      // 控制器
-      if(!empty($url[1])) {
-        $this->controller = ucfirst($url[1]);
-        unset($url[1]);
-      }
-      // 方法
-      if (!empty($url[2])) {
-        $this->method = ucfirst($url[2]);
-        unset($url[2]);
-      }
-      // 参数
-      $this->params = !empty($url)?array_values($url):[];
+      unset($_GET['_url']);
     }
+    if(!$url) return;
+    // URL
+    $url = trim($url, '/');
+    $url = filter_var($url, FILTER_SANITIZE_URL);
+    $url = explode('/', $url);
+    // 模块
+    if(!empty($url[0])) {
+      $this->module = ucfirst($url[0]);
+      unset($url[0]);
+    }
+    // 控制器
+    if(!empty($url[1])) {
+      $this->controller = ucfirst($url[1]);
+      unset($url[1]);
+    }
+    // 方法
+    if (!empty($url[2])) {
+      $this->method = ucfirst($url[2]);
+      unset($url[2]);
+    }
+    // 参数
+    $this->params = !empty($url)?array_values($url):[];
   }
 
   /* 执行 */

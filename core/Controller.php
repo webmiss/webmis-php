@@ -9,7 +9,7 @@ class Controller extends Base {
     // 语言
     $lang = isset($_GET['lang'])&&$_GET['lang']?$_GET['lang']:'en_US';
     if($lang && isset($data['code']) && !isset($data['msg'])) {
-      $name = 'App\\Config\\Langs\\'.$lang;
+      $name = 'App\\Config\\Langs\\'.strtolower($lang);
       $class = new $name();
       $action = 'code_'.$data['code'];
       $data['msg'] = $class::$$action;
