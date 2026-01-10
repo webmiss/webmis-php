@@ -18,11 +18,15 @@ $ composer install
 ```bash
 # Linux、MacOS
 ./bash serve
+./bash socketServer
 # Windows
 .\cmd serve
+.\cmd socketServer
+# 测试Socket
+php cli.php socket client admin '{"type":"","msg":"\u6d4b\u8bd5"}'
 ```
 - 浏览器访问 http://127.0.0.1:9000/
-- 打印信息到终端: self::Print('内容');
+- 测试Socket ws://127.0.0.1:9001/?channel=admin&token=Token
 
 ## 命令行
 ```bash

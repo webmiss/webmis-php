@@ -41,7 +41,7 @@ class RouterCli extends Base {
     // 实例化
     $controller = new $controllerPath();
     // 方法是否存在
-    if (!method_exists($controller, $this->method)) {
+    if(!method_exists($controller, $this->method)) {
       self::Error('[ '.$this->name.' ]方法不存在 '.$controllerPath.'::'.$this->method.'()');
     }
     // 调用方法并传递参数

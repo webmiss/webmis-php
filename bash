@@ -27,13 +27,9 @@ elif [ "$s" == "socketServerStart" ]; then
   nohup php $cli Socket server &
 elif [ "$s" == "socketServerStop" ]; then
   ps -aux | grep "$cli Socket server" | grep -v grep | awk {'print $2'} | xargs kill
-# Socket客户端-运行、启动、停止
+# Socket客户端-发送
 elif [ "$s" == "socketClient" ]; then
-  php $cli Socket client admin
-elif [ "$s" == "socketClientStart" ]; then
-  nohup php $cli Socket client admin &
-elif [ "$s" == "socketClientStop" ]; then
-  ps -aux | grep "$cli Socket client" | grep -v grep | awk {'print $2'} | xargs kill
+  php $cli Socket client admin '{"type":"","msg":"\u6d4b\u8bd5"}'
 # Logs-查看、运行、启动、停止
 elif [ "$s" == "LogsShow" ]; then
   ps -aux | grep "$cli Logs" | grep -v grep
@@ -55,9 +51,7 @@ else
   echo "  socketServer        运行(服务器)"
   echo "  socketServerStart   启动(服务器)"
   echo "  socketServerStop    停止(服务器)"
-  echo "  socketClient        运行(客户端)"
-  echo "  socketClientStart   启动(客户端)"
-  echo "  socketClientStop    停止(客户端)"
+  echo "  socketClient        发送(客户端)"
   echo "<Logs>"
   echo "  LogsShow            查看"
   echo "  Goods               运行"

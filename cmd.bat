@@ -18,7 +18,7 @@ REM Socket-运行(服务器)
   php %cli% Socket server
 REM Socket-运行(客户端)
 ) else if "%s%"=="socketClient" (
-  php %cli% Socket client admin
+  php %cli% Socket client admin '{"type":"","msg":"\u6d4b\u8bd5"}'
 ) else (
   echo ----------------------------------------------------
   echo [use] cmd.bat ^<command^>
@@ -28,6 +28,6 @@ REM Socket-运行(客户端)
   echo   install            依赖包: composer install
   echo ^<WebSocket^>
   echo   socketServer       运行(服务器)
-  echo   socketClient       运行(客户端)
+  echo   socketClient       发送(客户端)
   echo ----------------------------------------------------
 )

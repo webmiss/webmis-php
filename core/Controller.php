@@ -9,10 +9,12 @@ class Controller extends Base {
     // 语言
     $lang = isset($_GET['lang'])&&$_GET['lang']?$_GET['lang']:'en_US';
     if($lang && isset($data['code']) && !isset($data['msg'])) {
-      $name = 'App\\Config\\Langs\\'.strtolower($lang);
-      $class = new $name();
-      $action = 'code_'.$data['code'];
-      $data['msg'] = $class::$$action;
+      $path = 'App\\Config\\Langs\\';
+      $controller = $path.strtolower($lang);
+      if(!class_exists($controller)) $controller = $path.'en_us';
+      $class = new $controller();
+      $method = 'code_'.$data['code'];
+      $data['msg'] = method_exists($controller, $method)?$class::$$method:'';
     }
     // 允许跨域请求
     header('Access-Control-Allow-Origin: *');                                 // 域名

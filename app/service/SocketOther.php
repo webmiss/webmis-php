@@ -14,10 +14,10 @@ use App\Model\UserMsg;
 use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
 
-/* Socket服务-消息 */
-class SocketMsg implements MessageComponentInterface {
+/* Socket服务-其他 */
+class SocketOther implements MessageComponentInterface {
 
-  private $sever = 'default';  // 服务器
+  private $sever = 'other';  // 服务器
   private $lang = '';          // 语言
   private $clients = null;     // 连接
   private $uids = [];          // Uid
@@ -31,95 +31,9 @@ class SocketMsg implements MessageComponentInterface {
 
   /* 消息 */
   function getMsg(int $fid, array $msg): void {
-    if(!isset($msg['gid']) || !isset($msg['type']) || !isset($msg['title']) || !isset($msg['content'])) {
-      $this->send($fid, ['code'=>4000, 'type'=>'msg', 'title'=>'错误', 'content'=>'参数错误!']);
-      return;
-    }
-    // 数据
-    $time = time();
-    $uid = isset($msg['uid'])?$msg['uid']:0;
-    $data = ['id'=>0, 'time'=>date('Y-m-d H:i:s', $time)];
-    $data['gid'] = $msg['gid'];
-    $data['fid'] = $fid;
-    $data['uid'] = $uid;
-    $data['title'] = trim($msg['title']);
-    $data['content'] = is_string($msg['content'])?trim($msg['content']):$msg['content'];
-    $data['format'] = isset($msg['format'])?$msg['format']:0;
-    $data['img'] = isset($msg['img'])?trim($msg['img']):'';
-    $data['loading'] = isset($msg['loading'])?$msg['loading']:0;
-    // 保存消息
-    $m = new UserMsg();
-    $m->Values([
-      'gid'=> $data['gid'],
-      'fid'=> $fid,
-      'uid'=> $uid,
-      'ctime'=> $time,
-      'utime'=> $time,
-      'format'=> $data['format'],
-      'title'=> $data['title'],
-      'content'=> is_array($data['content'])?json_encode($data['content']):$data['content'],
-      'is_new'=> json_encode([$fid]),
-      'pdate'=> date('Y-m-d', $time),
-    ]);
-    if($m->Insert()) {
-      $data['id'] = $m->GetID();
-    } else {
-      $data['code'] = 5000;
-      $this->send($fid, $data);
-    }
-    // 智能机器人
-    $data['code'] = 0;
-    $data['type'] = 'msg';
-    if($data['gid']==1) {
-      // 发自己
-      $this->send($fid?:$uid, $data);
-      if($fid && $data['format']===0) {
-        // 货品流向
-        $res = $this->getDirect($data['content']);
-        // 阿里云百炼
-        // if(!$res) $res = Bailian::GetMsg([['role'=>'user', 'content'=>$data['content']]]);
-        // 回复
-        $data['id'] = 0;
-        $data['fid'] = 0;
-        $data['uid'] = $fid;
-        $data['title'] = $this->cfg['info'][$data['gid']]['title'];
-        $data['content'] = $res;
-        $data['img'] = $this->cfg['info'][$data['gid']]['img'];
-        $data['loading'] += 1;
-        $this->send($fid, $data);
-      }
-    } elseif($uid && $fid) {
-      // 发对方
-      $this->send($uid, $data);
-      // 发自己
-      $this->send($fid, $data);
-    }
-  }
-
-  /* 货品流向 */
-  function getDirect(string $msg): string {
-    $keys = ['流向', '货品', '商品'];
-    $is_key = false;
-    foreach($keys as $key) {
-      if(mb_strpos($msg, $key)) $is_key = true;
-    }
-    if(!$is_key) return '';
-    // 提取编码
-    $data = [];
-    preg_match_all('/[A-Z|a-z|0-9]{8,14}/', $msg, $sku);
-    foreach($sku[0] as $sku_id) {
-      $sku_id = strtoupper($sku_id);
-      // 查询流向
-      // list($total, $list) = Goods::GoodsWork($sku_id, [-1, 36]);
-      $list = [];
-      // 数据
-      $data[] = '## 商品编码: '.$sku_id;
-      foreach($list as $row) {
-        $data[] = $row['ctime'].' '.$row['type_name'].' '.$row['warehouse'];
-      }
-      $data[] = '';
-    }
-    return implode("\n", $data);
+    // 发自己
+    $this->send($fid, ['code'=>0, 'msg'=>$msg]);
+    print_r($this->cfg);
   }
 
   /* 路由 */
@@ -130,14 +44,6 @@ class SocketMsg implements MessageComponentInterface {
     }elseif($msg['type']=='msg') {
       // 消息
       $this->getMsg($uid, $msg);
-    }elseif($msg['type']=='online') {
-      // 是否在线
-      $list = [];
-      $uids = array_keys($this->uids);
-      foreach($msg['ids'] as $id) {
-        $list[(string)$id] = in_array($id, $uids);
-      }
-      $from->send($this->GetJSON(['code'=>0, 'type'=>'online', 'data'=>['total'=>count($uids), 'list'=>$list]]));
     } else {
       // 心跳包
       $from->send($this->GetJSON(['code'=>0, 'type'=>'']));

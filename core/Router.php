@@ -65,7 +65,7 @@ class Router extends Base {
     // 实例化
     $controller = new $controllerPath();
     // 方法是否存在
-    if (!method_exists($controller, $this->method)) {
+    if(!method_exists($controller, $this->method)) {
       self::Print('[ '.$this->name.' ]', '方法不存在 '.$controllerPath.'::'.$this->method.'()');
       exit;
     }
