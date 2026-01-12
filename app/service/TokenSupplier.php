@@ -4,7 +4,7 @@ namespace App\Service;
 use Core\Base;
 use Core\Redis;
 use App\Config\Env;
-use App\Library\Safety;
+use App\Librarys\Safety;
 
 /* Token-验证 */
 class TokenSupplier extends Base {

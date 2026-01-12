@@ -4,7 +4,7 @@ namespace App\Service;
 use Core\Base;
 use Core\Redis;
 use App\Config\Env;
-use App\Library\Safety;
+use App\Librarys\Safety;
 use App\Model\SysMenu;
 
 /* Token-验证 */

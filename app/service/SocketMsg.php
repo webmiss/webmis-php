@@ -5,7 +5,7 @@ use App\Config\Env;
 use App\Config\Socket as SocketCfg;
 use App\Service\TokenAdmin;
 use App\Service\TokenApi;
-use App\Library\Aliyun\Bailian;
+use App\Librarys\Aliyun\Bailian;
 use App\Util\Util;
 
 // use Data\Goods;

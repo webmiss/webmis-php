@@ -4,6 +4,14 @@ namespace Core;
 /* 控制器 */
 class Controller extends Base {
 
+  /* 资源地址 */
+  static function BaseUrl($url='', $host='') {
+    if($host) return $host.$url;
+    $str = isset($_SERVER['HTTPS'])?'https':'http';
+    // return 'http://localhost/php/public/'.$url;
+    return $str.'://'.$_SERVER['HTTP_HOST'].'/'.$url;
+  }
+
   /* 返回JSON */
   static protected function GetJSON(array $data=[]): string {
     // 语言
@@ -30,8 +38,10 @@ class Controller extends Base {
   /* 获取语言 */
   static protected function GetLang(string $action, ...$argv): string {
     $lang = isset($_GET['lang'])&&$_GET['lang']?$_GET['lang']:'en_US';
-    $name = 'Config\\Langs\\'.$lang;
-    $class = new $name();
+    $path = 'App\\Config\\Langs\\';
+    $controller = $path.strtolower($lang);
+    if(!class_exists($controller)) $controller = $path.'en_us';
+    $class = new $controller();
     return $argv?sprintf($class::$$action, ...$argv):$class::$$action;
   }
 
