@@ -3,13 +3,13 @@ namespace App\Model;
 
 use Core\Model;
 
-/* 系统菜单 */
-class SysMenu extends Model {
+/* 权限 */
+class SysPerm extends Model {
 
   /* 构造函数 */
   function __construct() {
     $this->DBConn();
-    $this->Table('sys_menus');
+    $this->Table('sys_perm');
   }
 
 }

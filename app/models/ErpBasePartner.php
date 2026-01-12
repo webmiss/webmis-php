@@ -13,7 +13,7 @@ class ErpBasePartner extends Model {
   }
 
   /* 列表 */
-  static function GetList(array $where = [], array $columns = ['name', 'state'], string $order_by = 'state DESC, sort DESC, name ASC'): array {
+  static function GetList(array $where = [], array $columns = ['name', 'status'], string $order_by = 'status DESC, sort DESC, name ASC'): array {
     $m = new ErpBasePartner();
     $m->Columns('wms_co_id', ...$columns);
     $m->Where(implode(' AND ', $where));
