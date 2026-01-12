@@ -1,5 +1,5 @@
 <?php
-namespace App\Library;
+namespace App\Librarys;
 
 /* 文件类 */
 class FileEo {

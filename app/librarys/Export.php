@@ -1,5 +1,5 @@
 <?php
-namespace App\Library;
+namespace App\Librarys;
 
 use Mpdf\Mpdf;
 

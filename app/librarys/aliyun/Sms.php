@@ -1,8 +1,8 @@
 <?php
-namespace App\Library\Aliyun;
+namespace App\Librarys\Aliyun;
 
 use App\Config\Aliyun;
-use App\Library\Curl;
+use App\Librarys\Curl;
 
 /* 短信服务 */
 class Sms {

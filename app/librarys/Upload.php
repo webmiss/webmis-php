@@ -1,5 +1,5 @@
 <?php
-namespace App\Library;
+namespace App\Librarys;
 
 use Core\Base;
 use App\Util\Base64;

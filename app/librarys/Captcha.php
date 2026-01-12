@@ -1,5 +1,5 @@
 <?php
-namespace Library;
+namespace App\Librarys;
 
 use Gregwar\Captcha\CaptchaBuilder;
 
