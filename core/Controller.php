@@ -22,7 +22,7 @@ class Controller extends Base {
       if(!class_exists($controller)) $controller = $path.'en_us';
       $class = new $controller();
       $method = 'code_'.$data['code'];
-      $data['msg'] = method_exists($controller, $method)?$class::$$method:'';
+      $data['msg'] = property_exists($controller, $method)?$class::$$method:'';
     }
     // 允许跨域请求
     header('Access-Control-Allow-Origin: *');                                 // 域名
