@@ -475,7 +475,7 @@ class Erp_allocate_out extends Controller {
   }
 
   /* 选项 */
-  static function GetSelect(): string {
+  static function Get_select(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -518,7 +518,7 @@ class Erp_allocate_out extends Controller {
   }
 
   /* 商品-列表 */
-  static function GoodsList(): string {
+  static function Goods_list(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -587,7 +587,7 @@ class Erp_allocate_out extends Controller {
   }
 
   /* 商品-检测 */
-  static function GoodsSafety(): string {
+  static function Goods_safety(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -636,7 +636,7 @@ class Erp_allocate_out extends Controller {
   }
 
   /* 商品-添加 */
-  static function GoodsAdd(): string {
+  static function Goods_add(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -771,7 +771,7 @@ class Erp_allocate_out extends Controller {
   }
 
   /* 商品-移除 */
-  static function GoodsRemove(): string {
+  static function Goods_remove(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -807,7 +807,7 @@ class Erp_allocate_out extends Controller {
   }
 
   /* 商品-数量 */
-  static function GoodsNum(): string {
+  static function Goods_num(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -850,7 +850,7 @@ class Erp_allocate_out extends Controller {
   }
 
   /* 商品-更新价格 */
-  static function GoodsPrice(): string {
+  static function Goods_price(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');

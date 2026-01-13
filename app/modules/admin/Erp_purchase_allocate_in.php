@@ -443,7 +443,7 @@ class Erp_allocate_in extends Controller {
   }
 
   /* 选项 */
-  static function GetSelect(): string {
+  static function Get_select(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -486,7 +486,7 @@ class Erp_allocate_in extends Controller {
   }
 
   /* 商品-列表 */
-  static function GoodsList(): string {
+  static function Goods_list(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
