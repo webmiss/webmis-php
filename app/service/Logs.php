@@ -1,5 +1,5 @@
 <?php
-namespace Service;
+namespace App\Service;
 
 use COre\Redis;
 use App\Librarys\FileEo;
