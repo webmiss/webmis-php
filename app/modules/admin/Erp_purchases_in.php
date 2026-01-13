@@ -9,7 +9,6 @@ use App\Service\Goods;
 use App\Service\Status;
 use App\Librarys\Export;
 use App\Util\Util;
-use App\Task\Stock;
 
 use App\Model\ErpPurchaseIn;
 use App\Model\ErpPurchaseInShow;
@@ -18,7 +17,7 @@ use App\Model\ErpBaseBrand;
 use App\Model\ErpBasePartner;
 
 /* 采购入库 */
-class Erp_purchases_in_push extends Controller {
+class Erp_purchases_in extends Controller {
 
   static private $partner_name = [];                // 主仓
   static private $brand_name = [];                  // 品牌
