@@ -7,8 +7,8 @@ use App\Util\Type;
 /* 模型 */
 class Model extends Base {
 
+  public $conn = null;          // 连接
   private $config = [];         // 配置
-  private $conn = null;         // 连接
   private $table = '';          // 数据表
   private $columns = '';        // 字段
   private $columnsType = [];    // 字段-类型
@@ -26,7 +26,7 @@ class Model extends Base {
   private $nums = 0;            // 条数
 
   /* 获取连接 */
-  protected function DBConn(string $name='default'): object|null {
+  protected function DBConn(string $name='default'): bool {
     // 配置
     $this->config = Db::config($name);
     // 连接
@@ -49,7 +49,8 @@ class Model extends Base {
         self::Print('[ Model ]', $e->getMessage());
       }
     }
-    return $this->conn;
+    // 返回
+    return $this->conn?true:false;
   }
 
   /* 执行 */
