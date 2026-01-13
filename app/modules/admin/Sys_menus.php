@@ -258,7 +258,7 @@ class Sys_menus extends Controller {
   }
 
   /* 获取菜单-全部 */
-  static function GetMenusAll() {
+  static function Get_menus_all() {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
