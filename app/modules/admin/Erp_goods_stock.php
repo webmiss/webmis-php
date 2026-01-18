@@ -27,7 +27,6 @@ class Erp_goods_stock extends Controller {
   static private $export_path = 'upload/tmp/';      // 目录
   static private $export_filename = '';             // 文件名
 
-
   /* 统计 */
   static function Total(): string {
     // 参数

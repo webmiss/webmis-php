@@ -1,7 +1,7 @@
 <?php
 namespace App\Service;
 
-use COre\Redis;
+use Core\Redis;
 use App\Librarys\FileEo;
 
 /* 日志 */

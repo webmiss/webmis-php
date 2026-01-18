@@ -22,7 +22,6 @@ class Curl {
     // 数据
     curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
     $res = curl_exec($ch);
-    curl_close($ch);
     // 结果
     if($resType=='json') $res=!empty($res)?json_decode($res):null;
     return $res;
