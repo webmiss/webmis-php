@@ -1,17 +1,15 @@
 <?php
-namespace APP\Web;
+namespace App\Home;
 
 use Core\Controller;
-use Core\Redis;
 use Core\View;
 use App\Config\Env;
-use App\Model\User;
 
 /* 网站 */
-class Index extends Controller {
+class index extends Controller {
 
   /* 首页 */
-  public function Index(): void {
+  public function index(): void {
     // 传参
     View::assign('title', Env::$title);
     View::assign('copy', Env::$copy);

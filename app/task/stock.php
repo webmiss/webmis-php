@@ -8,7 +8,7 @@ use App\Model\ErpGoodsInfo;
 use App\Model\ErpPurchaseStock;
 
 /* 商品库存 */
-class Stock extends Base {
+class stock extends Base {
 
   /* 同步采购员、供应商 */
   static function syncData(): void {
@@ -42,7 +42,7 @@ class Stock extends Base {
   }
 
   /* 库存同步 */
-  static function Goods(string $data){
+  static function goods(string $data){
     $param = json_decode($data, true);
     // 参数
     $param = array_merge([

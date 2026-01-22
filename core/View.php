@@ -4,7 +4,8 @@ namespace Core;
 /* 视图 */
 class View extends Base {
 
-  static private $data = []; // 视图变量
+  static private $name = 'View';  // 名称
+  static private $data = [];      // 视图变量
 
   /* 赋值变量 */
   static function assign(string $key, $value) {
@@ -17,7 +18,7 @@ class View extends Base {
     // 视图文件
     $viewPath = '../app/views/'.$viewName.'.php';
     if(!file_exists($viewPath)) {
-      self::Print('[ View ]', '视图不存在 '.$viewPath);
+      self::Print('[ '.self::$name.' ]', '视图不存在 '.$viewPath);
       return '';
     }
     // 内容

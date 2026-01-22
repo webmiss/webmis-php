@@ -7,7 +7,7 @@
             "APP\\Librarys\\": "app/librarys/",
             "APP\\Librarys\\Aliyun\\": "app/librarys/aliyun/",
             "App\\Model\\": "app/models/",
-            "App\\Web\\": "app/modules/web/",
+            "App\\Home\\": "app/modules/home/",
             "App\\Admin\\": "app/modules/admin/",
             "App\\Api\\": "app/modules/api/",
             "App\\Service\\": "app/service/",

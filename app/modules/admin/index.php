@@ -14,7 +14,7 @@ use App\Model\ErpPurchaseAllocate;
 use App\Model\ErpOrderShow;
 
 /* 控制台 */
-class Index extends Controller {
+class index extends Controller {
 
   private static $partner = [];       // 主仓
   // 默认值数据
@@ -25,13 +25,13 @@ class Index extends Controller {
   ];
 
   /* 首页 */
-  static function Index() {
+  static function index() {
     // 返回
     return self::GetJSON(['code'=>0, 'msg'=>'PHP Admin']);
   }
 
   /* 法定假期 */
-  static function Holiday(): string {
+  static function holiday(): string {
     // 参数
     $json = self::Json();
     $date = self::JsonName($json, 'date');
@@ -73,28 +73,8 @@ class Index extends Controller {
     return self::GetJSON(['code'=>0, 'data'=>isset($holiday[$date])?$holiday[$date]:'']);
   }
 
-  /* 选项 */
-  static function GetSelect(): string {
-    // 参数
-    $json = self::Json();
-    $token = self::JsonName($json, 'token');
-    // 验证
-    $msg = TokenAdmin::Verify($token, '');
-    if($msg!='') return self::GetJSON(['code'=>4001]);
-    // 仓库
-    self::$partner = ErpBasePartner::GetList(['type=0', 'status=1']);
-    $partner_name = [];
-    foreach(self::$partner as $k=>$v){
-      $partner_name[] = ['label'=>$v['name'], 'value'=>$k];
-    }
-    // 返回
-    return self::GetJSON(['code'=>0, 'data'=>[
-      'partner_name'=> $partner_name,
-    ]]);
-  }
-
   /* 报表-库存 */
-  static function Stock(): string {
+  static function stock(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -124,7 +104,7 @@ class Index extends Controller {
   }
 
   /* 报表-列表 */
-  static function List(): string {
+  static function list(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -328,7 +308,7 @@ class Index extends Controller {
   }
 
   /* 选项 */
-  static function Get_select(): string {
+  static function get_select(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');

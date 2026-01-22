@@ -25,12 +25,12 @@ class SocketMsg implements MessageComponentInterface {
 }
 
 /* Socket */
-class Socket extends Base {
+class socket extends Base {
 
   static private $config = [];         // 配置
 
   /* 服务器 */
-  static function Server(string $name='default') {
+  static function server(string $name='default') {
     // 配置
     self::$config = SocketCfg::config($name);
     // 启动
@@ -42,7 +42,7 @@ class Socket extends Base {
   }
 
   /* 客户端 */
-  static function Client(string $channel='admin', string $msg='', string $cfgName='default'): bool {
+  static function client(string $channel='admin', string $msg='', string $cfgName='default'): bool {
     // 配置
     $config = SocketCfg::config($cfgName);
     try{
