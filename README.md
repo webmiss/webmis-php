@@ -50,9 +50,9 @@ webmis-php/
 │    ├── Controller.php         // 基础控制器
 │    ├── Model.php              // 基础模型
 │    ├── Redis.php              // 缓存数据库
-│    ├── Router.py              // HMVC 路由
-│    ├── RouterCli.py           // Cli 路由
-│    └── View.py                // 基础视图
+│    ├── Router.php             // HMVC 路由
+│    ├── RouterCli.php          // Cli 路由
+│    └── View.php               // 基础视图
 ├── public                       // 静态资源
 │    ├── upload                 // 上传目录
 │    └── index.php              // 人口文件
