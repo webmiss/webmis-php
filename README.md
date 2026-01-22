@@ -38,8 +38,8 @@ webmis-php/
 │    ├── librarys               // 第三方类
 │    ├── models                 // 模型
 │    └── modules                // 模块
-│    │    ├── admin            // 后台接口
-│    │    ├── api              // 应用接口
+│    │    ├── admin            // 后台
+│    │    ├── api              // 应用
 │    │    └── home             // 网站
 │    ├── service                // 项目服务类
 │    ├── task                   // 任务类
