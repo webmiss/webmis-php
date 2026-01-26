@@ -14,7 +14,7 @@ use App\Model\ErpPurchaseAllocate;
 use App\Model\ErpOrderShow;
 
 /* 控制台 */
-class index extends Controller {
+class Index extends Controller {
 
   private static $partner = [];       // 主仓
   // 默认值数据

@@ -13,10 +13,11 @@ use App\Librarys\Captcha;
 use App\Model\User as UserM;
 use App\Model\UserInfo;
 
-class user extends Controller {
+/* 用户 */
+class User extends Controller {
 
   /* 验证码-图形 */
-  static function vcode(string $uname): void {
+  static function Vcode(string $uname): void {
     // 编码
     $code = Captcha::Vcode(4);
     // 缓存
@@ -27,7 +28,7 @@ class user extends Controller {
   }
 
   /* 验证码-数字 */
-  static function get_vcode(): string {
+  static function Get_vcode(): string {
     // 参数
     $json = self::Json();
     $type = self::JsonName($json, 'type');
@@ -70,7 +71,7 @@ class user extends Controller {
   }
 
   /* 登录 */
-	static function login(): string {
+	static function Login(): string {
     // 参数
     $json = self::Json();
     $uname = self::JsonName($json, 'uname');
@@ -186,7 +187,7 @@ class user extends Controller {
   }
 
   /* Token验证 */
-	static function token(): string {
+	static function Token(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -216,7 +217,7 @@ class user extends Controller {
   }
 
   /* 修改密码 */
-  static function change_passwd(): string {
+  static function Change_passwd(): string {
     // 参数
     $json = self::Json();
     $uname = self::JsonName($json, 'uname');
@@ -248,7 +249,7 @@ class user extends Controller {
   }
 
   /* 修改用户信息 */
-  static function change_uinfo(): string {
+  static function Change_uinfo(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -280,7 +281,7 @@ class user extends Controller {
   }
 
   /* 头像 */
-  static function upimg(): string {
+  static function Upimg(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');

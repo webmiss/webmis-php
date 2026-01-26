@@ -6,7 +6,7 @@ use Core\View;
 use App\Config\Env;
 
 /* 网站 */
-class index extends Controller {
+class Index extends Controller {
 
   /* 首页 */
   public function index(): void {

@@ -4,9 +4,9 @@ namespace Core;
 /* 路由 */
 class Router extends Base {
   private $name = 'app';          // 名称
-  private $module = 'Home';       // 模块
-  private $controller = 'index';  // 控制器
-  private $method = 'index';      // 方法
+  private $module = 'Home';        // 控制器
+  private $controller = 'Index';  // 控制器
+  private $method = 'Index';      // 方法
   private $params = [];           // 参数
 
   /* 构造函数 */
@@ -41,12 +41,12 @@ class Router extends Base {
     }
     // 控制器
     if(!empty($url[1])) {
-      $this->controller = $url[1];
+      $this->controller = ucfirst($url[1]);
       unset($url[1]);
     }
     // 方法
     if (!empty($url[2])) {
-      $this->method = $url[2];
+      $this->method = ucfirst($url[2]);
       unset($url[2]);
     }
     // 参数

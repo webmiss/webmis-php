@@ -4,8 +4,8 @@ namespace Core;
 /* 路由-命令行 */
 class RouterCli extends Base {
   private $name = 'cli';          // 名称
-  private $controller = 'main';   // 控制器
-  private $method = 'index';      // 方法
+  private $controller = 'Main';   // 控制器
+  private $method = 'Index';      // 方法
   private $params = [];           // 参数
 
   /* 构造函数 */
@@ -18,12 +18,12 @@ class RouterCli extends Base {
     unset($argv[0]);
     // 控制器
     if(isset($argv[1])) {
-      $this->controller = $argv[1];
+      $this->controller = ucfirst($argv[1]);
       unset($argv[1]);
     }
     // 方法
     if(isset($argv[2])) {
-      $this->method = $argv[2];
+      $this->method = ucfirst($argv[2]);
       unset($argv[2]);
     }
     // 参数
