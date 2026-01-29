@@ -8,10 +8,9 @@ use App\Util\Type;
 class Model extends Base {
 
   public $conn = null;          // 连接
-  private $config = [];         // 配置
+  private $name = 'Model';      // 名称
   private $table = '';          // 数据表
-  private $columns = '';        // 字段
-  private $columnsType = [];    // 字段-类型
+  private $columns = '*';       // 字段
   private $where = '';          // 条件
   private $group = '';          // 分组
   private $having = '';         // 筛选
@@ -28,25 +27,25 @@ class Model extends Base {
   /* 获取连接 */
   protected function DBConn(string $name='default'): bool {
     // 配置
-    $this->config = Db::config($name);
+    $cfg = Db::Config($name);
     // 连接
     if(!$this->conn) {
       try {
         $this->conn = new \PDO(
-          $this->config['driver'].':host='.$this->config['host'].';dbname='.$this->config['dbname'],
-          $this->config['username'],
-          $this->config['password'],
+          $cfg['driver'].':host='.$cfg['host'].';dbname='.$cfg['database'].';port='.$cfg['port'],
+          $cfg['user'],
+          $cfg['password'],
           [
             // 长链接
-            \PDO::ATTR_PERSISTENT => $this->config['persistent'],
+            \PDO::ATTR_PERSISTENT => $cfg['persistent'],
             // 异常设置
             \PDO::ATTR_ERRMODE => 2
           ]
         );
         // 设置编码
-        if($this->conn) $this->conn->exec('SET NAMES "'.$this->config['charset'].'";');
+        if($this->conn) $this->conn->exec('SET NAMES "'.$cfg['charset'].'";');
       } catch (\Exception $e) {
-        self::Print('[ Model ]', $e->getMessage());
+        self::Print('[ '.$this->name.' ] Conn:', $e->getMessage());
       }
     }
     // 返回
@@ -112,75 +111,74 @@ class Model extends Base {
     $this->table .= ' FULL JOIN ' . $table . ' ON ' . $on;
   }
   /* 字段 */
-  function Columns(...$columns): void {
-    $this->columns = implode(',', $columns);
-  }
-  /* 字段-返回类型 */
-  function ResType(array $type) {
-    $this->columnsType = $type;
+  function Columns(...$fields): void {
+    $this->columns = implode(',', $fields);
   }
   /* 条件 */
-  function Where(string $where, ...$values): void {
-    $this->where = $where;
-    $this->args = array_merge($this->args, $values);
+  function Where(string $where, ...$args): void {
+    $this->where = ' WHERE ' . $where;
+    $this->args = array_merge($this->args, $args);
+  }
+  /* 分组 */
+  function Group(string ...$group): void {
+    $this->group = ' GROUP BY ' . implode(',', $group);
+  }
+  /* 筛选 */
+  function Having(string $having): void {
+    $this->having = ' HAVING ' . $having;
+  }
+  /* 排序 */
+  function Order(string ...$order): void {
+    $this->order = ' ORDER BY ' . implode(',', $order);
   }
   /* 限制 */
   function Limit(int $start, int $limit): void {
-    $this->limit = $start.','.$limit;
+    $this->limit = ' LIMIT ' . $start . ',' . $limit;
   }
-  /* 排序 */
-  function Order(...$order): void {
-    $this->order = implode(',', $order);
-  }
-  /* 分组 */
-  function Group(...$group): void {
-    $this->group = implode(',', $group);
-  }
-  /* 筛选 */
-  function Having($having): void {
-    $this->having = $having;
-  }
-
   /* 分页 */
   function Page(int $page, int $limit): string {
-    $start = ($page - 1) * $limit;
-    return $this->limit = $start . ',' . $limit;
+    return $this->limit = ' LIMIT ' . (($page - 1) * $limit). ',' . $limit;
   }
 
   /* 查询-SQL */
   function SelectSQL(): array {
-    if($this->table=='') {
-      self::Error('[ Model ]', 'Select: 表不能为空!');
+    // 验证
+    if($this->table==='') {
+      self::Print('[ '.$this->name.' ]', 'Select: 表不能为空!');
       return ['', $this->args];
     }
-    if($this->columns=='') {
-      self::Error('[ Model ]', 'Select]: 字段不能为空!');
+    if($this->columns==='') {
+      self::Print('[ '.$this->name.' ]', 'Select]: 字段不能为空!');
       return ['', $this->args];
     }
-    // 合成
+    // SQL
     $this->sql = 'SELECT '.$this->columns.' FROM '.$this->table;
-    if($this->where != '') {
-      $this->sql .= ' WHERE '.$this->where;
+    $this->table = '';
+    $this->columns = '*';
+    if($this->where !== '') {
+      $this->sql .= $this->where;
       $this->where = '';
     }
-    if($this->group != '') {
-      $this->sql .= ' GROUP BY '.$this->group;
+    if($this->group !== '') {
+      $this->sql .= $this->group;
       $this->group = '';
     }
-    if($this->having != '') {
-      $this->sql .= ' HAVING '.$this->having;
+    if($this->having !== '') {
+      $this->sql .= $this->having;
       $this->having = '';
     }
-    if($this->order != '') {
-      $this->sql .= ' ORDER BY '.$this->order;
+    if($this->order !== '') {
+      $this->sql .= $this->order;
       $this->order = '';
     }
-    if($this->limit != '') {
-      $this->sql .= ' LIMIT '.$this->limit;
+    if($this->limit !== '') {
+      $this->sql .= $this->limit;
       $this->limit = '';
     }
+    // 参数
     $args = $this->args;
     $this->args = [];
+    // 结果
     return [$this->sql, $args];
   }
   /* 查询-多条 */
@@ -191,18 +189,7 @@ class Model extends Base {
   }
   /* 查询-多条数据 */
   function DataAll(object $stmt): array {
-    $data = $stmt?$stmt->fetchAll(\PDO::FETCH_ASSOC):[];
-    // 转换类型
-    if(count($this->columnsType)==0) return $data;
-    foreach($data as $k1=>$v1) {
-      foreach($v1 as $k2=>$v2) {
-        if(isset($this->columnsType[$k2])) {
-          $data[$k1][$k2] = Type::ToType($this->columnsType[$k2], $v2);
-        }
-      }
-    }
-    $this->columnsType = [];
-    return $data;
+    return $stmt?$stmt->fetchAll(\PDO::FETCH_ASSOC):[];
   }
   /* 查询-单条 */
   function FindFirst(array $param=[]): array | bool {
@@ -213,16 +200,7 @@ class Model extends Base {
   }
   /* 查询-单条数据 */
   function Data(object $stmt): array | bool {
-    $data = $this->nums>0?$stmt->fetch(\PDO::FETCH_ASSOC):false;
-    // 转换类型
-    if(count($this->columnsType)==0) return $data;
-    foreach($data as $k=>$v) {
-      if(isset($this->columnsType[$k])){
-        $data[$k] = Type::ToType($this->columnsType[$k], $v);
-      }
-    }
-    $this->columnsType = [];
-    return $data;
+    return $this->nums>0?$stmt->fetch(\PDO::FETCH_ASSOC):false;
   }
 
   /* 添加-单条 */
