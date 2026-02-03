@@ -369,13 +369,19 @@ class Erp_goods_stock extends Controller {
       $list[$k]['allocate'] = isset($allocate[$v['sku_id']])?($allocate[$v['sku_id']]=='0'?'调拨中':'完成'):'-';
       $list[$k]['order'] = isset($order[$v['sku_id']])?($order[$v['sku_id']]=='0'?'进行中':'完成'):'-';
       $list[$k]['refund'] = isset($refund[$v['sku_id']])?($refund[$v['sku_id']]=='0'?'进行中':'完成'):'-';
+      // 停留时间
+      $now = date('Y-m-d').' 23:59:59';
+      $dt1 = new \DateTime($v['utime']);
+      $dt2 = new \DateTime($now);
+      $res = $dt1->diff($dt2);
+      $list[$k]['stay'] = $res->days;
     }
     // 导出文件
     $admin = TokenAdmin::Token($token);
     self::$export_filename = 'GoodsStock_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
     $html = Export::ExcelTop();
     $html .= Export::ExcelTitle([
-      'ID', '商品分类', '商品编码', '库存', '入库', '调拨', '发货', '售后', '采退', '分仓ID', '分仓名称', '采购员', '创建时间', '更新时间'
+      'ID', '商品分类', '商品编码', '库存', '入库', '调拨', '发货', '售后', '采退', '分仓ID', '分仓名称', '采购员', '创建时间', '更新时间', '停留(天)'
     ]);
     // 数据
     foreach($list as $v){
@@ -395,6 +401,7 @@ class Erp_goods_stock extends Controller {
         $v['owner'],
         '&nbsp;'.$v['ctime'],
         '&nbsp;'.$v['utime'],
+        $v['stay'],
       ]);
     }
     $html .= Export::ExcelBottom();

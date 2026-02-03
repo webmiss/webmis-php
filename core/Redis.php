@@ -6,37 +6,32 @@ use App\Config\Redis as RedisCfg;
 /* Redis */
 class Redis extends Base {
 
+  public $conn = null;          // 连接
+  private $name = 'Redis';      // 名称
   private $config = [];         // 配置
-  private $conn = null;         // 连接
 
-  /* 获取连接 */
+  /* 构造函数 */
   public function __construct(string $name='default') {
     // 配置
     $this->config = RedisCfg::config($name);
     // 连接
+    if(!$this->conn) $this->ReidsConn();
+  }
+
+  /* 获取连接 */
+  public function ReidsConn(): object|null {
     if(!$this->conn) {
       try{
         $this->conn = new \Redis();
-        $this->conn->pconnect($this->config['host'], $this->config['port']); 
+        $this->conn->pconnect($this->config['host'], $this->config['port'], $this->config['socket_timeout'], 'redis_pool_unique', 0, 3);
         if($this->config['password']) $this->conn->auth($this->config['password']);
         $this->conn->select($this->config['db']);
       }catch (\Exception $e){
-        self::Print('[ Redis ]', $e->getMessage());
+        self::Print('[ '.$this->name.' ]', $e->getMessage());
         return null;
       }
     }
-  }
-  /* 析构函数 */
-  public function __destruct() {
-    $this->Close();
-  }
-
-  /* 关闭连接 */
-  public function Close(): void {
-    if($this->conn) {
-      $this->conn->close();
-      $this->conn = null;
-    }
+    return $this->conn;
   }
 
   /* 添加 */
@@ -44,36 +39,49 @@ class Redis extends Base {
     if(!$this->conn) return null;
     return $this->conn->set($key, $val);
   }
+
   /* 自增 */
   function Incr(string $key): string|bool| null {
     if(!$this->conn) return null;
     return $this->conn->incr($key);
   }
+
+  /* 自减 */
+  function Decr(string $key): string|bool|null {
+    if(!$this->conn) return null;
+    return $this->conn->decr($key);
+  }
+
   /* 获取 */
-  function Gets(string $key): string|bool|null {
+  function Get(string $key): string|bool|null {
     if(!$this->conn) return null;
     return $this->conn->get($key);
   }
+
   /* 删除 */
   function Del(string ...$key): int|null {
     if(!$this->conn) return null;
     return $this->conn->del($key);
   }
+
   /* 是否存在 */
   function Exist(string $key): int|null {
     if(!$this->conn) return null;
     return $this->conn->exists($key);
   }
+
   /* 设置过期时间(秒) */
   function Expire(string $key, int $ttl): bool|null {
     if(!$this->conn) return null;
     return $this->conn->expire($key, $ttl);
   }
+
   /* 获取过期时间(秒) */
   function Ttl(string $key): int|null {
     if(!$this->conn) return null;
     return @$this->conn->ttl($key);
   }
+
   /* 获取长度 */
   function StrLen(string $key): int|null {
     if(!$this->conn) return null;
@@ -85,30 +93,38 @@ class Redis extends Base {
     if(!$this->conn) return null;
     return $this->conn->hset($name, $key, $val);
   }
-  function HMSet(string $name, array $obj): bool|null {
-    if(!$this->conn) return null;
-    return $this->conn->hmset($name, $obj);
-  }
-  /* 哈希(Hash)-获取 */
-  function HGet(string $name, string $key): string|bool|null {
-    if(!$this->conn) return null;
-    return $this->conn->hget($name, $key);
-  }
-  function HMGet(string $name, string $key): array|null {
-    if(!$this->conn) return null;
-    return $this->conn->hmget($name, $key);
-  }
+
   /* 哈希(Hash)-删除 */
   function HDel(string $name, string ...$key): int|null {
     if(!$this->conn) return null;
     return $this->conn->hdel($name, $key);
   }
+
+  /* 哈希(Hash)-获取 */
+  function HGet(string $name, string $key): string|bool|null {
+    if(!$this->conn) return null;
+    return $this->conn->hget($name, $key);
+  }
+
+  /* 哈希(Hash)-获取全部 */
+  function HGetAll(string $name): array|null {
+    if(!$this->conn) return null;
+    return $this->conn->hgetall($name);
+  }
+
+  /* 哈希(Hash)-获取全部值 */
+  function HVals(string $name): array|null {
+    if(!$this->conn) return null;
+    return $this->conn->hvals($name);
+  }
+
   /* 哈希(Hash)-是否存在 */
   function HExist(string $name, string $key): int|null {
     if(!$this->conn) return null;
     return $this->conn->hexists($name, $key);
   }
-  /* 哈希(Hash)-Key个数 */
+
+  /* 哈希(Hash)-获取长度 */
   function HLen(string $name): int|null {
     if(!$this->conn) return null;
     return $this->conn->hlen($name);
