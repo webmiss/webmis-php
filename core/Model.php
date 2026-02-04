@@ -53,7 +53,7 @@ class Model extends Base {
   }
 
   /* 执行 */
-  function Exec($conn, string $sql, array $args=[]): ?object {
+  function Exec($conn, string $sql, ...$args): ?object {
     if(!$conn) return null;
     if(empty($sql)) {
       self::Print('[ '.$this->name.' ]', 'Exec: SQL不能为空!');
@@ -182,22 +182,22 @@ class Model extends Base {
     return [$this->sql, $args];
   }
   /* 查询-多条 */
-  function Find(string $sql='', array $args=[]): array|null {
+  function Find(string $sql='', ...$args): array|null {
     if($sql=='') {
       list($sql, $args) = $this->SelectSQL();
       if($sql=='') return null;
     }
-    $stmt = $this->Exec($this->conn, $sql, $args);
+    $stmt = $this->Exec($this->conn, $sql, ...$args);
     return $stmt?$stmt->fetchAll(\PDO::FETCH_ASSOC):[];
   }
   /* 查询-单条 */
-  function FindFirst(string $sql='', array $args=[]): array|null {
+  function FindFirst(string $sql='', ...$args): array|null {
     if($sql=='') {
       $this->Limit(0, 1);
       list($sql, $args) = $this->SelectSQL();
       if($sql=='') return null;
     }
-    $stmt = $this->Exec($this->conn, $sql, $args);
+    $stmt = $this->Exec($this->conn, $sql, ...$args);
     return $stmt?$stmt->fetch(\PDO::FETCH_ASSOC):null;
   }
 
@@ -252,11 +252,11 @@ class Model extends Base {
     return [$this->sql, $args];
   }
   /* 添加-执行 */
-  function Insert(string $sql='', array $args=[]): int {
+  function Insert(string $sql='', ...$args): int {
     if($sql=='') {
       list($sql, $args) = $this->InsertSQL();
     }
-    $stmt = $this->Exec($this->conn, $sql, $args);
+    $stmt = $this->Exec($this->conn, $sql, ...$args);
     return $stmt?$this->conn->lastInsertId():0;
   }
 
@@ -296,9 +296,11 @@ class Model extends Base {
     return [$this->sql, $args];
   }
   /* 更新-执行 */
-  function Update(): bool {
-    list($sql, $args) = $this->UpdateSQL();
-    $stmt = $this->Exec($this->conn, $sql, $args);
+  function Update(string $sql='', ...$args): bool {
+    if($sql=='') {
+      list($sql, $args) = $this->InsertSQL();
+    }
+    $stmt = $this->Exec($this->conn, $sql, ...$args);
     return $stmt?true:false;
   }
 
@@ -322,9 +324,11 @@ class Model extends Base {
     return [$this->sql, $args];
   }
   /* 删除-执行 */
-  function Delete(): bool {
-    list($sql, $args) = $this->DeleteSQL();
-    $stmt = $this->Exec($this->conn, $sql, $args);
+  function Delete(string $sql='', ...$args): bool {
+    if($sql=='') {
+      list($sql, $args) = $this->InsertSQL();
+    }
+    $stmt = $this->Exec($this->conn, $sql, ...$args);
     return $stmt?true:false;
   }
 
