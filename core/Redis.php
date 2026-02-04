@@ -53,7 +53,7 @@ class Redis extends Base {
   }
 
   /* 获取 */
-  function Get(string $key): string|bool|null {
+  function Gets(string $key): string|bool|null {
     if(!self::$conn) return null;
     return self::$conn->get($key);
   }

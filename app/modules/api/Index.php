@@ -17,7 +17,7 @@ class Index extends Controller {
     // Redis
     $r = new Redis();
     $r->Set('test', 'PHP Redis');
-    self::Print($data, $r->Get('test'));
+    self::Print($data, $r->Gets('test'));
     // 返回
     return self::GetJSON(['code'=>0, 'msg'=>'PHP Api']);
   }
