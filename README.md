@@ -35,7 +35,7 @@ php cli.php main index params
 - 测试Socket ws://127.0.0.1:9001/?channel=admin&token=Token
 
 ## 生产环境
-*** Ubuntu ***
+***Ubuntu***
 ```bash
 # Nginx
 apt install nginx -y
@@ -48,7 +48,7 @@ apt install redis-server -y
 apt install php-fpm php-cli php-mysql php-gd php-xml php-mbstring -y
 ```
 
-*** Nginx ***
+***Nginx***
 ```bash
 server {
     server_name  php.webmis.vip;
