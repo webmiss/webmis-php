@@ -9,12 +9,16 @@
 
 ## 安装
 ```bash
-$ git clone https://github.com/webmiss/webmis-php.git
-$ cd webmis-php
-$ composer install
+# 下载
+git clone https://github.com/webmiss/webmis-php.git
+cd webmis-php
+# Linux、MacOS
+./bash install
+# Windows
+.\cmd install
 ```
 
-## 运行
+## 开发环境
 ```bash
 # Linux、MacOS
 ./bash serve
@@ -29,6 +33,47 @@ php cli.php main index params
 ```
 - 浏览器访问 http://127.0.0.1:9000/
 - 测试Socket ws://127.0.0.1:9001/?channel=admin&token=Token
+
+## 生产环境
+*** Ubuntu ***
+```bash
+# Nginx
+apt install nginx -y
+apt autoremove -y
+# MariaDB
+apt install mariadb-server -y
+# Redis
+apt install redis-server -y
+# PHP
+apt install php-fpm php-cli php-mysql php-gd php-xml php-mbstring -y
+```
+
+*** Nginx ***
+```bash
+server {
+    server_name  php.webmis.vip;
+    set $root_path /home/www/webmis/php/public;
+    root $root_path;
+    index index.php;
+
+    location / {
+        try_files $uri $uri/ /index.php?_url=$uri&$args;
+    }
+    location ~* ^/(upload|favicon.png)/(.+)$ {
+        root $root_path;
+        add_header 'Access-Control-Allow-Origin' '*';
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
+        add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization';
+        if ($request_method = 'OPTIONS') { return 204; }
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass   unix:/run/php/php8.3-fpm.sock;
+        fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+        include        fastcgi_params;
+    }
+}
+```
 
 ## 项目结构
 ```plaintext
