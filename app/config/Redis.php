@@ -11,7 +11,7 @@ class Redis {
       case 'default':
         $data['host'] = '127.0.0.1';                               // 主机
         $data['port'] = 6379;                                      // 端口
-        $data['password'] = '';                                    // 密码
+        $data['password'] = 'e4b99adec618e653400966be536c45f8';    // 密码
         $data['db'] = 0;                                           // 硬盘
         $data['socket_timeout'] = 3;                               // 连接超时
         break;
