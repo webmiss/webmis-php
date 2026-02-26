@@ -8,18 +8,16 @@ use App\Service\TokenAdmin;
 use App\Service\Data;
 use App\Service\Goods;
 use App\Service\Logs;
-use App\Service\Status;
 use App\Librarys\Export;
 use App\Util\Util;
 use App\Librarys\Qrcode;
 use Milon\Barcode\DNS1D;
 
+use App\Model\ErpGoodsInfo;
 use App\Model\ErpGoodsLogs;
 use App\Model\ErpPurchaseStock;
 
 use App\Model\ErpBasePartner;
-use App\Model\ErpBaseBrand;
-use App\Model\ErpBaseCategory;
 
 /* 控制台 */
 class ErpGoods extends Controller {
@@ -238,6 +236,65 @@ class ErpGoods extends Controller {
     $list = $m->Find();
     // 返回
     return self::GetJSON(['code'=>0, 'msg'=>'成功', 'time'=>date('Y/m/d H:i:s'), 'data'=>$list]);
+  }
+
+  /* 商品-图片 */
+  static function Img_list(): string {
+    // 参数
+    $json = self::Json();
+    $token = self::JsonName($json, 'token');
+    $data = self::JsonName($json, 'data');
+    $page = self::JsonName($json, 'page');
+    $limit = self::JsonName($json, 'limit');
+    $order = self::JsonName($json, 'order');
+    // 验证权限
+    $msg = TokenAdmin::Verify($token, '');
+    if($msg!='') return self::GetJSON(['code'=>4001]);
+    if(!is_array($data) || empty($page) || empty($limit)) return self::GetJSON(['code'=> 4000]);
+    // 条件
+    $where = 'a.img=1';
+    // $where = 'img=1 AND labels!="缅甸" AND (category="翡翠-手镯" OR category="翡翠-挂件")';
+    $key = isset($data['key'])?array_filter(explode(' ', $data['key'])):[];
+    if($key) {
+      $where .= ' AND (a.properties_value LIKE "%'.implode('%" OR a.properties_value LIKE "%', $key).'%")';
+    }
+    // 分类
+    $category = isset($data['category'])?$data['category']:'';
+    if($category) $where .= ' AND a.category like "翡翠-'.$category.'%"';
+    // 价格
+    $price1 = isset($data['price1'])?(float)$data['price1']:0;
+    $price2 = isset($data['price2'])?(float)$data['price2']:0;
+    if($price1) $where .= ' AND a.sale_price>='.$price1;
+    if($price2) $where .= ' AND a.sale_price<='.$price2;
+    // 排序
+    $order_arr = [];
+    if(isset($order['utime']) && $order['utime']) $order_arr[]='a.utime '.$order['utime'];
+    if(isset($order['sale_price']) && $order['sale_price']) $order_arr[]='a.sale_price '.$order['sale_price'];
+    if(isset($order['stock']) && $order['stock']) {
+      $order_arr[]='b.num '.$order['stock'];
+      $where .= $order['stock']==='DESC'?' AND b.num>0':' AND b.num=0';
+    }
+    // 分区
+    $time = isset($data['time'])?$data['time']:'1';
+    $pname = Data::PartitionName(strtotime('-'.$time.' month'), time());
+    // 查询
+    $m = new ErpGoodsInfo();
+    $m->Table('erp_goods_info PARTITION('.$pname.') as a');
+    $m->LeftJoin('erp_purchase_stock as b', 'a.sku_id=b.sku_id');
+    $m->Columns('a.sku_id', 'a.img', 'a.sale_price', 'a.properties_value', 'b.num as stock');
+    $m->Where($where);
+    $m->Page($page, $limit);
+    $m->Order(...$order_arr);
+    $list = $m->Find();
+    // SKU
+    $data = [];
+    foreach($list as $v) {
+      $v['stock'] = $v['stock']?:0;
+      $v['img'] = $v['img']?Data::ImgGoods($v['sku_id']).'?'.date('Ymd'):'';
+      $data[$v['sku_id']] = $v;
+    }
+    // 返回
+    return self::GetJSON(['code'=>0, 'data'=>array_values($data)]);
   }
 
   /* 封面图-上传 */

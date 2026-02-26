@@ -374,7 +374,7 @@ class Erp_goods_stock extends Controller {
       $dt1 = new \DateTime($v['utime']);
       $dt2 = new \DateTime($now);
       $res = $dt1->diff($dt2);
-      $list[$k]['stay'] = $res->days;
+      $list[$k]['stay'] = $res->days==0?'今天':$res->days.'天';
     }
     // 导出文件
     $admin = TokenAdmin::Token($token);

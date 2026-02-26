@@ -8,9 +8,9 @@ set port=9000
 set cli=cli.php
 set php_dir=D:\soft\php
 set php_url=https://windows.php.net/downloads/releases/php-8.3.29-nts-Win32-vs16-x64.zip
+set php_ext=fileinfo,gd,mbstring,openssl,pdo_mysql
 set composer_url=https://install.phpcomposer.com/installer
 set composer_mirrors=https://repo.packagist.org
-set php_ext=fileinfo,gd,mbstring,openssl,pdo_mysql
 
 @REM PHP环境
 php -v >nul 2>&1

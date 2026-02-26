@@ -4,8 +4,8 @@
 **演示**
 - 使用文档( [https://webmis.vip/](https://webmis.vip/php/install/index) )
 - 网站-API( [https://php.webmis.vip/](https://php.webmis.vip/) )
-- 前端-API( [https://php.webmis.vip/api/](https://php.webmis.vip/api/) )
-- 后台-API( [https://php.webmis.vip/admin/](https://php.webmis.vip/admin/) )
+- 前端-API( [https://php.webmis.vip/api](https://php.webmis.vip/api) )
+- 后台-API( [https://php.webmis.vip/admin](https://php.webmis.vip/admin) )
 
 ## 安装
 ```bash
@@ -38,13 +38,12 @@ php cli.php main index params
 ### Ubuntu
 ```bash
 # Nginx
-apt install nginx -y
-apt autoremove -y
+apt install -y nginx
 # MariaDB
-apt install mariadb-server -y
+apt install -y mariadb-server
 # Redis
-apt install redis-server -y
-# PHP
+apt install -y redis-server
+# PHP( 依赖包 )
 apt install php-fpm php-cli php-mysql php-gd php-xml php-mbstring -y
 ```
 

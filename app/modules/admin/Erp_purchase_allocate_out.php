@@ -479,6 +479,7 @@ class Erp_allocate_out extends Controller {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
+    $type = self::JsonName($json, 'type');
     // 验证
     $msg = TokenAdmin::Verify($token, '');
     if($msg!='') return self::GetJSON(['code'=>4001]);
@@ -494,6 +495,7 @@ class Erp_allocate_out extends Controller {
     self::$partner_name = ErpBasePartner::GetList();
     $go_co_name = $link_co_name = [];
     foreach(self::$partner_name as $k=>$v) {
+      if($type=='add' && $v['state']!='1') continue;
       $tmp = ['label'=>$v['name'], 'value'=>$k, 'info'=>$v['status']?true:false];
       // 调出仓
       if($partner_perm) {
