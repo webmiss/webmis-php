@@ -8,9 +8,9 @@ set port=9000
 set cli=cli.php
 set php_dir=D:\soft\php
 set php_url=https://windows.php.net/downloads/releases/php-8.3.29-nts-Win32-vs16-x64.zip
-set php_ext=fileinfo,gd,mbstring,openssl,pdo_mysql
 set composer_url=https://install.phpcomposer.com/installer
 set composer_mirrors=https://repo.packagist.org
+set php_ext=curl,fileinfo,gd,mbstring,openssl,pdo_mysql
 
 @REM PHP环境
 php -v >nul 2>&1
@@ -49,7 +49,7 @@ if "%s%"=="serve" (
   @REM 配置文件
   if not exist "%php_dir%\php.ini" (
     copy /Y %php_dir%\php.ini-development %php_dir%\php.ini
-    echo [✓] 配置文件: %php_dir%\php.ini
+    echo [✓] 配置文件: %php_dir%\php.ini-development 到 %php_dir%\php.ini
   )
   @REM 修改扩展
   echo [✓] 添加扩展: %php_dir%\php.ini
@@ -64,22 +64,34 @@ if "%s%"=="serve" (
   @REM Composer环境
   if not exist "%php_dir%\composer.phar" (
     @REM 下载Composer
-    echo [✓] 下载Composer：%composer_url%
+    echo [✓] 下载Composer: %composer_url%
     curl -L "%composer_url%" -o composer-setup.php
     @REM 安装Composer
     php composer-setup.php
     move /Y composer.phar %php_dir%
-    echo [✓] 已安装Composer：%composer_url%
+    echo [✓] Composer: 已安装 %composer_url%
     @REM 删除文件
     del composer-setup.php
+    @REM 快捷方式
+    echo @echo off > "%php_dir%\composer.bat"
+    echo php "%%~dp0composer.phar" %%* >> "%php_dir%\composer.bat"
+    echo [✓] Composer: 快捷方式 "%php_dir%\composer.bat"
+  )
+  @REM 验证
+  composer -V >nul 2>&1
+  if errorlevel 1 (
+    echo [✗] Composer: 安装失败! 请手动安装
+    exit /b 1
+  ) else (
+    composer -V
   )
   @REM 镜像源
-  php %php_dir%\composer.phar config -g repo.packagist composer %composer_mirrors%
-  @REM 版本信息
-  php %php_dir%\composer.phar -V
+  composer config -g repo.packagist composer %composer_mirrors%
+  echo [✓] Composer: 镜像源 %composer_mirrors%
   @REM 安装依赖
   del composer.lock
-  php %php_dir%\composer.phar install
+  composer install
+  echo [✓] 运行: .\cmd serve
 REM Socket-运行(服务器)
 ) else if "%s%"=="socketServer" (
   php %cli% Socket server
