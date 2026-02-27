@@ -14,7 +14,7 @@ git clone https://github.com/webmiss/webmis-php.git
 cd webmis-php
 # Linux、MacOS
 ./bash install
-# Windows
+# Windows 11
 .\cmd install
 ```
 

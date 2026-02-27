@@ -1,5 +1,5 @@
 @echo off
-chcp 65001 >nul 2>&1
+CHCP 65001 >nul 2>&1
 
 REM 配置
 set s=%1%
