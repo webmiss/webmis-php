@@ -19,26 +19,34 @@ if %errorlevel% neq 0 (
   if not exist "%php_dir%\" (
     md "%php_dir%" >nul 2>&1
     if exist "%php_dir%\" (
-      echo [✓] 目录创建成功：%php_dir%
+      echo [✓] 创建目录: %php_dir%
     ) else (
-      echo [✗] 目录创建失败: %php_dir%
+      echo [✗] 创建目录: %php_dir%
     )
   )
   @REM 下载文件
   if not exist "%php_dir%\php.exe" (
     if not exist "php.zip" (
-      echo [✓] 下载文件：%php_url%
+      echo [✓] 下载文件: %php_url%
       curl -L "%php_url%" -o php.zip
     )
     @REM 解压文件
     powershell -Command "Expand-Archive -Path 'php.zip' -DestinationPath '%php_dir%' -Force"
-    echo [✓] 解压文件：php.zip 到 %php_dir%
+    echo [✓] 解压文件: php.zip 到 %php_dir%
     @REM 删除文件
-    del php.zip
+    del php.zip >nul 2>&1
   )
-  @REM 环境变量
-  set PATH=%PATH%;%php_dir%
-  echo [✓] 环境变量：%php_dir%
+  @REM 安装成功
+  echo [✓] 安装成功: 请添加环境变量并重启终端
+  echo PATH=%php_dir%
+  pause
+  @REM 查看版本
+  php -v >nul 2>&1
+  if %errorLevel% neq 0 (
+    @REM 环境变量
+    set PATH=%PATH%;%php_dir%
+    php -v
+  )
 )
 
 @REM 运行

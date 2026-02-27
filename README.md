@@ -12,8 +12,10 @@
 # 下载
 git clone https://github.com/webmiss/webmis-php.git
 cd webmis-php
+
 # Linux、MacOS
 ./bash install
+
 # Windows 11
 .\cmd install
 ```
@@ -23,11 +25,14 @@ cd webmis-php
 # Linux、MacOS
 ./bash serve
 ./bash socketServer
-# Windows
+
+# Windows 11
 .\cmd serve
 .\cmd socketServer
+
 # 测试Socket
 php cli.php socket client admin '{"type":"","msg":"\u6d4b\u8bd5"}'
+
 # 命令行: 控制器->方法(参数...)
 php cli.php main index params
 ```
