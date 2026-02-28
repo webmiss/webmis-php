@@ -26,34 +26,16 @@ if %errorlevel% neq 0 (
   )
   @REM 下载文件
   if not exist "%php_dir%\php.exe" (
-    if not exist "php.zip" (
-      echo [✓] 下载文件: %php_url%
-      curl -L "%php_url%" -o php.zip
-    )
+    @REM 下载文件
+    echo [✓] 下载文件: %php_url%
+    curl -L "%php_url%" -o php.zip
     @REM 解压文件
+    echo [✓] 正在解压: php.zip
     powershell -Command "Expand-Archive -Path 'php.zip' -DestinationPath '%php_dir%' -Force"
     echo [✓] 解压文件: php.zip 到 %php_dir%
     @REM 删除文件
     del php.zip >nul 2>&1
   )
-  @REM 安装成功
-  echo [✓] 安装成功: 请添加环境变量并重启终端
-  echo PATH=%php_dir%
-  pause
-  @REM 查看版本
-  php -v >nul 2>&1
-  if %errorLevel% neq 0 (
-    @REM 环境变量
-    set PATH=%PATH%;%php_dir%
-    php -v
-  )
-)
-
-@REM 运行
-if "%s%"=="serve" (
-  php -S %ip%:%port% -t public
-@REM 安装
-) else if "%s%"=="install" (
   @REM 配置文件
   if not exist "%php_dir%\php.ini" (
     copy /Y %php_dir%\php.ini-development %php_dir%\php.ini
@@ -75,9 +57,10 @@ if "%s%"=="serve" (
     echo [✓] 下载Composer: %composer_url%
     curl -L "%composer_url%" -o composer-setup.php
     @REM 安装Composer
+    echo [✓] 正在安装: composer-setup.php
     php composer-setup.php
     move /Y composer.phar %php_dir%
-    echo [✓] Composer: 已安装 %composer_url%
+    echo [✓] 安装成功: %php_dir%\composer.phar
     @REM 删除文件
     del composer-setup.php
     @REM 快捷方式
@@ -85,14 +68,26 @@ if "%s%"=="serve" (
     echo php "%%~dp0composer.phar" %%* >> "%php_dir%\composer.bat"
     echo [✓] Composer: 快捷方式 "%php_dir%\composer.bat"
   )
+  @REM 配置环境变量
+  echo [✓] 安装成功: 请添加环境变量并重启终端
+  echo PATH=%php_dir%
+  pause
   @REM 验证
-  composer -V >nul 2>&1
-  if errorlevel 1 (
-    echo [✗] Composer: 安装失败! 请手动安装
-    exit /b 1
-  ) else (
+  php -v >nul 2>&1
+  if %errorLevel% neq 0 (
+    @REM 临时环境变量
+    set PATH=%PATH%;%php_dir%
+    @REM 查看版本
+    php -v
     composer -V
   )
+)
+
+@REM 运行
+if "%s%"=="serve" (
+  php -S %ip%:%port% -t public
+@REM 安装
+) else if "%s%"=="install" (
   @REM 镜像源
   composer config -g repo.packagist composer %composer_mirrors%
   echo [✓] Composer: 镜像源 %composer_mirrors%
