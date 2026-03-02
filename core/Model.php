@@ -68,6 +68,7 @@ class Model extends Base {
       $this->id = $conn->lastInsertId();
       return $stmt;
     }catch (\Exception $e){
+      self::Print($sql);
       self::Print('[ '.$this->name.' ]', 'Exec: '.$e->getMessage());
       return null;
     }
@@ -116,6 +117,7 @@ class Model extends Base {
   }
   /* 条件 */
   function Where(string $where, ...$args): void {
+    if($where==='') return;
     $this->where = ' WHERE ' . $where;
     $this->args = array_merge($this->args, $args);
   }
@@ -298,7 +300,7 @@ class Model extends Base {
   /* 更新-执行 */
   function Update(string $sql='', ...$args): bool {
     if($sql=='') {
-      list($sql, $args) = $this->InsertSQL();
+      list($sql, $args) = $this->UpdateSQL();
     }
     $stmt = $this->Exec($this->conn, $sql, ...$args);
     return $stmt?true:false;
@@ -326,7 +328,7 @@ class Model extends Base {
   /* 删除-执行 */
   function Delete(string $sql='', ...$args): bool {
     if($sql=='') {
-      list($sql, $args) = $this->InsertSQL();
+      list($sql, $args) = $this->DeleteSQL();
     }
     $stmt = $this->Exec($this->conn, $sql, ...$args);
     return $stmt?true:false;

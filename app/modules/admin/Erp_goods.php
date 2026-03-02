@@ -270,31 +270,34 @@ class ErpGoods extends Controller {
     $order_arr = [];
     if(isset($order['utime']) && $order['utime']) $order_arr[]='a.utime '.$order['utime'];
     if(isset($order['sale_price']) && $order['sale_price']) $order_arr[]='a.sale_price '.$order['sale_price'];
-    if(isset($order['stock']) && $order['stock']) {
-      $order_arr[]='b.num '.$order['stock'];
-      $where .= $order['stock']==='DESC'?' AND b.num>0':' AND b.num=0';
-    }
     // 分区
     $time = isset($data['time'])?$data['time']:'1';
     $pname = Data::PartitionName(strtotime('-'.$time.' month'), time());
+    // 库存
+    $m = new ErpPurchaseStock();
+    $m->Columns('sku_id', 'num', 'utime');
+    if(isset($order['stock']) && $order['stock']) {
+      $m->Where($order['stock']==='DESC'?'num>0':'num=0');
+    }
+    $m->Order('num DESC', 'utime DESC');
+    $m->Group('sku_id');
+    list($sql) = $m->SelectSQL();
     // 查询
     $m = new ErpGoodsInfo();
     $m->Table('erp_goods_info PARTITION('.$pname.') as a');
-    $m->LeftJoin('erp_purchase_stock as b', 'a.sku_id=b.sku_id');
+    $m->Join('('.$sql.') as b', 'a.sku_id=b.sku_id');
     $m->Columns('a.sku_id', 'a.img', 'a.sale_price', 'a.properties_value', 'b.num as stock');
     $m->Where($where);
     $m->Page($page, $limit);
     $m->Order(...$order_arr);
     $list = $m->Find();
     // SKU
-    $data = [];
-    foreach($list as $v) {
-      $v['stock'] = $v['stock']?:0;
-      $v['img'] = $v['img']?Data::ImgGoods($v['sku_id']).'?'.date('Ymd'):'';
-      $data[$v['sku_id']] = $v;
+    foreach($list as $k=>$v) {
+      $list[$k]['stock'] = $v['stock']?:0;
+      $list[$k]['img'] = $v['img']?Data::ImgGoods($v['sku_id']).'?'.date('Ymd'):'';
     }
     // 返回
-    return self::GetJSON(['code'=>0, 'data'=>array_values($data)]);
+    return self::GetJSON(['code'=>0, 'data'=>$list]);
   }
 
   /* 封面图-上传 */
