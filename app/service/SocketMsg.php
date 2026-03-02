@@ -180,7 +180,6 @@ class SocketMsg implements MessageComponentInterface {
   function onOpen(ConnectionInterface $conn) {
     // 验证
     $uid = $this->verify((array)$conn->httpRequest->getUri());
-    if($uid<0) return $conn->close();
     // 保存
     $this->clients->attach($conn);
     if($uid==0) {

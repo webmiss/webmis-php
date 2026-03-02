@@ -17,7 +17,6 @@ class Logs {
     $data['pdate'] = date('Y-m-d');
     $redis = new Redis();
     $redis->RPush('logs_goods', json_encode($data));
-    $redis->Close();
   }
 
 }

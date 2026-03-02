@@ -294,7 +294,6 @@ class Sys_user extends Controller {
         $redis->Expire(Env::$admin_token_prefix.'_token_'.$id, 0);
         $redis->Expire(Env::$api_token_prefix.'_token_'.$id, 0);
         $redis->Expire(Env::$supplier_token_prefix.'_token_'.$id, 0);
-        $redis->Close();
         // 返回
         return self::GetJSON(['code'=>0]);
       } else {

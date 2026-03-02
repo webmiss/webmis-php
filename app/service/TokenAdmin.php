@@ -20,9 +20,8 @@ class TokenAdmin extends Base {
     $uid = (string)$tData->uid;
     $key = Env::$admin_token_prefix.'_token_'.$uid;
     $redis = new Redis();
-    $access_token = $redis->Gets($key);
+    $access_token = $redis->Get($key);
     $time = $redis->Ttl($key);
-    $redis->Close();
     if(Env::$admin_token_sso && md5($token)!=$access_token) return '强制退出!';
     if($time<1) return '请重新登录!';
     // 续期
@@ -30,7 +29,6 @@ class TokenAdmin extends Base {
       $redis = new Redis();
       $redis->Expire($key, Env::$admin_token_time);
       $redis->Expire(Env::$admin_token_prefix.'_perm_'.$uid, Env::$admin_token_time);
-      $redis->Close();
     }
     // URL权限
     if($urlPerm=='') return '';
@@ -68,7 +66,6 @@ class TokenAdmin extends Base {
     $key = Env::$admin_token_prefix.'_perm_'.$uid;
     $redis->Set($key, $perm);
     $redis->Expire($key, Env::$admin_token_time);
-    $redis->Close();
     return true;
   }
   
@@ -80,8 +77,7 @@ class TokenAdmin extends Base {
     if(!$tData) return $permAll;
     // 权限
     $redis = new Redis();
-    $permStr = $redis->Gets(Env::$admin_token_prefix.'_perm_'.$tData->uid);
-    $redis->Close();
+    $permStr = $redis->Get(Env::$admin_token_prefix.'_perm_'.$tData->uid);
     // 拆分
     $arr = !empty($permStr)?explode(' ',$permStr):[];
     foreach($arr as $val){
@@ -100,7 +96,6 @@ class TokenAdmin extends Base {
     $key = Env::$admin_token_prefix.'_token_'.$data['uid'];
     $redis->Set($key, md5($token));
     $res = $redis->Expire($key, Env::$admin_token_time);
-    $redis->Close();
     return $token;
   }
 
@@ -110,7 +105,6 @@ class TokenAdmin extends Base {
     if($tData){
       $redis = new Redis();
       $tData->time = $redis->Ttl(Env::$admin_token_prefix.'_token_'.$tData->uid);
-      $redis->Close();
     }
     return $tData;
   }

@@ -19,16 +19,14 @@ class TokenSupplier extends Base {
     $uid = (string)$tData->uid;
     $key = Env::$supplier_token_prefix.'_token_'.$uid;
     $redis = new Redis();
-    $access_token = $redis->Gets($key);
+    $access_token = $redis->Get($key);
     $time = $redis->Ttl(Env::$supplier_token_prefix.'_token_'.$uid);
-    $redis->Close();
     if(Env::$supplier_token_sso && md5($token)!=$access_token) return '强制退出!';
     if($time<1) return '请重新登录!';
     // 续期
     if(Env::$supplier_token_auto){
       $redis = new Redis();
       $redis->Expire(Env::$supplier_token_prefix.'_token_'.$uid, Env::$supplier_token_time);
-      $redis->Close();
     }
     return '';
   }
@@ -42,7 +40,6 @@ class TokenSupplier extends Base {
     $key = Env::$supplier_token_prefix.'_token_'.$data['uid'];
     $redis->Set($key, md5($token));
     $redis->Expire($key, Env::$supplier_token_time);
-    $redis->Close();
     return $token;
   }
 
@@ -52,7 +49,6 @@ class TokenSupplier extends Base {
     if($token){
       $redis = new Redis();
       $token->time = $redis->Ttl(Env::$supplier_token_prefix.'_token_'.$token->uid);
-      $redis->Close();
     }
     return $token;
   }

@@ -31,6 +31,13 @@ class Redis extends Base {
         return null;
       }
     }
+    // 检测状态
+    if(self::$conn->ping()!==true) {
+      self::Print('[ '.$this->name.' ]', '连接异常');
+      self::$conn = null;
+      return null;
+    }
+    // 返回
     return self::$conn;
   }
 

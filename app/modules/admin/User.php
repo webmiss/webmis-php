@@ -24,7 +24,6 @@ class User extends Controller {
     $redis = new Redis();
     $redis->Set(Env::$admin_token_prefix.'_vcode_'.$uname, strtolower($code));
     $redis->Expire(Env::$admin_token_prefix.'_vcode_'.$uname, 24*3600);
-    $redis->Close();
   }
 
   /* 验证码-数字 */
@@ -39,8 +38,7 @@ class User extends Controller {
     $max_time=60; $max_num=10; $limt=10;
     $redis = new Redis();
     $time = $redis->Ttl(Env::$admin_token_prefix.'_vcode_time_'.$uname);
-    $num = $redis->Gets(Env::$admin_token_prefix.'_vcode_num_'.$uname)?:0;
-    $redis->Close();
+    $num = $redis->Get(Env::$admin_token_prefix.'_vcode_num_'.$uname)?:0;
     if($time>0) return self::GetJSON(['code'=>4001, 'msg'=>self::GetLang('login_verify_vcode_time', $time), 'data'=>$time]);
     if($num>=$max_num) return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('login_verify_vcode_max', $max_num)]);
     // 验证码
@@ -65,7 +63,6 @@ class User extends Controller {
     $redis->Expire(Env::$admin_token_prefix.'_vcode_time_'.$uname, $max_time);
     $redis->Set(Env::$admin_token_prefix.'_vcode_num_'.$uname, $num+1);
     $redis->Expire(Env::$admin_token_prefix.'_vcode_num_'.$uname, strtotime(date('Y-m-d').' 23:59:59')-time());
-    $redis->Close();
     // 返回
     return self::GetJSON(['code'=>0, 'data'=>$code]);
   }
@@ -90,8 +87,7 @@ class User extends Controller {
       if(!Safety::IsRight('passwd', $passwd)) return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('login_passwd', 6, 16)]);
       // 验证码
       $redis = new Redis();
-      $code = $redis->Gets(Env::$admin_token_prefix.'_vcode_'.$uname);
-      $redis->Close();
+      $code = $redis->Get(Env::$admin_token_prefix.'_vcode_'.$uname);
       if($code){
         if(strlen($vcode)!=4) return self::GetJSON(['code'=>4001,'msg'=>self::GetLang('login_vcode'), 'vcode_url'=>$vcode_url]);
         elseif($vcode!=$code) return self::GetJSON(['code'=>4002,'msg'=>self::GetLang('login_verify_vcode'), 'vcode_url'=>$vcode_url]);
@@ -101,13 +97,11 @@ class User extends Controller {
     }else{
       // 验证码
       $redis = new Redis();
-      $code = $redis->Gets(Env::$admin_token_prefix.'_vcode_'.$uname);
-      $redis->Close();
+      $code = $redis->Get(Env::$admin_token_prefix.'_vcode_'.$uname);
       if(!$code || $code!=$vcode) return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('login_verify_vcode')]);
       // 清除
       $redis = new Redis();
       $redis->Expire(Env::$admin_token_prefix.'_vcode_'.$uname, 1);
-      $redis->Close();
       // 条件
       $where = 'a.tel="'.$uname.'"';
     }
@@ -131,7 +125,6 @@ class User extends Controller {
       $redis = new Redis();
       $redis->Set(Env::$admin_token_prefix.'_vcode_'.$uname, time());
       $redis->Expire(Env::$admin_token_prefix.'_vcode_'.$uname, 24*3600);
-      $redis->Close();
       return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('login_verify'), 'vcode_url'=>$vcode_url]);
     }
     // 是否禁用
@@ -139,7 +132,6 @@ class User extends Controller {
     // 清除验证码
     $redis = new Redis();
     $redis->Expire(Env::$admin_token_prefix.'_vcode_'.$uname, 1);
-    $redis->Close();
     // 默认密码
     $isPasswd = $data['password']==md5(Env::$password);
     // 权限
@@ -229,8 +221,7 @@ class User extends Controller {
     if(mb_strlen($vcode)!=4) return self::GetJSON(['code'=>4000]);
     // 验证码
     $redis = new Redis();
-    $code = $redis->Gets(Env::$admin_token_prefix.'_vcode_'.$uname);
-    $redis->Close();
+    $code = $redis->Get(Env::$admin_token_prefix.'_vcode_'.$uname);
     if($code!=$vcode) return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('login_verify_vcode')]);
     // 更新
     $m = new UserM();
@@ -241,7 +232,6 @@ class User extends Controller {
       // 清除验证码
       $redis = new Redis();
       $redis->Expire(Env::$admin_token_prefix.'_vcode_'.$uname, 1);
-      $redis->Close();
       return self::GetJSON(['code'=>0]);
     }else{
       return self::GetJSON(['code'=>5000]);
