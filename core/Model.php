@@ -184,23 +184,23 @@ class Model extends Base {
     return [$this->sql, $args];
   }
   /* 查询-多条 */
-  function Find(string $sql='', ...$args): array|null {
+  function Find(string $sql='', ...$args): array|bool {
     if($sql=='') {
       list($sql, $args) = $this->SelectSQL();
-      if($sql=='') return null;
+      if($sql=='') return false;
     }
     $stmt = $this->Exec($this->conn, $sql, ...$args);
-    return $stmt?$stmt->fetchAll(\PDO::FETCH_ASSOC):[];
+    return $stmt?$stmt->fetchAll(\PDO::FETCH_ASSOC):false;
   }
   /* 查询-单条 */
-  function FindFirst(string $sql='', ...$args): array|null {
+  function FindFirst(string $sql='', ...$args): array|bool {
     if($sql=='') {
       $this->Limit(0, 1);
       list($sql, $args) = $this->SelectSQL();
-      if($sql=='') return null;
+      if($sql=='') return false;
     }
     $stmt = $this->Exec($this->conn, $sql, ...$args);
-    return $stmt?$stmt->fetch(\PDO::FETCH_ASSOC):null;
+    return $stmt?$stmt->fetch(\PDO::FETCH_ASSOC):false;
   }
 
   /* 添加-单条 */
