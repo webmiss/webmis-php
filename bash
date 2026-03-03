@@ -6,18 +6,25 @@ port="9000"
 cli="cli.php"
 s=$1
 
+# PHP环境
+if ! command -v php >/dev/null 2>&1; then
+  echo "> 请安装'php'"
+  exit 1
+fi
+# Composer环境
+if ! command -v composer >/dev/null 2>&1; then
+  echo "> 请安装'composer'"
+  exit 1
+fi
+
 # 运行
 if [ "$s" == "serve" ]; then {
-    php -S $ip:$port -t public
-  } || {
-    echo "> 请安装'php'"
-  }
+  php -S $ip:$port -t public
+}
 # 安装
 elif [ "$s" == "install" ]; then {
-    rm -fr composer.lock && composer install
-  } || {
-    echo "> 请安装'composer'"
-  }
+  rm -fr composer.lock && composer install
+}
 # Socket服务器-查看、运行、启动、停止
 elif [ "$s" == "socketShow" ]; then
   ps -aux | grep "$cli Socket" | grep -v grep
@@ -27,9 +34,6 @@ elif [ "$s" == "socketServerStart" ]; then
   nohup php $cli Socket server &
 elif [ "$s" == "socketServerStop" ]; then
   ps -aux | grep "$cli Socket server" | grep -v grep | awk {'print $2'} | xargs kill
-# Socket客户端-发送
-elif [ "$s" == "socketClient" ]; then
-  php $cli Socket client admin '{"type":"","msg":"\u6d4b\u8bd5"}'
 # Logs-查看、运行、启动、停止
 elif [ "$s" == "LogsShow" ]; then
   ps -aux | grep "$cli Logs" | grep -v grep
@@ -51,7 +55,6 @@ else
   echo "  socketServer        运行(服务器)"
   echo "  socketServerStart   启动(服务器)"
   echo "  socketServerStop    停止(服务器)"
-  echo "  socketClient        发送(客户端)"
   echo "<Logs>"
   echo "  LogsShow            查看"
   echo "  Goods               运行"
