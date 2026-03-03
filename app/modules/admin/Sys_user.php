@@ -282,9 +282,11 @@ class Sys_user extends Controller {
       $one = $m3->FindFirst();
       $data = ['uid'=>$id, 'utime'=>time(), 'role'=>$param['role'], 'perm'=>$param['perm'], 'brand'=>$param['brand'], 'shop'=>$param['shop'], 'partner'=>$param['partner'], 'partner_in'=>$param['partner_in']];
       if(!$one) {
+        $m3 = new SysPerm();
         $m3->Values($data);
         $m3->Insert();
       }
+      $m3 = new SysPerm();
       $m3->Set($data);
       $m3->Where('uid=?', $id);
       // 执行
