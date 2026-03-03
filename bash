@@ -18,13 +18,12 @@ if ! command -v composer >/dev/null 2>&1; then
 fi
 
 # 运行
-if [ "$s" == "serve" ]; then {
+if [ "$s" == "serve" ]; then
   php -S $ip:$port -t public
-}
 # 安装
-elif [ "$s" == "install" ]; then {
+elif [ "$s" == "install" ]; then
   rm -fr composer.lock && composer install
-}
+  echo "运行: ./bash serve"
 # Socket服务器-查看、运行、启动、停止
 elif [ "$s" == "socketShow" ]; then
   ps -aux | grep "$cli Socket" | grep -v grep
