@@ -244,7 +244,7 @@ class Sys_user extends Controller {
       $m3 = new SysPerm();
       $m3->Values(['uid'=>$id, 'utime'=>time(), 'role'=>$param['role'], 'perm'=>$param['perm'], 'brand'=>$param['brand'], 'shop'=>$param['shop'], 'partner'=>$param['partner'], 'partner_in'=>$param['partner_in']]);
       // 执行
-      if($m2->Insert() && $m3-> Insert()) {
+      if($m2->Insert()===0 && $m3->Insert()===0) {
         return self::GetJSON(['code'=>0]);
       } else {
         return self::GetJSON(['code'=>5000]);

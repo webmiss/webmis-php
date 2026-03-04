@@ -259,7 +259,7 @@ class Model extends Base {
       list($sql, $args) = $this->InsertSQL();
     }
     $stmt = $this->Exec($this->conn, $sql, ...$args);
-    return $stmt?$this->conn->lastInsertId():0;
+    return $stmt?$this->id:-1;
   }
 
   /* 更新-数据 */
