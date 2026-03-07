@@ -135,17 +135,60 @@ class Status {
     return $data[$name];
   }
 
-  /* 其它出入库 */
-  static function OrderInout(string $name): array {
+  /* 店铺订单 */
+  static function ShopOrder(string $name): array {
     $data = [
-      'type_name'=> ['0'=>'销售', '1'=>'退货'],
-      'status_name'=> ['0'=>'待确认', '1'=>'已确认'],
+      // 平台类型
+      'type_name'=> ['XX'=> '线下', 'TB'=> '淘宝', 'DY'=>'抖音', 'WX'=>'微信', 'WD'=>'微店', 'PDD'=>'拼多多'],
+      // 订单状态
+      'status_name'=> [
+        'UNKNOWN'=> '未知',
+        'DELETED'=> '已删除',
+        'CLOSE'=> '已关闭',
+        'CANCEL'=> '已取消',
+        'UNPAID'=> '未付款',
+        'PART_PAID'=> '部分付款',
+        'NOT_SHIPPED'=> '未发货',
+        'PART_SHIPPED'=> '部分发货',
+        'SHIPPED'=> '已发货',
+        'REJECTED'=> '已拒收',
+        'COMPLETE'=> '已完成',
+        'BILL_SHIPPED'=> '已寄票',
+        'BILL_COMPLETE'=> '已收票',
+        'PAUSE'=> '暂停',
+        'LOCKED'=> '锁定',
+        'O2O_ORDER_RECEIVED'=> '已接单',
+        'O2O_ORDER_PICKED'=> '已拣货',
+        'O2O_ORDER_PICKED'=> '已拣货',
+      ],
+      // 售后状态
+      'refund_name'=> [
+        'NONE'=> '未知',
+        'NO_REFUND'=> '无退款',
+        'PART_REFUNDED'=> '部分退款',
+        'ALL_REFUNDED'=> '全部退款',
+      ],
+      // 旗帜名称
+      'flag_name'=> [
+        'NONE'=> '无',
+        'RED'=> '红',
+        'YELLOW'=> '黄',
+        'GREEN'=> '绿',
+        'BLUE'=> '蓝',
+        'PURPLE'=> '紫',
+        'ORANGE'=> '橙',
+        'GREY'=> '灰',
+        'LIGHT_BLUE'=> '浅蓝',
+        'LIGHT_PINK'=> '浅粉',
+        'DARK_GREEN'=> '深绿',
+        'PEACH_RED'=> '桃红',
+      ],
     ];
     return $data[$name];
   }
 
   /* 其它出入库 */
-  static function OtherInout(string $name): array {
+  static function OrderInout(string $name): array {
     $data = [
       'type_name'=> ['0'=>'销售', '1'=>'退货'],
       'status_name'=> ['0'=>'待确认', '1'=>'已确认'],

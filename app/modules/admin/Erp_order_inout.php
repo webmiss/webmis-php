@@ -90,8 +90,8 @@ class Erp_order_inout extends Controller {
     // 数据
     self::$shop_name = ErpBaseShop::GetList();
     self::$partner_name = ErpBasePartner::GetList();
-    self::$type_name = Status::OtherInout('type_name');
-    self::$status_name = Status::OtherInout('status_name');
+    self::$type_name = Status::OrderInout('type_name');
+    self::$status_name = Status::OrderInout('status_name');
     foreach($list as $k=>$v) {
       $list[$k]['shop_name'] = isset(self::$shop_name[$v['shop_id']])?self::$shop_name[$v['shop_id']]['name']:'线下';
       $list[$k]['shop_to_name'] = isset(self::$shop_name[$v['shop_to']])?self::$shop_name[$v['shop_to']]['name']:'-';
@@ -112,15 +112,11 @@ class Erp_order_inout extends Controller {
     }
     // 时间
     $stime = isset($d['stime'])?trim($d['stime']):date('Y-m-d', strtotime('-1 year'));
-    if($stime){
-      $start = strtotime($stime.' 00:00:00');
-      $where[] = 'ctime>='.$start;
-    }
+    $start = strtotime($stime.' 00:00:00');
+    $where[] = 'ctime>='.$start;
     $etime = isset($d['etime'])?trim($d['etime']):date('Y-m-d');
-    if($etime){
-      $end = strtotime($etime.' 23:59:59');
-      $where[] = 'ctime<='.$end;
-    }
+    $end = strtotime($etime.' 23:59:59');
+    $where[] = 'ctime<='.$end;
     // 关键字
     $key = isset($d['key'])?Util::Trim($d['key']):'';
     if($key){
@@ -432,8 +428,8 @@ class Erp_order_inout extends Controller {
     // 内容
     self::$shop_name = ErpBaseShop::GetList();
     self::$partner_name = ErpBasePartner::GetList();
-    self::$type_name = Status::OtherInout('type_name');
-    self::$status_name = Status::OtherInout('status_name');
+    self::$type_name = Status::OrderInout('type_name');
+    self::$status_name = Status::OrderInout('status_name');
     foreach($list as $v){
       $tmp = isset($goods[$v['sku_id']])?$goods[$v['sku_id']]:[];
       $html .= Export::ExcelData([
@@ -467,7 +463,7 @@ class Erp_order_inout extends Controller {
     $html .= Export::ExcelBottom();
     // 文件名
     $admin = TokenAdmin::Token($token);
-    $file_name = 'OtherInout_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
+    $file_name = 'OrderInout_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
     Export::ExcelFileEnd(self::$export_path, $file_name, $html);
     // 返回
     return self::GetJSON(['code'=>0, 'data'=>['path'=>self::BaseUrl(self::$export_path), 'filename'=>$file_name]]);
@@ -487,7 +483,7 @@ class Erp_order_inout extends Controller {
     $partner_perm = $admin->partner?explode(',', $admin->partner):[];
     // 类型
     $type_name = [];
-    self::$type_name = Status::OtherInout('type_name');
+    self::$type_name = Status::OrderInout('type_name');
     foreach(self::$type_name as $k=>$v) $type_name[]=['label'=>$v, 'value'=>$k];
     // 店铺
     self::$shop_name = ErpBaseShop::GetList();
@@ -513,7 +509,7 @@ class Erp_order_inout extends Controller {
     }
     // 状态
     $status_name = [];
-    self::$status_name = Status::OtherInout('status_name');
+    self::$status_name = Status::OrderInout('status_name');
     foreach(self::$status_name as $k=>$v) $status_name[]=['label'=>$v, 'value'=>$k];
     // 返回
     return self::GetJSON(['code'=>0, 'data'=>[
