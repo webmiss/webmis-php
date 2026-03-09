@@ -84,7 +84,8 @@ class Goods extends Controller {
     $m->Columns(...$columns);
     $m->Where('sku_id in("'.implode('","', $sku).'")');
     $m->Order('id DESC');
-    return $m->Find();
+    $res = $m->Find();
+    return $res?$res:[];
   }
 
   /* 商品-资料认证 */
@@ -394,6 +395,7 @@ class Goods extends Controller {
       'file' => [],           // 文件
     ], $param);
     // 类型
+    $img = 0;
     if($param['type']=='update') {
       $img = 1;
       // 图片内容
@@ -403,7 +405,6 @@ class Goods extends Controller {
         $res = self::GoodsImgFile($param['sku_id'], $param['file']);
       }
     } elseif($param['type']=='remove') {
-      $img = 0;
       // 清理图片
       $res = Oss::DeleteObject('img/sku/'.$param['sku_id'].'.jpg');
     }
