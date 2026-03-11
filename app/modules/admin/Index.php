@@ -39,20 +39,14 @@ class Index extends Controller {
     // 数据
     $os = strtolower($os);
     if(!in_array($os, ['web'])) return self::GetJSON(['code'=>4000, 'msg'=>'['.$os.']该操作系统不支持更新!']);
-    $version = $size = $file = '';
+    $version = $size = $url = '';
     if($os==='web') {
       $version = '3.0.0';
-      $file = 'https://admin.webmis.vip';
+      $url = 'https://admin.webmis.vip';
       $size = 0;
     }
     // 返回
-    return self::GetJSON(['code'=>0, 'data'=>[
-      'os'=> $os,
-      'version'=> $version,
-      'local'=> $local,
-      'size'=> $size,
-      'file'=> self::BaseUrl($file),
-    ]]);
+    return self::GetJSON(['code'=>0, 'data'=>['os'=>$os, 'version'=>$version, 'local'=>$local, 'size'=>$size, 'url'=>self::BaseUrl($url)]]);
   }
 
   /* 法定假期 */
