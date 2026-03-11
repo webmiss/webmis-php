@@ -28,8 +28,10 @@ class Controller extends Base {
     header('Access-Control-Allow-Origin: *');                                 // 域名
     header('Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS');  // 请求方式
     header('Access-Control-Allow-Headers: Content-Type, Content-Range, Content-Disposition, Content-Description');  //预检响应
-    header('Access-Control-Max-Age: 2592000');                                // OPTIONS(30天)
-    if($_SERVER['REQUEST_METHOD']=='OPTIONS')  exit;
+    if($_SERVER['REQUEST_METHOD']=='OPTIONS') {
+      header('Access-Control-Max-Age: 2592000');                              // OPTIONS(缓存30天)
+      exit;
+    }
     // Json
     header('Content-type: application/json; charset=utf-8');
     return json_encode($data);
