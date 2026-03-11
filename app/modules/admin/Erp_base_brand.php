@@ -67,7 +67,7 @@ class Erp_base_brand extends Controller {
       'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime',
     );
     $m->Where($where);
-    $m->Order($order?:'id DESC');
+    $m->Order($order?:'status DESC, id DESC');
     $m->Page($page, $limit);
     $list = $m->Find();
     foreach($list as $k=>$v) {

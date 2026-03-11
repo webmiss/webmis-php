@@ -10,7 +10,6 @@ use App\Model\ErpBasePartner;
 
 /* 主仓&分仓 */
 class Erp_base_partner extends Controller {
-
   
   static private $type_name = [];               // 类型
   static private $class_name = [];              // 分类

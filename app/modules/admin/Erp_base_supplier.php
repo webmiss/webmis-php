@@ -11,7 +11,7 @@ use App\Util\Util;
 use App\Model\ErpBaseSupplier;
 
 /* 供应商 */
-class Erp_supplier extends Controller {
+class Erp_base_supplier extends Controller {
 
   // 导出
   static private $export_path = 'upload/tmp/';  // 目录
@@ -63,7 +63,7 @@ class Erp_supplier extends Controller {
     $m = new ErpBaseSupplier();
     $m->Columns('id', 'supplier_id', 'name', 'status', 'tel', 'city', 'depositbank', 'bankacount', 'acountnumber', 'alipay_id', 'alipay_name', 'remark', 'operator_name', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
     $m->Where($where);
-    $m->Order($order?''.$order:'utime DESC, id DESC');
+    $m->Order($order?''.$order:'status DESC, utime DESC, id DESC');
     $m->Page($page, $limit);
     $list = $m->Find();
     // 数据

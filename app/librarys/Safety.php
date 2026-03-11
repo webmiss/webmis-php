@@ -26,8 +26,8 @@ class Safety {
   }
 
   /* 正则-验证 */
-  static function Test(string $reg, $value): bool {
-    return preg_match('/'.$reg.'/', $value)?true:false;
+  static function Test(string $reg, $val): bool {
+    return preg_match('/'.$reg.'/',$val)?true:false;
   }
 
   /* Base64-加密 */

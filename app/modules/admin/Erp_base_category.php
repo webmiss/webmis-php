@@ -66,7 +66,7 @@ class Erp_base_category extends Controller {
       'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime',
     );
     $m->Where($where);
-    $m->Order($order?:'sort DESC, name');
+    $m->Order($order?:'sort DESC, status DESC, name');
     $m->Page($page, $limit);
     $list = $m->Find();
     foreach($list as $k=>$v) {

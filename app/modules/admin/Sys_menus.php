@@ -69,7 +69,7 @@ class Sys_menus extends Controller {
     );
     $m->Where($where);
     $m->Page($page, $limit);
-    $m->Order($order?:'fid DESC, sort');
+    $m->Order($order?:'status DESC, fid DESC, sort');
     $list = $m->Find();
     foreach($list as $k=>$v) {
       $list[$k]['status'] = $v['status']?true:false;

@@ -59,13 +59,13 @@ class Erp_base_organization extends Controller {
     $where = self::getWhere($data);
     // 查询
     $m = new ErpBaseOrganization();
-    $m->Columns('id', 'fid', 'name', 'sort', 'state', 'creator_name', 'operator_name', 'remark', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
+    $m->Columns('id', 'fid', 'name', 'sort', 'status', 'creator_name', 'operator_name', 'remark', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
     $m->Where($where);
-    $m->Order($order?:'id DESC');
+    $m->Order($order?:'status DESC, id DESC');
     $m->Page($page, $limit);
     $list = $m->Find();
     foreach($list as $k=>$v) {
-      $list[$k]['state'] = $v['state']?true:false;
+      $list[$k]['status'] = $v['status']?true:false;
     }
     // 返回
     return self::GetJSON(['code'=>0, 'time'=>date('Y/m/d H:i:s'), 'data'=>$list]);
@@ -117,7 +117,7 @@ class Erp_base_organization extends Controller {
     $param['fid'] = isset($data['fid'])?trim($data['fid']):'';
     $param['sort'] = isset($data['sort'])?$data['sort']:'';
     $param['name'] = isset($data['name'])?trim($data['name']):'';
-    $param['state'] = isset($data['state'])&&$data['state']?1:0;
+    $param['status'] = isset($data['status'])&&$data['status']?1:0;
     $param['remark'] = isset($data['remark'])?trim($data['remark']):'';
     // 验证
     if(!is_numeric($param['fid'])) return self::GetJSON(['code'=>4000, 'msg'=>'请输入FID']);
@@ -191,7 +191,7 @@ class Erp_base_organization extends Controller {
     $where = self::getWhere($data);
     // 查询
     $m = new ErpBaseOrganization();
-    $m->Columns('id', 'fid', 'name', 'sort', 'state', 'creator_name', 'operator_name', 'remark', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
+    $m->Columns('id', 'fid', 'name', 'sort', 'status', 'creator_name', 'operator_name', 'remark', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
     $m->Where($where);
     $m->Order($order?:'id DESC');
     $list = $m->Find();
@@ -211,7 +211,7 @@ class Erp_base_organization extends Controller {
         $v['fid'],
         $v['name'],
         $v['sort'],
-        $v['state']?self::GetLang('enable'):self::GetLang('disable'),
+        $v['status']?self::GetLang('enable'):self::GetLang('disable'),
         '&nbsp;'.$v['ctime'],
         '&nbsp;'.$v['utime'],
         $v['creator_name'],

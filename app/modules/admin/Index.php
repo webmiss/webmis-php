@@ -39,8 +39,9 @@ class Index extends Controller {
     // 数据
     $os = strtolower($os);
     if(!in_array($os, ['web'])) return self::GetJSON(['code'=>4000, 'msg'=>'['.$os.']该操作系统不支持更新!']);
+    $version = $size = $file = '';
     if($os==='web') {
-      $version = '3.0.1';
+      $version = '3.0.0';
       $file = 'https://admin.webmis.vip';
       $size = 0;
     }
@@ -62,14 +63,14 @@ class Index extends Controller {
     $url = 'https://php.webmis.vip/upload/img/holiday/';
     // 假期
     $holiday = [
-      '2026-02-16'=> ['holiday'=>true, 'name'=>'春节', 'img'=>$url.'20260216.png', 'bg'=>$url.'202602.png'],
-      '2026-02-17'=> ['holiday'=>true, 'name'=>'春节', 'img'=>$url.'20260217.png', 'bg'=>$url.'202602.png'],
-      '2026-02-18'=> ['holiday'=>true, 'name'=>'春节', 'img'=>$url.'20260218.png', 'bg'=>$url.'202602.png'],
-      '2026-02-19'=> ['holiday'=>true, 'name'=>'春节', 'img'=>$url.'20260219.png', 'bg'=>$url.'202602.png'],
-      '2026-02-20'=> ['holiday'=>true, 'name'=>'春节', 'img'=>$url.'20260220.png', 'bg'=>$url.'202602.png'],
-      '2026-02-21'=> ['holiday'=>true, 'name'=>'春节', 'img'=>$url.'20260221.png', 'bg'=>$url.'202602.png'],
-      '2026-02-22'=> ['holiday'=>true, 'name'=>'春节', 'img'=>$url.'20260222.png', 'bg'=>$url.'202602.png'],
-      '2026-02-23'=> ['holiday'=>true, 'name'=>'春节', 'img'=>$url.'20260223.png', 'bg'=>$url.'202602.png'],
+      '2026-02-16'=> ['holiday'=>true, 'name'=>'春节', 'img'=>$url.'20260216(360x420).png', 'bg'=>$url.'202602(360x50).png'],
+      '2026-02-17'=> ['holiday'=>true, 'name'=>'春节', 'img'=>$url.'20260217(360x420).png', 'bg'=>$url.'202602(360x50).png'],
+      '2026-02-18'=> ['holiday'=>true, 'name'=>'春节', 'img'=>$url.'20260218(360x420).png', 'bg'=>$url.'202602(360x50).png'],
+      '2026-02-19'=> ['holiday'=>true, 'name'=>'春节', 'img'=>$url.'20260219(360x420).png', 'bg'=>$url.'202602(360x50).png'],
+      '2026-02-20'=> ['holiday'=>true, 'name'=>'春节', 'img'=>$url.'20260220(360x420).png', 'bg'=>$url.'202602(360x50).png'],
+      '2026-02-21'=> ['holiday'=>true, 'name'=>'春节', 'img'=>$url.'20260221(360x420).png', 'bg'=>$url.'202602(360x50).png'],
+      '2026-02-22'=> ['holiday'=>true, 'name'=>'春节', 'img'=>$url.'20260222(360x420).png', 'bg'=>$url.'202602(360x50).png'],
+      '2026-02-23'=> ['holiday'=>true, 'name'=>'春节', 'img'=>$url.'20260223(360x420).png', 'bg'=>$url.'202602(360x50).png'],
       '2026-04-04'=> ['holiday'=>true, 'name'=>'清明节', 'img'=>''],
       '2026-04-05'=> ['holiday'=>true, 'name'=>'清明节', 'img'=>''],
       '2026-04-06'=> ['holiday'=>true, 'name'=>'清明节', 'img'=>''],

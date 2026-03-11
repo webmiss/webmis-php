@@ -71,7 +71,7 @@ class Erp_base_shop extends Controller {
       'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime',
     );
     $m->Where($where);
-    $m->Order($order?:'utime DESC');
+    $m->Order($order?:'status DESC, utime DESC');
     $m->Page($page, $limit);
     $list = $m->Find();
     foreach($list as $k=>$v) {
@@ -293,6 +293,7 @@ class Erp_base_shop extends Controller {
     self::$class_name = Status::Shop('class_name');
     foreach(self::$class_name as $k=>$v) $class_name[]=['label'=>$v, 'value'=>$v];
     // 组织
+    $org_name = [];
     self::$org_name = self::getOrgName();
     foreach(self::$org_name as $k=>$v) $org_name[]=['label'=>$v, 'value'=>$k];
     // 状态
