@@ -24,16 +24,9 @@ class Controller extends Base {
       $method = 'code_'.$data['code'];
       $data['msg'] = property_exists($controller, $method)?$class::$$method:'';
     }
-    // 允许跨域请求
-    header('Access-Control-Allow-Origin: *');                                 // 域名
-    header('Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS');  // 请求方式
-    header('Access-Control-Allow-Headers: Content-Type, Content-Range, Content-Disposition, Content-Description');  //预检响应
-    if($_SERVER['REQUEST_METHOD']=='OPTIONS') {
-      header('Access-Control-Max-Age: 2592000');                              // OPTIONS(缓存30天)
-      exit;
-    }
-    // Json
+    // Json类型
     header('Content-type: application/json; charset=utf-8');
+    // 返回
     return json_encode($data);
   }
 

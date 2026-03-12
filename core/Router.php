@@ -4,7 +4,7 @@ namespace Core;
 /* 路由 */
 class Router extends Base {
   private $name = 'app';          // 名称
-  private $module = 'Home';        // 控制器
+  private $module = 'Web';        // 控制器
   private $controller = 'Index';  // 控制器
   private $method = 'Index';      // 方法
   private $params = [];           // 参数
@@ -67,6 +67,14 @@ class Router extends Base {
     // 方法是否存在
     if(!method_exists($controller, $this->method)) {
       self::Print('[ '.$this->name.' ]', '方法不存在 '.$controllerPath.'::'.$this->method.'()');
+      exit;
+    }
+    // 允许跨域请求
+    header('Access-Control-Allow-Origin: *');                                 // 域名
+    header('Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS');  // 方法
+    header('Access-Control-Allow-Headers: Content-Type, Content-Range, Content-Disposition, Content-Description, Authorization');
+    if($_SERVER['REQUEST_METHOD']=='OPTIONS') {
+      header('Access-Control-Max-Age: 2592000');                              // OPTIONS(缓存30天)
       exit;
     }
     // 调用方法并传递参数
