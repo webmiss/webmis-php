@@ -14,18 +14,12 @@ class Controller extends Base {
 
   /* 返回JSON */
   static protected function GetJSON(array $data=[]): string {
-    // 语言
-    $lang = isset($_GET['lang'])&&$_GET['lang']?$_GET['lang']:'en_US';
-    if($lang && isset($data['code']) && !isset($data['msg'])) {
-      $path = 'App\\Config\\Langs\\';
-      $controller = $path.strtolower($lang);
-      if(!class_exists($controller)) $controller = $path.'en_us';
-      $class = new $controller();
-      $method = 'code_'.$data['code'];
-      $data['msg'] = property_exists($controller, $method)?$class::$$method:'';
-    }
     // Json类型
     header('Content-type: application/json; charset=utf-8');
+    // 语言
+    if(isset($data['code']) && !isset($data['msg'])) {
+      $data['msg'] = self::GetLang('code_'.$data['code']);
+    }
     // 返回
     return json_encode($data);
   }
