@@ -89,7 +89,7 @@ webmis-php/
 │    └── modules                // 模块
 │    │    ├── admin            // 后台
 │    │    ├── api              // 应用
-│    │    └── home             // 网站
+│    │    └── web              s// 网站
 │    ├── service                // 项目服务类
 │    ├── task                   // 任务类
 │    ├── util                   // 工具类

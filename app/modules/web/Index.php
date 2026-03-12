@@ -1,5 +1,5 @@
 <?php
-namespace App\Home;
+namespace App\Web;
 
 use Core\Controller;
 use Core\View;
@@ -14,7 +14,7 @@ class Index extends Controller {
     View::assign('title', Env::$title);
     View::assign('copy', Env::$copy);
     // 视图
-    View::render('home/index');
+    View::render('web/index');
   }
 
 }

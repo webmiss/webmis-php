@@ -36,10 +36,12 @@ class Index extends Controller {
     $json = self::Json();
     $os = self::JsonName($json, 'os');
     $local = self::JsonName($json, 'version');
-    // 数据
+    // 验证
     $os = strtolower($os);
     if(!in_array($os, ['web'])) return self::GetJSON(['code'=>4000, 'msg'=>'['.$os.']该操作系统不支持更新!']);
-    $version = $size = $url = '';
+    // 数据
+    $size = 0;
+    $version = $url = '';
     if($os==='web') {
       $version = '3.0.0';
       $url = 'https://admin.webmis.vip';
@@ -65,27 +67,27 @@ class Index extends Controller {
       '2026-02-21'=> ['holiday'=>true, 'name'=>'春节', 'img'=>$url.'20260221(360x420).png', 'bg'=>$url.'202602(360x50).png'],
       '2026-02-22'=> ['holiday'=>true, 'name'=>'春节', 'img'=>$url.'20260222(360x420).png', 'bg'=>$url.'202602(360x50).png'],
       '2026-02-23'=> ['holiday'=>true, 'name'=>'春节', 'img'=>$url.'20260223(360x420).png', 'bg'=>$url.'202602(360x50).png'],
-      '2026-04-04'=> ['holiday'=>true, 'name'=>'清明节', 'img'=>''],
-      '2026-04-05'=> ['holiday'=>true, 'name'=>'清明节', 'img'=>''],
-      '2026-04-06'=> ['holiday'=>true, 'name'=>'清明节', 'img'=>''],
-      '2026-05-01'=> ['holiday'=>true, 'name'=>'劳动节', 'img'=>''],
-      '2026-05-02'=> ['holiday'=>true, 'name'=>'劳动节', 'img'=>''],
-      '2026-05-03'=> ['holiday'=>true, 'name'=>'劳动节', 'img'=>''],
-      '2026-05-04'=> ['holiday'=>true, 'name'=>'劳动节', 'img'=>''],
-      '2026-05-05'=> ['holiday'=>true, 'name'=>'劳动节', 'img'=>''],
-      '2026-06-20'=> ['holiday'=>true, 'name'=>'端午节', 'img'=>''],
-      '2026-06-21'=> ['holiday'=>true, 'name'=>'端午节', 'img'=>''],
-      '2026-06-22'=> ['holiday'=>true, 'name'=>'端午节', 'img'=>''],
-      '2026-09-26'=> ['holiday'=>true, 'name'=>'中秋节', 'img'=>''],
-      '2026-09-27'=> ['holiday'=>true, 'name'=>'中秋节', 'img'=>''],
-      '2026-09-28'=> ['holiday'=>true, 'name'=>'中秋节', 'img'=>''],
-      '2026-10-01'=> ['holiday'=>true, 'name'=>'国庆节', 'img'=>''],
-      '2026-10-02'=> ['holiday'=>true, 'name'=>'国庆节', 'img'=>''],
-      '2026-10-03'=> ['holiday'=>true, 'name'=>'国庆节', 'img'=>''],
-      '2026-10-04'=> ['holiday'=>true, 'name'=>'国庆节', 'img'=>''],
-      '2026-10-05'=> ['holiday'=>true, 'name'=>'国庆节', 'img'=>''],
-      '2026-10-06'=> ['holiday'=>true, 'name'=>'国庆节', 'img'=>''],
-      '2026-10-07'=> ['holiday'=>true, 'name'=>'国庆节', 'img'=>''],
+      '2026-04-04'=> ['holiday'=>true, 'name'=>'清明节', 'img'=>'', 'bg'=>''],
+      '2026-04-05'=> ['holiday'=>true, 'name'=>'清明节', 'img'=>'', 'bg'=>''],
+      '2026-04-06'=> ['holiday'=>true, 'name'=>'清明节', 'img'=>'', 'bg'=>''],
+      '2026-05-01'=> ['holiday'=>true, 'name'=>'劳动节', 'img'=>'', 'bg'=>''],
+      '2026-05-02'=> ['holiday'=>true, 'name'=>'劳动节', 'img'=>'', 'bg'=>''],
+      '2026-05-03'=> ['holiday'=>true, 'name'=>'劳动节', 'img'=>'', 'bg'=>''],
+      '2026-05-04'=> ['holiday'=>true, 'name'=>'劳动节', 'img'=>'', 'bg'=>''],
+      '2026-05-05'=> ['holiday'=>true, 'name'=>'劳动节', 'img'=>'', 'bg'=>''],
+      '2026-06-20'=> ['holiday'=>true, 'name'=>'端午节', 'img'=>'', 'bg'=>''],
+      '2026-06-21'=> ['holiday'=>true, 'name'=>'端午节', 'img'=>'', 'bg'=>''],
+      '2026-06-22'=> ['holiday'=>true, 'name'=>'端午节', 'img'=>'', 'bg'=>''],
+      '2026-09-26'=> ['holiday'=>true, 'name'=>'中秋节', 'img'=>'', 'bg'=>''],
+      '2026-09-27'=> ['holiday'=>true, 'name'=>'中秋节', 'img'=>'', 'bg'=>''],
+      '2026-09-28'=> ['holiday'=>true, 'name'=>'中秋节', 'img'=>'', 'bg'=>''],
+      '2026-10-01'=> ['holiday'=>true, 'name'=>'国庆节', 'img'=>'', 'bg'=>''],
+      '2026-10-02'=> ['holiday'=>true, 'name'=>'国庆节', 'img'=>'', 'bg'=>''],
+      '2026-10-03'=> ['holiday'=>true, 'name'=>'国庆节', 'img'=>'', 'bg'=>''],
+      '2026-10-04'=> ['holiday'=>true, 'name'=>'国庆节', 'img'=>'', 'bg'=>''],
+      '2026-10-05'=> ['holiday'=>true, 'name'=>'国庆节', 'img'=>'', 'bg'=>''],
+      '2026-10-06'=> ['holiday'=>true, 'name'=>'国庆节', 'img'=>'', 'bg'=>''],
+      '2026-10-07'=> ['holiday'=>true, 'name'=>'国庆节', 'img'=>'', 'bg'=>''],
     ];
     // 返回
     return self::GetJSON(['code'=>0, 'data'=>isset($holiday[$date])?$holiday[$date]:'']);

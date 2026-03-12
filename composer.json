@@ -8,7 +8,7 @@
             "App\\Librarys\\Aliyun\\": "app/librarys/aliyun/",
             "App\\Librarys\\Dian3\\": "app/librarys/dian3/",
             "App\\Model\\": "app/models/",
-            "App\\Home\\": "app/modules/home/",
+            "App\\Web\\": "app/modules/web/",
             "App\\Admin\\": "app/modules/admin/",
             "App\\Api\\": "app/modules/api/",
             "App\\Service\\": "app/service/",
