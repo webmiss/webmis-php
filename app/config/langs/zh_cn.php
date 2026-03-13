@@ -2,7 +2,7 @@
 namespace App\Config\Langs;
 
 /* 简体中文 */
-class zh_CN {
+class zh_cn {
 
   /* Code */
   static string $code_0 = '成功';
@@ -30,8 +30,7 @@ class zh_CN {
   static string $sys_user_is_exist = '该用户已存在';
   /* SysRole */
   static string $sys_role_name = '角色%s～%s位字符';
-  /* WebHtml */
-  static string $web_html_title = '标题$s～%s位字符';
-  static string $web_html_name = '名称$s～%s位字符';
+  /* SysMenus */
+  static string $sys_menus_name = '菜单%s～%s位字符';
 
 }

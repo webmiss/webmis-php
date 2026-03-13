@@ -2,7 +2,7 @@
 namespace App\Config\Langs;
 
 /* English */
-class en_US {
+class en_us {
 
   /* Code */
   static string $code_0 = 'Success';
@@ -32,8 +32,5 @@ class en_US {
   static string $sys_role_name = 'Role %s-%s characters';
   /* SysMenus */
   static string $sys_menus_name = 'Menus %s-%s characters';
-  /* WebHtml */
-  static string $web_html_title = 'Title %s-%s characters';
-  static string $web_html_name = 'Name %s-%s characters';
 
 }

@@ -12,6 +12,18 @@ class Controller extends Base {
     return $str.'://'.$_SERVER['HTTP_HOST'].'/'.$url;
   }
 
+  /* 获取语言 */
+  static protected function GetLang(string $action, ...$argv): string {
+    $lang = isset($_GET['lang'])&&$_GET['lang']?strtolower($_GET['lang']):'en_us';
+    // 是否存在
+    $path = 'App\\Config\\Langs\\';
+    $controller = $path.$lang;
+    if(!class_exists($controller)) $controller = $path.'en_us';
+    // 实例化
+    $class = new $controller();
+    return $argv?sprintf($class::$$action, ...$argv):$class::$$action;
+  }
+
   /* 返回JSON */
   static protected function GetJSON(array $data=[]): string {
     // Json类型
@@ -22,16 +34,6 @@ class Controller extends Base {
     }
     // 返回
     return json_encode($data);
-  }
-
-  /* 获取语言 */
-  static protected function GetLang(string $action, ...$argv): string {
-    $lang = isset($_GET['lang'])&&$_GET['lang']?$_GET['lang']:'en_US';
-    $path = 'App\\Config\\Langs\\';
-    $controller = $path.strtolower($lang);
-    if(!class_exists($controller)) $controller = $path.'en_us';
-    $class = new $controller();
-    return $argv?sprintf($class::$$action, ...$argv):$class::$$action;
   }
 
   /* Get参数 */
