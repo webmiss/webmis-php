@@ -166,20 +166,29 @@ class SocketMsg implements MessageComponentInterface {
     // 语言
     $lang = $this->lang?:'en_US';
     if($lang && isset($data['code']) && !isset($data['msg'])) {
-      $path = 'App\\Config\\Langs\\';
-      $controller = $path.strtolower($lang);
-      if(!class_exists($controller)) $controller = $path.'en_us';
-      $class = new $controller();
-      $method = 'code_'.$data['code'];
-      $data['msg'] = property_exists($controller, $method)?$class::$$method:'';
+      $data['msg'] = $this->GetLang($lang, 'code_'.$data['code']);
     }
     return json_encode($data);
+  }
+
+  /* 获取语言 */
+  static protected function GetLang(string $lang, string $action, ...$argv): string {
+    $lang = $lang?strtolower($lang):'en_us';
+    // 是否存在
+    $path = 'App\\Config\\Langs\\';
+    $controller = $path.$lang;
+    if(!class_exists($controller)) $controller = $path.'en_us';
+    if(!property_exists($controller, $action)) return '';
+    // 实例化
+    $class = new $controller();
+    return $argv?sprintf($class::$$action, ...$argv):$class::$$action;
   }
 
   /* 连接 */
   function onOpen(ConnectionInterface $conn) {
     // 验证
     $uid = $this->verify((array)$conn->httpRequest->getUri());
+    if($uid<0) return $conn->close();
     // 保存
     $this->clients->attach($conn);
     if($uid==0) {

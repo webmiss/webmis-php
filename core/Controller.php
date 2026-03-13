@@ -19,6 +19,7 @@ class Controller extends Base {
     $path = 'App\\Config\\Langs\\';
     $controller = $path.$lang;
     if(!class_exists($controller)) $controller = $path.'en_us';
+    if(!property_exists($controller, $action)) return '';
     // 实例化
     $class = new $controller();
     return $argv?sprintf($class::$$action, ...$argv):$class::$$action;
