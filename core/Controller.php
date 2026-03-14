@@ -5,11 +5,13 @@ namespace Core;
 class Controller extends Base {
 
   /* 资源地址 */
-  static function BaseUrl($url='', $host='') {
-    if($host) return $host.$url;
-    $str = isset($_SERVER['HTTPS'])?'https':'http';
+  static function BaseUrl($url) {
+    $http = 'http';
+    if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']==='on') $http='https';
+    elseif(isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO']==='https') $http='https';
+    elseif(isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT']===443) $http='https';
     // return 'http://localhost/php/public/'.$url;
-    return $str.'://'.$_SERVER['HTTP_HOST'].'/'.$url;
+    return $http.'://'.$_SERVER['HTTP_HOST'].'/'.$url;
   }
 
   /* 获取语言 */
