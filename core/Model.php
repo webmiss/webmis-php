@@ -9,6 +9,7 @@ class Model extends Base {
 
   public $conn = null;          // 连接
   private $name = 'Model';      // 名称
+  private $db = 'default';      // 数据库
   private $table = '';          // 数据表
   private $columns = '*';       // 字段
   private $where = '';          // 条件
@@ -26,6 +27,8 @@ class Model extends Base {
 
   /* 获取连接 */
   protected function DBConn(string $name='default'): object {
+    // 默认值
+    $this->db = $name;
     // 配置
     $cfg = Db::Config($name);
     // 连接
@@ -185,20 +188,28 @@ class Model extends Base {
   }
   /* 查询-多条 */
   function Find(string $sql='', ...$args): array|bool {
+    // SQL
     if($sql=='') {
       list($sql, $args) = $this->SelectSQL();
       if($sql=='') return false;
     }
+    // 连接
+    if(!$this->conn) $this->DBConn($this->db);
+    // 执行
     $stmt = $this->Exec($this->conn, $sql, ...$args);
     return $stmt?$stmt->fetchAll(\PDO::FETCH_ASSOC):false;
   }
   /* 查询-单条 */
   function FindFirst(string $sql='', ...$args): array|bool {
+    // SQL
     if($sql=='') {
       $this->Limit(0, 1);
       list($sql, $args) = $this->SelectSQL();
       if($sql=='') return false;
     }
+    // 连接
+    if(!$this->conn) $this->DBConn($this->db);
+    // 执行
     $stmt = $this->Exec($this->conn, $sql, ...$args);
     return $stmt?$stmt->fetch(\PDO::FETCH_ASSOC):false;
   }
@@ -255,9 +266,13 @@ class Model extends Base {
   }
   /* 添加-执行 */
   function Insert(string $sql='', ...$args): int {
+    // SQL
     if($sql=='') {
       list($sql, $args) = $this->InsertSQL();
     }
+    // 连接
+    if(!$this->conn) $this->DBConn($this->db);
+    // 执行
     $stmt = $this->Exec($this->conn, $sql, ...$args);
     return $stmt?$this->id:-1;
   }
@@ -299,9 +314,13 @@ class Model extends Base {
   }
   /* 更新-执行 */
   function Update(string $sql='', ...$args): bool {
+    // SQL
     if($sql=='') {
       list($sql, $args) = $this->UpdateSQL();
     }
+    // 连接
+    if(!$this->conn) $this->DBConn($this->db);
+    // 执行
     $stmt = $this->Exec($this->conn, $sql, ...$args);
     return $stmt?true:false;
   }
@@ -327,9 +346,13 @@ class Model extends Base {
   }
   /* 删除-执行 */
   function Delete(string $sql='', ...$args): bool {
+    // SQL
     if($sql=='') {
       list($sql, $args) = $this->DeleteSQL();
     }
+    // 连接
+    if(!$this->conn) $this->DBConn($this->db);
+    // 执行
     $stmt = $this->Exec($this->conn, $sql, ...$args);
     return $stmt?true:false;
   }
