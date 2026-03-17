@@ -8,8 +8,8 @@ use App\Librarys\FileEo;
 class Logs {
 
   /* 文件 */
-  static function File(string $file='', $content=''){
-    FileEo::WriterEnd($file, json_encode($content)."\n");
+  static function File(string $file, array|string $content=''){
+    FileEo::WriterEnd($file, is_array($content)?json_encode($content):$content."\n");
   }
 
   /* 商品-日志 */

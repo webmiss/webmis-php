@@ -6,10 +6,25 @@ use Core\Base;
 /* 工具 */
 class Util extends Base {
 
-  /* 执行Linux命令 */
-  static function Exec(string $cmd) {
-    $res = shell_exec($cmd);
-    return $res;
+  /* Trim */
+  static function Trim(string $str): string {
+    return preg_replace('/(\s|\&nbsp\;| |\xc2\xa0)/', '', $str);
+  }
+
+  /* Lower */
+  static function Lower(string $str): string {
+    return strtolower($str);
+  }
+
+  /* Upper */
+  static function Upper(string $str): string {
+    return strtoupper($str);
+  }
+
+  /* Time */
+  static function Time(): int {
+    list($t1, $t2) = explode(' ', microtime());
+    return (int)(($t1 + $t2) * 1000);
   }
 
   /* 长度 */
@@ -17,6 +32,12 @@ class Util extends Base {
     $res = 0;
     if(gettype($val)=='array') $res=count($val);
     elseif(gettype($val)=='string') $res=mb_strlen($val);
+    return $res;
+  }
+
+  /* 执行Linux命令 */
+  static function Exec(string $cmd) {
+    $res = shell_exec($cmd);
     return $res;
   }
 
@@ -91,17 +112,6 @@ class Util extends Base {
     }
     array_multisort($tmp, $sort, $arr);
     return $arr;
-  }
-
-  /* Trim */
-  static function Trim(string $str): string {
-    return preg_replace('/(\s|\&nbsp\;| |\xc2\xa0)/', '', $str);
-  }
-
-  /* Time */
-  static function Time(): int {
-    list($t1, $t2) = explode(' ', microtime());
-    return (int)(($t1 + $t2) * 1000);
   }
 
 }

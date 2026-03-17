@@ -10,6 +10,7 @@ use App\Librarys\Safety;
 use App\Librarys\Mail;
 use App\Librarys\Aliyun\Sms;
 use App\Librarys\Captcha;
+
 use App\Model\User as UserM;
 use App\Model\UserInfo;
 
@@ -75,10 +76,11 @@ class User extends Controller {
     $passwd = self::JsonName($json, 'passwd');
     $vcode = self::JsonName($json, 'vcode');
     $vcode_url = self::BaseUrl('admin/user/vcode').'/'.$uname.'?'.time();
-    // 验证用户名
+    // 验证
     if(!Safety::IsRight('uname',$uname) && !Safety::IsRight('tel',$uname) && !Safety::IsRight('email',$uname)){
       return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('login_uname')]);
     }
+    if(!$passwd && !$vcode) return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('login_verify')]);
     // 登录方式
     $where = '';
     $vcode = strtolower(trim($vcode));
@@ -99,39 +101,38 @@ class User extends Controller {
       $redis = new Redis();
       $code = $redis->Get(Env::$admin_token_prefix.'_vcode_'.$uname);
       if(!$code || $code!=$vcode) return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('login_verify_vcode')]);
-      // 清除
-      $redis = new Redis();
-      $redis->Expire(Env::$admin_token_prefix.'_vcode_'.$uname, 1);
       // 条件
       $where = 'a.tel="'.$uname.'"';
     }
     // 查询
-    $model = new UserM();
-    $model->Table('user AS a');
-    $model->LeftJoin('user_info AS b', 'a.id=b.uid');
-    $model->LeftJoin('sys_perm AS c', 'a.id=c.uid');
-    $model->LeftJoin('sys_role AS d', 'c.role=d.id');
-    $model->Columns(
+    $m = new UserM();
+    $m->Table('user AS a');
+    $m->LeftJoin('user_info AS b', 'a.id=b.uid');
+    $m->LeftJoin('sys_perm AS c', 'a.id=c.uid');
+    $m->LeftJoin('sys_role AS d', 'c.role=d.id');
+    $m->Columns(
       'a.id', 'a.status', 'a.password', 'a.tel', 'a.email',
       'b.type', 'b.nickname', 'b.department', 'b.position', 'b.name', 'b.gender', 'FROM_UNIXTIME(b.birthday, "%Y-%m-%d") as birthday', 'b.img', 'b.signature',
       'c.role', 'c.perm', 'c.brand', 'c.shop', 'c.partner', 'c.partner_in', 
       'd.perm as role_perm'
     );
-    $model->Where($where);
-    $data = $model->FindFirst();
+    $m->Where($where);
+    $data = $m->FindFirst();
     // 是否存在
-    if(empty($data)){
-      // 缓存
+    if(empty($data)) {
+      // 强制验证码(24小时)
       $redis = new Redis();
       $redis->Set(Env::$admin_token_prefix.'_vcode_'.$uname, time());
       $redis->Expire(Env::$admin_token_prefix.'_vcode_'.$uname, 24*3600);
+      // 返回
       return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('login_verify'), 'vcode_url'=>$vcode_url]);
+    } else {
+      // 清除验证码
+      $redis = new Redis();
+      $redis->Del(Env::$admin_token_prefix.'_vcode_'.$uname);
     }
     // 是否禁用
     if($data['status']!='1') return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('login_verify_status')]);
-    // 清除验证码
-    $redis = new Redis();
-    $redis->Expire(Env::$admin_token_prefix.'_vcode_'.$uname, 1);
     // 默认密码
     $isPasswd = $data['password']==md5(Env::$password);
     // 权限
@@ -141,10 +142,10 @@ class User extends Controller {
     TokenAdmin::savePerm($data['id'], $perm);
     // 登录时间
     $ltime = time();
-    $model->Table('user');
-    $model->Set(['ltime'=>$ltime]);
-    $model->Where('id=?', $data['id']);
-    $model->Update();
+    $m = new UserM();
+    $m->Set(['ltime'=>$ltime]);
+    $m->Where('id=?', $data['id']);
+    $m->Update();
     // Token
     $token = TokenAdmin::Create([
       'uid'=>$data['id'],
@@ -231,7 +232,7 @@ class User extends Controller {
     if($m->Update()){
       // 清除验证码
       $redis = new Redis();
-      $redis->Expire(Env::$admin_token_prefix.'_vcode_'.$uname, 1);
+      $redis->Del(Env::$admin_token_prefix.'_vcode_'.$uname);
       return self::GetJSON(['code'=>0]);
     }else{
       return self::GetJSON(['code'=>5000]);
