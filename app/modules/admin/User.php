@@ -139,7 +139,7 @@ class User extends Controller {
     $perm = $data['role_perm'];
     if($data['perm']) $perm=$data['perm'];
     if(!$perm) return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('login_verify_perm')]);
-    TokenAdmin::savePerm($data['id'], $perm);
+    TokenAdmin::SavePerm((string)$data['id'], $perm);
     // 登录时间
     $ltime = time();
     $m = new UserM();

@@ -7,7 +7,7 @@ use App\Config\Env;
 use App\Librarys\Safety;
 use App\Model\SysMenu;
 
-/* Token-验证 */
+/* Token Admin */
 class TokenAdmin extends Base {
 
   /* 验证 */
@@ -20,13 +20,13 @@ class TokenAdmin extends Base {
     $uid = (string)$tData->uid;
     $key = Env::$admin_token_prefix.'_token_'.$uid;
     $redis = new Redis();
-    $access_token = $redis->Get($key);
     $time = $redis->Ttl($key);
-    if(Env::$admin_token_sso && md5($token)!=$access_token) return '强制退出!';
     if($time<1) return '请重新登录!';
-    // 续期
+    // 单点登录
+    $access_token = $redis->Get($key);
+    if(Env::$admin_token_sso && md5($token)!=$access_token) return '强制退出!';
+    // 是否续期
     if(Env::$admin_token_auto){
-      $redis = new Redis();
       $redis->Expire($key, Env::$admin_token_time);
       $redis->Expire(Env::$admin_token_prefix.'_perm_'.$uid, Env::$admin_token_time);
     }
@@ -36,20 +36,20 @@ class TokenAdmin extends Base {
     $action = explode('?', end($arr))[0];
     array_pop($arr);
     $controller = implode('/', $arr);
-    // 菜单
-    $menu = new SysMenu();
-    $menu->Columns('id','action');
-    $menu->Where('controller=?', $controller);
-    $menuData = $menu->FindFirst();
-    if(empty($menuData)) return '菜单验证无效!';
-    // 验证-菜单
-    $id = (string)$menuData['id'];
-    $permData = self::getPerm($token);
-    if(!isset($permData[$id])) return '无权访问菜单!';
-    // 验证-动作
-    $actionVal = (int)$permData[$id];
-    $permArr = json_decode($menuData['action']);
+    // 查询菜单
+    $m = new SysMenu();
+    $m->Columns('id', 'action');
+    $m->Where('controller=?', $controller);
+    $data = $m->FindFirst();
+    if(empty($data)) return '菜单验证无效!';
+    // 验证菜单
+    $id = (string)$data['id'];
+    $perm = self::GetPerm($token);
+    if(!isset($perm[$id])) return '无权访问菜单!';
+    // 验证动作
     $permVal = 0;
+    $actionVal = (int)$perm[$id];
+    $permArr = json_decode($data['action']);
     foreach($permArr as $val){
       if($action==$val->action){
         $permVal = (int)$val->perm;
@@ -61,51 +61,55 @@ class TokenAdmin extends Base {
   }
 
   /* 权限-保存 */
-  static function savePerm($uid, string $perm): bool {
-    $redis = new Redis();
+  static function SavePerm(string $uid, string $perm): bool {
     $key = Env::$admin_token_prefix.'_perm_'.$uid;
+    $redis = new Redis();
     $redis->Set($key, $perm);
     $redis->Expire($key, Env::$admin_token_time);
     return true;
   }
   
-  /* 权限-拆分 */
-  static function getPerm(string $token): array {
-    $permAll = [];
+  /* 权限-获取 */
+  static function GetPerm(string $token): array {
+    $arr = [];
     // Token
+    if($token=='') return $arr;
     $tData = Safety::Decode($token);
-    if(!$tData) return $permAll;
+    if(!$tData) return $arr;
     // 权限
+    $uid = (string)$tData->uid;
     $redis = new Redis();
-    $permStr = $redis->Get(Env::$admin_token_prefix.'_perm_'.$tData->uid);
+    $permStr = $redis->Get(Env::$admin_token_prefix.'_perm_'.$uid);
+    if(empty($permStr)) return $arr;
     // 拆分
-    $arr = !empty($permStr)?explode(' ',$permStr):[];
-    foreach($arr as $val){
-      $s = explode(':',$val);
-      $permAll[$s[0]] = (int)$s[1];
+    $perm = explode(' ', $permStr);
+    foreach($perm as $v){
+      $tmp = explode(':', $v);
+      $arr[$tmp[0]] = (int)$tmp[1];
     }
-    return $permAll;
+    return $arr;
   }
 
   /* 生成 */
   static function Create(array $data): ?string {
+    // 登录时间
     $data['l_time'] = date('Y-m-d H:i:s');
     $token = Safety::Encode($data);
-    // 缓存
+    // 缓存Token
     $redis = new Redis();
     $key = Env::$admin_token_prefix.'_token_'.$data['uid'];
     $redis->Set($key, md5($token));
-    $res = $redis->Expire($key, Env::$admin_token_time);
+    $redis->Expire($key, Env::$admin_token_time);
     return $token;
   }
 
   /* 解析 */
-  static function Token(string $token) {
+  static function Token(string $token): ?object {
     $tData = Safety::Decode($token);
-    if($tData){
-      $redis = new Redis();
-      $tData->time = $redis->Ttl(Env::$admin_token_prefix.'_token_'.$tData->uid);
-    }
+    if(!$tData) return null;
+    // 过期时间
+    $redis = new Redis();
+    $tData->time = $redis->Ttl(Env::$admin_token_prefix.'_token_'.$tData->uid);
     return $tData;
   }
 
