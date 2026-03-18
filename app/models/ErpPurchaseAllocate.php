@@ -8,7 +8,7 @@ class ErpPurchaseAllocate extends Model {
 
   /* 构造函数 */
   function __construct() {
-    $this->DBConn();
+    $this->DBConn('default');
     $this->Table('erp_purchase_allocate');
   }
 

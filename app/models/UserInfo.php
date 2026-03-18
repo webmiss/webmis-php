@@ -8,7 +8,7 @@ class UserInfo extends Model {
 
   /* 构造函数 */
   function __construct() {
-    $this->DBConn();
+    $this->DBConn('default');
     $this->Table('user_info');
   }
 

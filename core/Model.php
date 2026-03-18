@@ -26,9 +26,9 @@ class Model extends Base {
   private $nums = 0;            // 影响行数
 
   /* 获取连接 */
-  protected function DBConn(string $name='default'): object {
+  protected function DBConn(string $name=''): object {
     // 默认值
-    $this->db = $name;
+    $this->db = $name??'default';
     // 配置
     $cfg = Db::Config($name);
     // 连接
