@@ -1,14 +1,14 @@
 <?php
 namespace App\Service;
 
-use Core\Controller;
+use Core\Base;
 use App\Config\Env;
 use App\Librarys\Upload;
 use App\Librarys\Aliyun\Oss;
 use App\Model\UserInfo;
 
 /* 数据类 */
-class Data extends Controller {
+class Data extends Base {
 
   // 分区时间
   static public $partition = [
@@ -56,7 +56,7 @@ class Data extends Controller {
   static function UserImg(string $token, string $base64, string $storage='oss'): string {
     // 限制格式
     list($ext, $ct) = self::ImgBase64Info($base64);
-    if(!in_array($ext, ['jpg', 'png'])) return self::GetJSON(['code'=>4000, 'msg'=>'只能上传JPG、PNG格式图片!']);
+    if(!in_array($ext, ['jpg', 'png'])) return '';
     // 文件
     $admin = TokenAdmin::Token($token);
     $file = 'user/img/'.$admin->uid.'.'.$ext;

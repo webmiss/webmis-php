@@ -50,9 +50,9 @@ class TokenAdmin extends Base {
     $permVal = 0;
     $actionVal = (int)$perm[$id];
     $permArr = json_decode($data['action']);
-    foreach($permArr as $val){
-      if($action==$val->action){
-        $permVal = (int)$val->perm;
+    foreach($permArr as $v){
+      if($action==$v->action){
+        $permVal = (int)$v->perm;
         break;
       }
     }
@@ -105,12 +105,12 @@ class TokenAdmin extends Base {
 
   /* 解析 */
   static function Token(string $token): ?object {
-    $tData = Safety::Decode($token);
-    if(!$tData) return null;
+    $data = Safety::Decode($token);
+    if(!$data) return null;
     // 过期时间
     $redis = new Redis();
-    $tData->time = $redis->Ttl(Env::$admin_token_prefix.'_token_'.$tData->uid);
-    return $tData;
+    $data->time = $redis->Ttl(Env::$admin_token_prefix.'_token_'.$data->uid);
+    return $data;
   }
 
 }

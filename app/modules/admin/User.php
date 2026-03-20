@@ -148,9 +148,9 @@ class User extends Controller {
     $m->Update();
     // Token
     $token = TokenAdmin::Create([
-      'uid'=>$data['id'],
-      'uname'=>$uname,
-      'name'=>$data['name'],
+      'uid'=> $data['id'],
+      'uname'=> $uname,
+      'name'=> $data['name'],
       'type'=> $data['type'],
       'isPasswd'=> $isPasswd,
       'brand'=> $data['brand'],
@@ -283,7 +283,7 @@ class User extends Controller {
     if(empty($base64)) return self::GetJSON(['code'=>4000]);
     // 上传
     $img = Data::UserImg($token, $base64);
-    if(!$img) return self::GetJSON(['code'=>5000]);
+    if(!$img) return self::GetJSON(['code'=>4000]);
     // 返回
     return self::GetJSON(['code'=>0, 'data'=>Data::Img($img)]);
   }
