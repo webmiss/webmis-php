@@ -6,7 +6,7 @@ use App\Librarys\FileEo;
 use App\Librarys\Upload;
 use App\Service\TokenAdmin;
 
-class Sys_file extends Controller {
+class SysFile extends Controller {
 
   private static $dirRoot = 'upload/';
 

@@ -10,14 +10,14 @@ use App\Service\Status;
 use App\Librarys\Export;
 use App\Util\Util;
 
-use App\Model\ErpPurchaseOut;
+use App\Model\ErpPurchaseOut as ErpPurchaseOutM;
 use App\Model\ErpPurchaseOutShow;
 
 use App\Model\ErpBaseBrand;
 use App\Model\ErpBasePartner;
 
 /* 采购入库 */
-class Erp_purchases_out extends Controller {
+class ErpPurchasesOut extends Controller {
 
   static private $partner_name = [];                // 主仓
   static private $brand_name = [];                  // 品牌
@@ -40,7 +40,7 @@ class Erp_purchases_out extends Controller {
     // 条件
     $where = self::getWhere($data, $token);
     // 统计
-    $m = new ErpPurchaseOut();
+    $m = new ErpPurchaseOutM();
     $m->Columns('count(*) AS total', 'sum(num) AS num', 'sum(sale_price) AS sale_price', 'sum(market_price) AS market_price');
     $m->Where($where);
     $one = $m->FindFirst();
@@ -69,7 +69,7 @@ class Erp_purchases_out extends Controller {
     if(empty($data) || !is_array($data) || empty($page) || empty($limit)) return self::GetJSON(['code'=> 4000]);
     $where = self::getWhere($data, $token);
     // 查询
-    $m = new ErpPurchaseOut();
+    $m = new ErpPurchaseOutM();
     $m->Columns('id', 'type', 'wms_co_id', 'brand', 'sale_price', 'market_price', 'num', 'total', 'status', 'creator_id', 'creator_name', 'operator_id', 'operator_name', 'remark', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
     $m->Where($where);
     $m->Page($page, $limit);
@@ -97,15 +97,11 @@ class Erp_purchases_out extends Controller {
     }
     // 时间
     $stime = isset($d['stime'])?trim($d['stime']):date('Y-m-d', strtotime('-1 year'));
-    if($stime){
-      $start = strtotime($stime.' 00:00:00');
-      $where[] = 'ctime>='.$start;
-    }
+    $start = strtotime($stime.' 00:00:00');
+    $where[] = 'ctime>='.$start;
     $etime = isset($d['etime'])?trim($d['etime']):date('Y-m-d');
-    if($etime){
-      $end = strtotime($etime.' 23:59:59');
-      $where[] = 'ctime<='.$end;
-    }
+    $end = strtotime($etime.' 23:59:59');
+    $where[] = 'ctime<='.$end;
     // 关键字
     $key = isset($d['key'])?Util::Trim($d['key']):'';
     if($key){
@@ -209,7 +205,7 @@ class Erp_purchases_out extends Controller {
       $param['utime'] = time();
       $param['creator_id'] = $admin->uid;
       $param['creator_name'] = $admin->name;
-      $m = new ErpPurchaseOut();
+      $m = new ErpPurchaseOutM();
       $m->Values($param);
       if($m->Insert()) {
         $id = $m->GetID();
@@ -226,7 +222,7 @@ class Erp_purchases_out extends Controller {
       }
     }
     // 单据
-    $m = new ErpPurchaseOut();
+    $m = new ErpPurchaseOutM();
     $m->Columns('id');
     $m->Where('status="0" AND id=?', $id);
     $info = $m->FindFirst();
@@ -235,7 +231,7 @@ class Erp_purchases_out extends Controller {
     $param['utime'] = time();
     $param['operator_id'] = $admin->uid;
     $param['operator_name'] = $admin->name;
-    $m = new ErpPurchaseOut();
+    $m = new ErpPurchaseOutM();
     $m->Set($param);
     $m->Where('id=?', $id);
     if($m->Update()) {
@@ -269,7 +265,7 @@ class Erp_purchases_out extends Controller {
     $m1 = new ErpPurchaseOutShow();
     $m1->Where('pid in('.$ids.')');
     // 单据
-    $m2 = new ErpPurchaseOut();
+    $m2 = new ErpPurchaseOutM();
     $m2->Where('id in('.$ids.') AND status=0');
     if($m1->Delete() && $m2->Delete()){
       // 日志
@@ -305,7 +301,7 @@ class Erp_purchases_out extends Controller {
     $id = implode(',', $data);
     $admin = TokenAdmin::Token($token);
     // 单据
-    $m = new ErpPurchaseOut();
+    $m = new ErpPurchaseOutM();
     $m->Columns('id', 'ctime', 'utime', 'brand');
     $m->Where('status=0 AND id in('.$id.')');
     $info = $m->Find();
@@ -326,7 +322,7 @@ class Erp_purchases_out extends Controller {
       }
     }
     // 更新
-    $m = new ErpPurchaseOut();
+    $m = new ErpPurchaseOutM();
     $m->Set(['status'=>1, 'utime'=>time()]);
     $m->Where('status=0 AND id in('.$id.')');
     if($m->Update()) {
@@ -362,7 +358,7 @@ class Erp_purchases_out extends Controller {
       return self::GetJSON(['code'=>4000]);
     }
     // 单据
-    $m = new ErpPurchaseOut();
+    $m = new ErpPurchaseOutM();
     $m->Columns('id', 'ctime', 'utime', 'type', 'wms_co_id', 'remark');
     $m->Where('status=0 AND id=?', $id);
     $info = $m->FindFirst();
@@ -406,7 +402,7 @@ class Erp_purchases_out extends Controller {
       // PID
       if($i===0) $pid = $info['id'];
       else {
-        $m = new ErpPurchaseOut();
+        $m = new ErpPurchaseOutM();
         $m->Values([
           'type'=> $info['type'],
           'wms_co_id'=> $info['wms_co_id'],
@@ -425,7 +421,7 @@ class Erp_purchases_out extends Controller {
       $m1->Set(['pid'=>$pid, 'utime'=>time()]);
       $m1->Where('id in('.implode(',', $v['id']).')');
       // 信息
-      $m2 = new ErpPurchaseOut();
+      $m2 = new ErpPurchaseOutM();
       $m2->Set([
         'cost_price'=> $v['cost_price'],
         'sale_price'=> $v['sale_price'],
@@ -460,7 +456,7 @@ class Erp_purchases_out extends Controller {
     // 数据
     $ids = implode(',', $data);
     // 更新
-    $m = new ErpPurchaseOut();
+    $m = new ErpPurchaseOutM();
     $m->Set(['status'=>0, 'utime'=>time()]);
     $m->Where('status=1 AND id in('.$ids.')');
     if($m->Update()) {
@@ -481,7 +477,7 @@ class Erp_purchases_out extends Controller {
     if($msg!='') return self::GetJSON(['code'=> 4001]);
     if(empty($data) || !is_array($data)) return self::GetJSON(['code'=> 4000]);
     // 查询
-    $m = new ErpPurchaseOut();
+    $m = new ErpPurchaseOutM();
     $m->Columns('id', 'type', 'status', 'creator_name', 'operator_name', 'remark');
     $m->Where('id in('.implode(',', $data).')');
     $all = $m->Find();
@@ -554,7 +550,7 @@ class Erp_purchases_out extends Controller {
   }
 
   /* 选项 */
-  static function Get_select(): string {
+  static function GetSelect(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -601,7 +597,7 @@ class Erp_purchases_out extends Controller {
   }
 
   /* 商品-列表 */
-  static function Goods_list(): string {
+  static function GoodsList(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -615,7 +611,7 @@ class Erp_purchases_out extends Controller {
       return self::GetJSON(['code'=>4000]);
     }
     // 查询
-    $m = new ErpPurchaseOut();
+    $m = new ErpPurchaseOutM();
     $m->Columns('id', 'ctime', 'utime', 'wms_co_id');
     $m->Where('id=?', $id);
     $one = $m->FindFirst();
@@ -673,7 +669,7 @@ class Erp_purchases_out extends Controller {
   }
 
   /* 商品-检测 */
-  static function Goods_safety(): string {
+  static function GoodsSafety(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -721,7 +717,7 @@ class Erp_purchases_out extends Controller {
   }
 
   /* 商品-添加 */
-  static function Goods_add(): string {
+  static function GoodsAdd(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -736,7 +732,7 @@ class Erp_purchases_out extends Controller {
       return self::GetJSON(['code'=>4000]);
     }
     // 状态
-    $m = new ErpPurchaseOut();
+    $m = new ErpPurchaseOutM();
     $m->Columns('id');
     $m->Where('status=0 AND id=?', $id);
     $one = $m->FindFirst();
@@ -845,7 +841,7 @@ class Erp_purchases_out extends Controller {
   }
 
   /* 商品-移除 */
-  static function Goods_remove(): string {
+  static function GoodsRemove(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -860,7 +856,7 @@ class Erp_purchases_out extends Controller {
       return self::GetJSON(['code'=>4000]);
     }
     // 状态
-    $m = new ErpPurchaseOut();
+    $m = new ErpPurchaseOutM();
     $m->Columns('id');
     $m->Where('status=0 AND id=?', $id);
     $one = $m->FindFirst();
@@ -892,7 +888,7 @@ class Erp_purchases_out extends Controller {
   }
 
   /* 商品-数量 */
-  static function Goods_num(): string {
+  static function GoodsNum(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -933,7 +929,7 @@ class Erp_purchases_out extends Controller {
   }
 
   /* 商品-更新价格 */
-  static function Goods_price(): string {
+  static function GoodsPrice(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -975,7 +971,7 @@ class Erp_purchases_out extends Controller {
       $total++;
     }
     // 更新
-    $m = new ErpPurchaseOut();
+    $m = new ErpPurchaseOutM();
     $m->Set([
       'cost_price'=> $cost_price,
       'sale_price'=> $sale_price,

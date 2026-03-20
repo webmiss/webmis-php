@@ -36,17 +36,17 @@ class Router extends Base {
     $url = explode('/', $url);
     // 模块
     if(!empty($url[0])) {
-      $this->module = ucfirst($url[0]);
+      $this->module = str_replace('_', '', ucwords($url[0], '_'));
       unset($url[0]);
     }
     // 控制器
     if(!empty($url[1])) {
-      $this->controller = ucfirst($url[1]);
+      $this->controller = str_replace('_', '', ucwords($url[1], '_'));
       unset($url[1]);
     }
     // 方法
     if (!empty($url[2])) {
-      $this->method = ucfirst($url[2]);
+      $this->method = str_replace('_', '', ucwords($url[2], '_'));
       unset($url[2]);
     }
     // 参数

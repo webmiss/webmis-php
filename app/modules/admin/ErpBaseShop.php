@@ -6,14 +6,16 @@ use App\Service\TokenAdmin;
 use App\Service\Status;
 use App\Librarys\Export;
 use App\Util\Util;
-use App\Model\ErpBasePartner;
+use App\Model\ErpBaseShop as ErpBaseShopM;
+use App\Model\ErpBaseOrganization;
 
-/* 主仓&分仓 */
-class Erp_base_partner extends Controller {
-  
-  static private $type_name = [];               // 类型
+/* 店铺管理 */
+class ErpBaseShop extends Controller {
+
+  static private $org_name = [];                // 组织
+  static private $city_name = [];               // 城市
   static private $class_name = [];              // 分类
-  private static $status_name = [];             // 状态
+  static private $status_name = [];              // 状态
   // 导出
   static private $export_path = 'upload/tmp/';  // 目录
   static private $export_filename = '';         // 文件名
@@ -33,7 +35,7 @@ class Erp_base_partner extends Controller {
     // 条件
     $where = self::getWhere($data);
     // 统计
-    $m = new ErpBasePartner();
+    $m = new ErpBaseShopM();
     $m->Columns('count(*) AS total');
     $m->Where($where);
     $one = $m->FindFirst();
@@ -61,20 +63,24 @@ class Erp_base_partner extends Controller {
     }
     // 条件
     $where = self::getWhere($data);
+    self::$org_name = self::getOrgName();
     // 查询
-    $m = new ErpBasePartner();
+    $m = new ErpBaseShopM();
     $m->Columns(
-      'id', 'type', 'class', 'wms_co_id', 'name', 'sort', 'status', 'creator_name', 'operator_name', 'remark',
+      'id', 'fid', 'city', 'class', 'shop_id', 'name', 'sort', 'status', 'creator_name', 'operator_name', 'remark',
       'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime',
     );
     $m->Where($where);
-    $m->Order($order?:'sort DESC, status DESC, name, id DESC');
+    $m->Order($order?:'status DESC, utime DESC');
     $m->Page($page, $limit);
     $list = $m->Find();
-    self::$type_name = Status::Partner('type_name');
     foreach($list as $k=>$v) {
       $list[$k]['status'] = $v['status']?true:false;
-      $list[$k]['type_name'] = self::$type_name[$v['type']];
+      // 组织
+      $org = array_filter(explode(':', $v['fid']));
+      $name = '';
+      foreach($org as $v) $name .= self::$org_name[$v].' > ';
+      $list[$k]['org_name'] = rtrim($name, ' > ');
     }
     // 返回
     return self::GetJSON(['code'=>0, 'time'=>date('Y/m/d H:i:s'), 'data'=>$list]);
@@ -86,23 +92,26 @@ class Erp_base_partner extends Controller {
     $key = isset($d['key'])?Util::Trim($d['key']):'';
     if($key){
       $arr = [
-        'type like "'.$key.'"',
+        'city like "'.$key.'"',
         'class like "'.$key.'"',
-        'wms_co_id like "'.$key.'"',
+        'shop_id like "'.$key.'"',
         'name like "%'.$key.'%"',
         'remark like "%'.$key.'%"',
       ];
       $where[] = '('.implode(' OR ', $arr).')';
     }
-    // 类型
-    $type = isset($d['type'])&&is_array($d['type'])?$d['type']:[];
-    if($type) $where[] = 'type in("'.implode('","', $type).'")';
+    // 城市
+    $city = isset($d['city'])&&is_array($d['city'])?$d['city']:[];
+    if($city) $where[] = 'city in("'.implode('","', $city).'")';
     // 分类
     $class = isset($d['class'])&&is_array($d['class'])?$d['class']:[];
     if($class) $where[] = 'class in("'.implode('","', $class).'")';
+    // 所属
+    $fid = isset($d['fid'])&&is_array($d['fid'])?$d['fid']:[];
+    if($fid) $where[] = '(fid LIKE "%:'.implode(':%" OR fid LIKE "%:', $fid).':%")';
     // 状态
     $status = isset($d['status'])&&is_array($d['status'])?$d['status']:[];
-    if($status) $where[] = 'status in('.implode(',', $status).')';
+    if($status) $where[] = 'status in("'.implode('","', $status).'")';
     // 名称
     $name = isset($d['name'])?trim($d['name']):'';
     if($name) $where[] = 'name LIKE "%'.$name.'%"';
@@ -134,17 +143,19 @@ class Erp_base_partner extends Controller {
     // 数据
     $param = [];
     $id = isset($data['id'])&&$data['id']?trim($data['id']):'';
+    $param['fid'] = isset($data['fid'])?trim($data['fid']):'';
     $param['sort'] = isset($data['sort'])?$data['sort']:'';
-    $param['type'] = isset($data['type'])&&$data['type']?$data['type'][0]:'';
+    $param['city'] = isset($data['city'])&&$data['city']?$data['city'][0]:'';
     $param['class'] = isset($data['class'])&&$data['class']?$data['class'][0]:'';
-    $param['wms_co_id'] = isset($data['wms_co_id'])?trim($data['wms_co_id']):'';
+    $param['shop_id'] = isset($data['shop_id'])?trim($data['shop_id']):'';
     $param['name'] = isset($data['name'])?trim($data['name']):'';
     $param['status'] = isset($data['status'])&&$data['status']?1:0;
     $param['remark'] = isset($data['remark'])?trim($data['remark']):'';
     // 验证
+    if(!strstr($param['fid'], ':')) return self::GetJSON(['code'=>4000, 'msg'=>'请输入归属事业部']);
     if(!is_numeric($param['sort'])) return self::GetJSON(['code'=>4000, 'msg'=>'请输入排序数字']);
-    if(!is_numeric($param['wms_co_id'])) return self::GetJSON(['code'=>4000, 'msg'=>'请输入分仓ID']);
-    if($param['type']=='') return self::GetJSON(['code'=>4000, 'msg'=>'请选择类型']);
+    if(!is_numeric($param['shop_id'])) return self::GetJSON(['code'=>4000, 'msg'=>'请输入店铺ID']);
+    if($param['city']=='') return self::GetJSON(['code'=>4000, 'msg'=>'请选择城市']);
     if($param['class']=='') return self::GetJSON(['code'=>4000, 'msg'=>'请选择分类']);
     if(mb_strlen($param['name'])<2 || mb_strlen($param['name'])>32) return self::GetJSON(['code'=>4000, 'msg'=>'请输入名称']);
     // 操作员
@@ -157,7 +168,7 @@ class Erp_base_partner extends Controller {
       $param['ctime'] = time();
       $param['creator_id'] = $admin->uid;
       $param['creator_name'] = $admin->name;
-      $m = new ErpBasePartner();
+      $m = new ErpBaseShopM();
       $m->Values($param);
       if($m->Insert()) {
         return self::GetJSON(['code'=>0]);
@@ -166,7 +177,7 @@ class Erp_base_partner extends Controller {
       }
     }
     // 更新
-    $m = new ErpBasePartner();
+    $m = new ErpBaseShopM();
     $m->Set($param);
     $m->Where('id=?', $id);
     if($m->Update()) {
@@ -189,7 +200,7 @@ class Erp_base_partner extends Controller {
       return self::GetJSON(['code'=>4000]);
     }
     // 模型
-    $m = new ErpBasePartner();
+    $m = new ErpBaseShopM();
     $m->Where('id in('.implode(',', $data).')');
     if($m->Delete()) {
       return self::GetJSON(['code'=>0]);
@@ -214,9 +225,9 @@ class Erp_base_partner extends Controller {
     // 条件
     $where = self::getWhere($data);
     // 查询
-    $m = new ErpBasePartner();
+    $m = new ErpBaseShopM();
     $m->Columns(
-      'id', 'type', 'class', 'wms_co_id', 'name', 'sort', 'status', 'creator_name', 'operator_name', 'remark',
+      'id', 'fid', 'city', 'class', 'shop_id', 'name', 'sort', 'status', 'creator_name', 'operator_name', 'remark',
       'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime',
     );
     $m->Where($where);
@@ -225,20 +236,20 @@ class Erp_base_partner extends Controller {
     if(!$list) return self::GetJSON(['code'=>4010]);
     // 导出文件
     $admin = TokenAdmin::Token($token);
-    self::$export_filename = 'ErpBasePartner_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
+    self::$export_filename = 'ErpBaseShop_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
     $html = Export::ExcelTop();
     $html .= Export::ExcelTitle([
-      'ID', '类型', '分类', '分仓ID', '仓库名称', '排序', '状态', '创建时间', '更新时间', '制单员', '操作员', '备注'
+      'ID', 'FID', '城市', '分类', '店铺ID', '店铺名称', '排序', '状态', '创建时间', '更新时间', '制单员', '操作员', '备注'
     ]);
     // 数据
-    self::$type_name = Status::Partner('type_name');
     foreach($list as $k=>$v){
       // 内容
       $html .= Export::ExcelData([
         $v['id'],
-        self::$type_name[$v['type']],
+        $v['fid'],
+        $v['city'],
         $v['class'],
-        $v['wms_co_id'],
+        $v['shop_id'],
         $v['name'],
         $v['sort'],
         $v['status']?self::GetLang('enable'):self::GetLang('disable'),
@@ -255,30 +266,45 @@ class Erp_base_partner extends Controller {
     return self::GetJSON(['code'=>0, 'data'=>['path'=>self::BaseUrl(self::$export_path), 'filename'=>self::$export_filename]]);
   }
 
+  /* 组织架构 */
+  static private function getOrgName(): array {
+    $m = new ErpBaseOrganization();
+    $m->Columns('id', 'name');
+    $all = $m->Find();
+    $org_name = [];
+    foreach($all as $v) $org_name[$v['id']]=$v['name'];
+    return $org_name;
+  }
+
   /* 选项 */
-  static function Get_select(): string {
+  static function GetSelect(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
     // 验证
     $msg = TokenAdmin::Verify($token, '');
     if($msg!='') return self::GetJSON(['code'=>4001]);
-    // 类型
-    $type_name = [];
-    self::$type_name = Status::Partner('type_name');
-    foreach(self::$type_name as $k=>$v) $type_name[]=['label'=>$v, 'value'=>$k];
+    // 城市
+    $city_name = [];
+    self::$city_name = Status::Shop('city_name');
+    foreach(self::$city_name as $k=>$v) $city_name[]=['label'=>$v, 'value'=>$v];
     // 分类
     $class_name = [];
-    self::$class_name = Status::Partner('class_name');
+    self::$class_name = Status::Shop('class_name');
     foreach(self::$class_name as $k=>$v) $class_name[]=['label'=>$v, 'value'=>$v];
+    // 组织
+    $org_name = [];
+    self::$org_name = self::getOrgName();
+    foreach(self::$org_name as $k=>$v) $org_name[]=['label'=>$v, 'value'=>$k];
     // 状态
     $status_name = [];
-    self::$status_name = Status::Partner('status_name');
+    self::$status_name = Status::Shop('status_name');
     foreach(self::$status_name as $k=>$v) $status_name[]=['label'=>$v, 'value'=>$k];
     // 返回
     return self::GetJSON(['code'=>0, 'data'=>[
-      'type_name'=> $type_name,
+      'city_name'=> $city_name,
       'class_name'=> $class_name,
+      'org_name'=> $org_name,
       'status_name'=> $status_name,
     ]]);
   }

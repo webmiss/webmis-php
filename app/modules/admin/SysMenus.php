@@ -9,7 +9,7 @@ use App\Util\Util;
 use App\Model\SysMenu;
 
 /* 系统菜单 */
-class Sys_menus extends Controller {
+class SysMenus extends Controller {
 
   private static $menus = [];   //全部菜单
   private static $permAll = []; //用户权限
@@ -258,7 +258,7 @@ class Sys_menus extends Controller {
   }
 
   /* 获取菜单-全部 */
-  static function Get_menus_all() {
+  static function GetMenusAll() {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -285,7 +285,7 @@ class Sys_menus extends Controller {
   }
 
   /* 获取菜单-权限 */
-  static function Get_menus_perm() {
+  static function GetMenusPerm() {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');

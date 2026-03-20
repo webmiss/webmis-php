@@ -9,22 +9,19 @@ use App\Service\Goods;
 use App\Service\Status;
 use App\Librarys\Export;
 use App\Util\Util;
-use App\Task\Stock;
 
-use App\Model\ErpOrderInout;
-use App\Model\ErpOrderShow;
+use App\Model\ErpPurchaseAllocate;
+use App\Model\ErpPurchaseAllocateShow;
 
-use App\Model\ErpBaseShop;
 use App\Model\ErpBasePartner;
 
-/* 其他出入库 */
-class Erp_order_inout extends Controller {
+/* 调拨出 */
+class ErpPurchaseAllocateOut extends Controller {
 
-  static private $shop_name = [];                   // 店铺
-  static private $partner_name = [];                // 分仓
-  static private $type_name = [];                   // 类型
-  static private $status_name = [];                  // 状态
-  static private $export_path = 'upload/tmp/';      // 导出-目录
+  static private $partner_name = [];              // 分仓
+  static private $type_name = [];                 // 类型
+  static private $status_name = [];               // 状态
+  static private $export_path = 'upload/tmp/';    // 导出-目录
 
   /* 统计 */
   static function Total(): string {
@@ -39,28 +36,18 @@ class Erp_order_inout extends Controller {
       return self::GetJSON(['code'=>4000, 'msg'=>'参数错误!']);
     }
     // 条件
-    $where = self::getWhere($data, $token);
+    list($where, $operator) = self::getWhere($data, $token, true);
     // 统计
-    $m = new ErpOrderInout();
-    $m->Columns(
-      'count(*) AS total',
-      'sum(CASE WHEN type="0" THEN sale_price ELSE 0 END) AS sale_price_out',
-      'sum(CASE WHEN type="0" THEN market_price ELSE 0 END) AS market_price_out',
-      'sum(CASE WHEN type="0" THEN num ELSE 0 END) AS out_num',
-      'sum(CASE WHEN type="1" THEN sale_price ELSE 0 END) AS sale_price_in',
-      'sum(CASE WHEN type="1" THEN market_price ELSE 0 END) AS market_price_in',
-      'sum(CASE WHEN type="1" THEN num ELSE 0 END) AS in_num',
-    );
+    $m = new ErpPurchaseAllocate();
+    $m->Columns('count(*) AS total', 'sum(num) AS num', 'sum(sale_price) AS sale_price', 'sum(market_price) AS market_price');
     $m->Where($where);
     $one = $m->FindFirst();
     $total = [
       'total'=> $one?(int)$one['total']:0,
-      'sale_price_out'=> $one?(float)$one['sale_price_out']:0,
-      'market_price_out'=> $one?(float)$one['market_price_out']:0,
-      'out_num'=> $one?(int)$one['out_num']:0,
-      'sale_price_in'=> $one?(float)$one['sale_price_in']:0,
-      'market_price_in'=> $one?(float)$one['market_price_in']:0,
-      'in_num'=> $one?(int)$one['in_num']:0,
+      'num'=> $one?(int)$one['num']:0,
+      'sale_price'=> $one?(float)$one['sale_price']:0,
+      'market_price'=> $one?(float)$one['market_price']:0,
+      'operator'=> $operator?:'',
     ];
     // 返回
     return self::GetJSON(['code'=>0, 'time'=>date('Y/m/d H:i:s'), 'data'=>$total]);
@@ -76,39 +63,41 @@ class Erp_order_inout extends Controller {
     $limit = self::JsonName($json, 'limit');
     $order = self::JsonName($json, 'order');
     // 验证权限
-    $msg = TokenAdmin::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg!='') return self::GetJSON(['code'=> 4001]);
-    if(empty($data) || !is_array($data) || empty($page) || empty($limit)) return self::GetJSON(['code'=> 4000]);
-    $where = self::getWhere($data, $token);
+    $msg = TokenAdmin::Verify($token, '');
+    if($msg!='') return self::GetJSON(['code'=>4001]);
+    if(empty($data) || !is_array($data) || empty($page) || empty($limit)) return self::GetJSON(['code'=>4000]);
+    list($where) = self::getWhere($data, $token);
     // 查询
-    $m = new ErpOrderInout();
-    $m->Columns('id', 'type', 'shop_id', 'shop_to', 'wms_co_id', 'warehouse', 'drop_co_name', 'sale_price', 'market_price', 'num', 'status', 'creator_name', 'operator_name', 'remark', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
+    $m = new ErpPurchaseAllocate();
+    $m->Columns(
+      'id', 'type', 'go_co_id', 'link_co_id', 'sale_price', 'market_price', 'num', 'total', 'status', 'creator_id', 'creator_name', 'operator_id', 'operator_name', 'remark',
+      'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime'
+    );
     $m->Where($where);
     $m->Page($page, $limit);
-    $m->Order($order?:'status, utime DESC');
+    $m->Order($order?:'status, ctime DESC');
     $list = $m->Find();
     // 数据
-    self::$shop_name = ErpBaseShop::GetList();
     self::$partner_name = ErpBasePartner::GetList();
-    self::$type_name = Status::OrderInout('type_name');
-    self::$status_name = Status::OrderInout('status_name');
+    self::$type_name = Status::Allocate('type_name');
+    self::$status_name = Status::Allocate('status_name');
     foreach($list as $k=>$v) {
-      $list[$k]['shop_name'] = isset(self::$shop_name[$v['shop_id']])?self::$shop_name[$v['shop_id']]['name']:'线下';
-      $list[$k]['shop_to_name'] = isset(self::$shop_name[$v['shop_to']])?self::$shop_name[$v['shop_to']]['name']:'-';
-      $list[$k]['wms_co_name'] = isset(self::$partner_name[$v['wms_co_id']])?self::$partner_name[$v['wms_co_id']]['name']:'-';
-      $list[$k]['type_name'] = self::$type_name[$v['type']];
+      $list[$k]['go_co_name'] = isset(self::$partner_name[$v['go_co_id']])?self::$partner_name[$v['go_co_id']]['name']:'-';
+      $list[$k]['link_co_name'] = isset(self::$partner_name[$v['link_co_id']])?self::$partner_name[$v['link_co_id']]['name']:'-';
+      $list[$k]['type_name'] = self::$type_name[$v['type']]['label'];
+      $list[$k]['type_info'] = self::$type_name[$v['type']]['info'];
       $list[$k]['status_name'] = self::$status_name[$v['status']];
     }
     // 返回
     return self::GetJSON(['code'=>0, 'time'=>date('Y/m/d H:i:s'), 'data'=>$list]);
   }
   /* 搜索条件 */
-  static private function getWhere(array $d, string $token): string {
+  static private function getWhere(array $d, string $token, bool $isTotal=false): array {
     $where = [];
     $admin = TokenAdmin::Token($token);
     // 限制-分仓
     if($admin->partner){
-      $where[] = 'wms_co_id in('.$admin->partner.')';
+      $where[] = 'go_co_id in('.$admin->partner.')';
     }
     // 时间
     $stime = isset($d['stime'])?trim($d['stime']):date('Y-m-d', strtotime('-1 year'));
@@ -134,15 +123,12 @@ class Erp_order_inout extends Controller {
     // 类型
     $type = isset($d['type'])&&is_array($d['type'])?$d['type']:[];
     if($type) $where[] = 'type in("'.implode('","', $type).'")';
-    // 店铺
-    $shop_id = isset($d['shop_id'])&&is_array($d['shop_id'])?$d['shop_id']:[];
-    if($shop_id) $where[] = 'shop_id in("'.implode('","', $shop_id).'")';
-    // 买断
-    $shop_to = isset($d['shop_to'])&&is_array($d['shop_to'])?$d['shop_to']:[];
-    if($shop_to) $where[] = 'shop_to in("'.implode('","', $shop_to).'")';
-    // 仓库
-    $wms_co_id = isset($d['wms_co_id'])&&is_array($d['wms_co_id'])?$d['wms_co_id']:[];
-    if($wms_co_id) $where[] = 'wms_co_id in("'.implode('","', $wms_co_id).'")';
+    // 调出仓
+    $go_co_id = isset($d['go_co_id'])&&is_array($d['go_co_id'])?$d['go_co_id']:[];
+    if($go_co_id) $where[] = 'go_co_id in("'.implode('","', $go_co_id).'")';
+    // 调入仓
+    $link_co_id = isset($d['link_co_id'])&&is_array($d['link_co_id'])?$d['link_co_id']:[];
+    if($link_co_id) $where[] = 'link_co_id in("'.implode('","', $link_co_id).'")';
     // 状态
     $status = isset($d['status'])&&is_array($d['status'])?$d['status']:[];
     if($status) $where[] = 'status in("'.implode('","', $status).'")';
@@ -158,20 +144,28 @@ class Erp_order_inout extends Controller {
       $pid = self::getPid($sku_id, $start, $end);
       $where[] = empty($pid)?'id=0':'id in('.implode(',', $pid).')';
     }
-    // 品牌
-    $brand = isset($d['brand'])?trim($d['brand']):'';
-    if($brand) $where[] = 'brand="'.$brand.'"';
     // 制单员
-    $creater_name = isset($d['creater_name'])?trim($d['creater_name']):'';
-    if($creater_name) $where[] = 'creator_name like "%'.$creater_name.'%"';
+    $creator_name = isset($d['creator_name'])?trim($d['creator_name']):'';
+    if($creator_name) $where[] = 'creator_name like "%'.$creator_name.'%"';
     // 操作员
+    $operator = [];
     $operator_name = isset($d['operator_name'])?trim($d['operator_name']):'';
     if($operator_name) $where[] = 'operator_name like "%'.$operator_name.'%"';
+    if($isTotal && $operator_name) {
+      $w = 'operator_name like "%'.$operator_name.'%"';
+      if($go_co_id) $w .= ' AND go_co_id in("'.implode('","', $go_co_id).'")';
+      $pname = Data::PartitionName($start, $end);
+      $m = new ErpPurchaseAllocateShow();
+      $m->Partition($pname);
+      $m->Columns('sum(num) AS num');
+      $m->Where($w);
+      $operator = $m->FindFirst();
+    }
     // 备注
     $remark = isset($d['remark'])?trim($d['remark']):'';
     if($remark!='') $where[] = 'remark like "%'.$remark.'%"';
     // 返回
-    return implode(' AND ', $where);
+    return [implode(' AND ', $where), $operator];
   }
   /* 搜索条件-PID */
   static function getPid(string $sku_id, $start, $end) {
@@ -188,7 +182,7 @@ class Erp_order_inout extends Controller {
       $pname = Data::PartitionName($start, $end);
     }
     // 查询
-    $m = new ErpOrderShow();
+    $m = new ErpPurchaseAllocateShow();
     if($pname) $m->Partition($pname);
     $m->Columns('pid');
     $m->Where($w);
@@ -208,25 +202,24 @@ class Erp_order_inout extends Controller {
     $data = self::JsonName($json, 'data');
     // 验证权限
     $msg = TokenAdmin::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg!='') return self::GetJSON(['code'=> 4001]);
-    if(empty($data) || !is_array($data)) return self::GetJSON(['code'=> 4000]);
+    if($msg!='') return self::GetJSON(['code'=>4001]);
+    if(empty($data) || !is_array($data)) return self::GetJSON(['code'=>4000]);
     // 数据
     $admin = TokenAdmin::Token($token);
     $id = isset($data['id'])&&$data['id']?$data['id']:'';
     $param['type'] = isset($data['type'])&&$data['type']?$data['type'][0]:'';
-    $param['wms_co_id'] = isset($data['wms_co_id'])&&$data['wms_co_id']?$data['wms_co_id'][0]:'';
-    $param['shop_id'] = isset($data['shop_id'])&&$data['shop_id']?$data['shop_id'][0]:'';
-    $param['shop_to'] = isset($data['shop_to'])&&$data['shop_to']?$data['shop_to'][0]:'';
+    $param['go_co_id'] = isset($data['go_co_id'])&&$data['go_co_id']?$data['go_co_id'][0]:'';
+    $param['link_co_id'] = isset($data['link_co_id'])&&$data['link_co_id']?$data['link_co_id'][0]:'';
     $param['remark'] = isset($data['remark'])?trim($data['remark']):'';
-    if($param['type']=='' || $param['wms_co_id']=='' || $param['shop_id']=='' || $param['shop_to']=='') return self::GetJSON(['code'=>4000]);
-    // 模型
-    $m = new ErpOrderInout();
+    if($param['type']=='' || $param['go_co_id']=='' || $param['link_co_id']=='') return self::GetJSON(['code'=>4000]);
+    // 类型
     if(!$id) {
       // 添加
       $param['ctime'] = time();
       $param['utime'] = time();
       $param['creator_id'] = $admin->uid;
       $param['creator_name'] = $admin->name;
+      $m = new ErpPurchaseAllocate();
       $m->Values($param);
       if($m->Insert()) {
         $id = $m->GetID();
@@ -235,27 +228,43 @@ class Erp_order_inout extends Controller {
           'operator_id'=> $admin->uid,
           'operator_name'=> $admin->name,
           'sku_id'=> $id,
-          'content'=> '创建其它出入库单: '.$id
+          'content'=> '创建调拨单: '.$id
         ]);
         return self::GetJSON(['code'=>0]);
       } else {
         return self::GetJSON(['code'=>5000]);
       }
     }
+    // 单据
+    $m = new ErpPurchaseAllocate();
+    $m->Columns('id', 'ctime', 'utime', 'link_co_id');
+    $m->Where('status="0" AND id=?', $id);
+    $info = $m->FindFirst();
+    if(!$info) return self::GetJSON(['code'=>4000, 'msg'=>'当前状态不可用!']);
     // 编辑
     $param['utime'] = time();
     $param['operator_id'] = $admin->uid;
     $param['operator_name'] = $admin->name;
+    $m = new ErpPurchaseAllocate();
     $m->Set($param);
     $m->Where('id=?', $id);
     if($m->Update()) {
+      // 明细
+      if(isset($param['link_co_id']) && $param['link_co_id']!=$info['link_co_id']) {
+        $pname = Data::PartitionName($info['ctime'], $param['utime']);
+        $m = new ErpPurchaseAllocateShow();
+        $m->Partition($pname);
+        $m->Set(['link_co_id'=>$param['link_co_id']]);
+        $m->Where('pid=?', $id);
+        $m->Update();
+      }
       // 日志
       Logs::Goods([
         'ctime'=>time(),
         'operator_id'=> $admin->uid,
         'operator_name'=> $admin->name,
         'sku_id'=> $id,
-        'content'=> '更新其它出入库单: '.$id
+        'content'=> '更新调拨单: '.$id
       ]);
       return self::GetJSON(['code'=>0]);
     } else {
@@ -264,7 +273,7 @@ class Erp_order_inout extends Controller {
   }
 
   /* 删除 */
-  static function Del(): string {
+  static function Del() {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -278,10 +287,10 @@ class Erp_order_inout extends Controller {
     // 数据
     $ids = implode(',', $data);
     // 明细
-    $m1 = new ErpOrderShow();
-    $m1->Where('type in("5", "6") AND pid in('.$ids.')');
+    $m1 = new ErpPurchaseAllocateShow();
+    $m1->Where('pid in('.$ids.') AND status="0"');
     // 单据
-    $m2 = new ErpOrderInout();
+    $m2 = new ErpPurchaseAllocate();
     $m2->Where('id in('.$ids.') AND status="0"');
     if($m1->Delete() && $m2->Delete()){
       // 日志
@@ -293,7 +302,7 @@ class Erp_order_inout extends Controller {
           'operator_id'=> $admin->uid,
           'operator_name'=> $admin->name,
           'sku_id'=> $pid,
-          'content'=> '删除其它出入库单: '.$pid
+          'content'=> '删除调拨单: '.$pid
         ]);
       }
       return self::GetJSON(['code'=>0]);
@@ -302,7 +311,7 @@ class Erp_order_inout extends Controller {
   }
 
   /* 推送 */
-  static function Push(): string {
+  static function Push() {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -314,79 +323,70 @@ class Erp_order_inout extends Controller {
       return self::GetJSON(['code'=>4000]);
     }
     // 数据
-    $id = implode(',', $data);
+    $ids = implode(',', $data);
     $admin = TokenAdmin::Token($token);
-    self::$partner_name = ErpBasePartner::GetList();
     // 单据
-    $m = new ErpOrderInout();
-    $m->Columns('id', 'ctime', 'utime', 'wms_co_id', 'remark');
-    $m->Where('status="0" AND id in('.$id.')');
+    $m = new ErpPurchaseAllocate();
+    $m->Columns('id', 'ctime', 'utime');
+    $m->Where('status="0" AND num>0 AND id in('.$ids.')');
     $info = $m->Find();
     if(!$info) return self::GetJSON(['code'=>4000, 'msg'=>'当前状态不可用!']);
-    // 分区
-    $pids = $ctime = $utime = [];
-    foreach($info as $v) {
-      $pids[] = $v['id'];
-      $ctime[] = $v['ctime'];
-      $utime[] = $v['utime'];
-    }
-    sort($ctime);
-    rsort($utime);
-    $pname = Data::PartitionName($ctime[0], $utime[0]);
-    // 货品
-    $m = new ErpOrderShow();
-    if($pname) $m->Partition($pname);
-    $m->Columns('id', 'pid', 'type', 'wms_co_id', 'sku_id', 'num');
-    $m->Where('type in("5","6") AND status="0" AND pid in('.implode(',', $pids).')');
-    $all = $m->Find();
-    // 数据
-    $ids = $bizs = [];
-    foreach($all as $v) {
-      $ids[] = $v['id'];
-      $bizs[$v['wms_co_id']][] = [
-        'wms_co_id'=> $v['wms_co_id'],
-        'sku_id'=> $v['sku_id'],
-        'num'=> $v['type']=='5'?-$v['num']:$v['num'],
-        // 其它
-        'pid'=> $v['pid'],
-        'type'=> $v['type'],
-      ];
-    }
-    // 明细
-    if($ids) {
-      $m = new ErpOrderShow();
-      if($pname) $m->Partition($pname);
-      $m->Set(['status'=>'1']);
-      $m->Where('id in('.implode(',', $ids).')');
-      $m->Update();
-    }
-    // 其它出入库单
-    $m = new ErpOrderInout();
-    $m->Set(['status'=>'1', 'utime'=>time(), 'operator_id'=>$admin->uid, 'operator_name'=>$admin->name]);
-    $m->Where('status="0" AND id in('.implode(',', $pids).')');
+    // 更新
+    $m = new ErpPurchaseAllocate();
+    $m->Set(['status'=>'1', 'utime'=>time()]);
+    $m->Where('status="0" AND num>0 AND id in('.$ids.')');
     if($m->Update()) {
-      // 库存盘点
-      foreach($bizs as $k=>$v) {
-        $list = array_chunk($v, 200, false);
-        foreach($list as $d) {
-          // 库存
-          Stock::Goods(json_encode(['bizs'=>[$k=>$d], 'goods'=>true]));
-          // 日志
-          foreach($d as $sku) {
-            Logs::Goods([
-              'ctime'=>time(),
-              'operator_id'=> $admin->uid,
-              'operator_name'=> $admin->name,
-              'sku_id'=> $sku['sku_id'],
-              'content'=> '其它出入库: '.$sku['sku_id'].' 单号: '.$sku['pid'].' 类型: '.($sku['type']=='5'?'销售':'退货').' 数量: '.$sku['num'].' 仓库: '.(isset(self::$partner_name[$sku['wms_co_id']])?self::$partner_name[$sku['wms_co_id']]['name']:$sku['wms_co_id']),
-            ]);
-          }
-        }
+      foreach($info as $v) {
+        // 更新价格
+        $pname = Data::PartitionName($v['ctime'], $v['utime']);
+        $total = self::goodsUpdatePrice($admin, $pname, $v['id']);
+        // 日志
+        Logs::Goods([
+          'ctime'=>time(),
+          'operator_id'=> $admin->uid,
+          'operator_name'=> $admin->name,
+          'sku_id'=> $v['id'],
+          'content'=> '推送调拨单: '.$v['id'].' 数量: '.$total['num']
+        ]);
       }
       return self::GetJSON(['code'=>0]);
-    } else {
-      return self::GetJSON(['code'=>5000]);
     }
+    return self::GetJSON(['code'=>5000]);
+  }
+
+  /* 撤回 */
+  static function Revoke() {
+    // 参数
+    $json = self::Json();
+    $token = self::JsonName($json, 'token');
+    $data = self::JsonName($json, 'data');
+    // 验证
+    $msg = TokenAdmin::Verify($token, '');
+    if($msg!='') return self::GetJSON(['code'=>4001]);
+    if(empty($data) || !is_array($data)) {
+      return self::GetJSON(['code'=>4000]);
+    }
+    // 数据
+    $ids = implode(',', $data);
+    // 更新
+    $m = new ErpPurchaseAllocate();
+    $m->Set(['status'=>'0', 'utime'=>time()]);
+    $m->Where('status="1" AND id in('.$ids.')');
+    if($m->Update()) {
+      // 日志
+      $admin = TokenAdmin::Token($token);
+      foreach($data as $id) {
+        Logs::Goods([
+          'ctime'=>time(),
+          'operator_id'=> $admin->uid,
+          'operator_name'=> $admin->name,
+          'sku_id'=> $id,
+          'content'=> '撤回调拨单: '.$id
+        ]);
+      }
+      return self::GetJSON(['code'=>0]);
+    }
+    return self::GetJSON(['code'=>5000]);
   }
 
   /* 导出 */
@@ -397,12 +397,14 @@ class Erp_order_inout extends Controller {
     $data = self::JsonName($json, 'data');
     // 验证权限
     $msg = TokenAdmin::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg!='') return self::GetJSON(['code'=> 4001]);
-    if(empty($data) || !is_array($data)) return self::GetJSON(['code'=> 4000]);
+    if($msg!='') return self::GetJSON(['code'=>4001]);
+    if(empty($data) || !is_array($data)) return self::GetJSON(['code'=>4000]);
+    // 数据
+    $ids = implode(',', $data);
     // 查询
-    $m = new ErpOrderInout();
-    $m->Columns('id', 'type', 'shop_id', 'shop_to', 'status', 'creator_name', 'operator_name', 'remark');
-    $m->Where('id in('.implode(',', $data).')');
+    $m = new ErpPurchaseAllocate();
+    $m->Columns('id', 'type', 'status', 'creator_name', 'operator_name', 'remark');
+    $m->Where('id in('.$ids.')');
     $all = $m->Find();
     $pid = $info = [];
     foreach($all as $v){
@@ -411,9 +413,9 @@ class Erp_order_inout extends Controller {
     }
     if(!$pid) return self::GetJSON(['code'=>4000, 'msg'=>'暂无数据!']);
     // 明细
-    $m = new ErpOrderShow();
-    $m->Columns('pid', 'wms_co_id', 'type', 'sku_id', 'num', 'status', 'operator_name', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
-    $m->Where('type in("5", "6") AND pid in('.implode(',', array_keys($pid)).')');
+    $m = new ErpPurchaseAllocateShow();
+    $m->Columns('pid', 'go_co_id', 'link_co_id', 'sku_id', 'num', 'status', 'operator_name', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
+    $m->Where('pid in('.implode(',', array_keys($pid)).')');
     $m->Order('pid DESC', 'id DESC');
     $list = $m->Find();
     // 商品资料
@@ -423,24 +425,24 @@ class Erp_order_inout extends Controller {
     // 表头
     $html = Export::ExcelTop();
     $html .= Export::ExcelTitle([
-      '单号', '类型', '店铺名称', '入库仓库', '买断店铺', '图片', '商品编码', '暗码', '商品名称', '颜色及规格', '标签价(元)', '吊牌价(W)', '数量', '单位', '重量', '标签', '商品分类', '品牌', '采购员', '状态', '制单员', '操作员', '创建时间', '修改时间', '备注'
+      '单号', '类型', '调出仓', '调入仓', '图片', '商品编码', '暗码', '款式编码', '商品名称', '颜色及规格', '标签价(元)', '吊牌价(W)', '数量', '单位', '重量', '标签', '商品分类', '品牌', '采购员', '状态', '制单员', '操作员', '创建时间', '修改时间', '备注'
     ]);
     // 内容
-    self::$shop_name = ErpBaseShop::GetList();
+    $admin = TokenAdmin::Token($token);
     self::$partner_name = ErpBasePartner::GetList();
-    self::$type_name = Status::OrderInout('type_name');
-    self::$status_name = Status::OrderInout('status_name');
+    self::$type_name = Status::Allocate('type_name');
+    self::$status_name = Status::Allocate('status_name');
     foreach($list as $v){
       $tmp = isset($goods[$v['sku_id']])?$goods[$v['sku_id']]:[];
       $html .= Export::ExcelData([
         $v['pid'],
-        self::$type_name[$info[$v['pid']]['type']],
-        isset(self::$shop_name[$info[$v['pid']]['shop_id']])?self::$shop_name[$info[$v['pid']]['shop_id']]['name']:'-',
-        self::$partner_name[$v['wms_co_id']]['name'],
-        isset(self::$shop_name[$info[$v['pid']]['shop_to']])?self::$shop_name[$info[$v['pid']]['shop_to']]['name']:'-',
+        self::$type_name[$info[$v['pid']]['type']]['label'],
+        self::$partner_name[$v['go_co_id']]['name'],
+        self::$partner_name[$v['link_co_id']]['name'],
         $tmp['img']?'<a href="'.Data::ImgGoods($v['sku_id'], false).'" target="_blank">查看</a>':'-',
         '&nbsp;'.$v['sku_id'],
         '&nbsp;'.($tmp['short_name']?$tmp['short_name']:'-'),
+        $tmp['i_id']?$tmp['i_id']:'-',
         $tmp['name']?$tmp['name']:'-',
         '&nbsp;'.($tmp['properties_value']?$tmp['properties_value']:'-'),
         $tmp['sale_price']>0?$tmp['sale_price']:'-',
@@ -462,67 +464,59 @@ class Erp_order_inout extends Controller {
     }
     $html .= Export::ExcelBottom();
     // 文件名
-    $admin = TokenAdmin::Token($token);
-    $file_name = 'OrderInout_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
+    $file_name = 'AllocateOut_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
     Export::ExcelFileEnd(self::$export_path, $file_name, $html);
     // 返回
     return self::GetJSON(['code'=>0, 'data'=>['path'=>self::BaseUrl(self::$export_path), 'filename'=>$file_name]]);
   }
 
   /* 选项 */
-  static function Get_select(): string {
+  static function GetSelect(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
+    $type = self::JsonName($json, 'type');
     // 验证
     $msg = TokenAdmin::Verify($token, '');
     if($msg!='') return self::GetJSON(['code'=>4001]);
     // 权限
     $admin = TokenAdmin::Token($token);
-    $shop_perm = $admin->shop?explode(',', $admin->shop):[];
     $partner_perm = $admin->partner?explode(',', $admin->partner):[];
+    $partner_in_perm = $admin->partner_in?explode(',', $admin->partner_in):[];
     // 类型
     $type_name = [];
-    self::$type_name = Status::OrderInout('type_name');
-    foreach(self::$type_name as $k=>$v) $type_name[]=['label'=>$v, 'value'=>$k];
-    // 店铺
-    self::$shop_name = ErpBaseShop::GetList();
-    $shop_name = $shop_to_name = [];
-    foreach(self::$shop_name as $k=>$v) {
-      $tmp = ['label'=>$v['name'], 'value'=>$k, 'info'=>$v['status']?true:false];
-      if($shop_perm) {
-        if(in_array($k, $shop_perm)) $shop_name[] = $tmp;
-      } else {
-        $shop_name[] = $tmp;
-      }
-      // 全部
-      $shop_to_name[] = $tmp;
-    }
+    self::$type_name = Status::Allocate('type_name');
+    foreach(self::$type_name as $v) $type_name[]=$v;
     // 分仓
     self::$partner_name = ErpBasePartner::GetList();
-    $partner_name = [];
+    $go_co_name = $link_co_name = [];
     foreach(self::$partner_name as $k=>$v) {
+      if($type=='add' && $v['state']!='1') continue;
       $tmp = ['label'=>$v['name'], 'value'=>$k, 'info'=>$v['status']?true:false];
+      // 调出仓
       if($partner_perm) {
-        if(in_array($k, $partner_perm)) $partner_name[] = $tmp;
-      } else $partner_name[] = $tmp;
+        if(in_array($k, $partner_perm)) $go_co_name[] = $tmp;
+      } else $go_co_name[] = $tmp;
+      // 调入仓
+      if($partner_in_perm) {
+        if(in_array($k, $partner_in_perm)) $link_co_name[] = $tmp;
+      } else $link_co_name[] = $tmp;
     }
     // 状态
     $status_name = [];
-    self::$status_name = Status::OrderInout('status_name');
+    self::$status_name = Status::Allocate('status_name');
     foreach(self::$status_name as $k=>$v) $status_name[]=['label'=>$v, 'value'=>$k];
     // 返回
     return self::GetJSON(['code'=>0, 'data'=>[
       'type_name'=> $type_name,
-      'shop_name'=> $shop_name,
-      'shop_to_name'=> $shop_to_name,
-      'partner_name'=> $partner_name,
+      'go_co_name'=> $go_co_name,
+      'link_co_name'=> $link_co_name,
       'status_name'=> $status_name,
     ]]);
   }
 
   /* 商品-列表 */
-  static function Goods_list(): string {
+  static function GoodsList(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -536,23 +530,23 @@ class Erp_order_inout extends Controller {
       return self::GetJSON(['code'=>4000]);
     }
     // 查询
-    $m = new ErpOrderInout();
-    $m->Columns('id', 'ctime', 'utime', 'wms_co_id');
+    $m = new ErpPurchaseAllocate();
+    $m->Columns('id', 'ctime', 'utime');
     $m->Where('id=?', $id);
     $one = $m->FindFirst();
-    if(!$one) return self::GetJSON(['code'=>0]);
+    if(!$one) return self::GetJSON(['code'=>4000]);
     // 分区
     $pname = Data::PartitionName($one['ctime'], $one['utime']);
-    $where = ['type in("5", "6")', 'pid='.$id, 'wms_co_id='.$one['wms_co_id']];
+    $where = ['pid='.$id];
     // SKU
     if($sku_id) {
       $arr = array_filter(explode(' ', strtoupper($sku_id)));
       $where[] = 'sku_id in("'.implode('","', $arr).'")';
     }
     // 查询
-    $m = new ErpOrderShow();
+    $m = new ErpPurchaseAllocateShow();
     if($pname) $m->Partition($pname);
-    $m->Columns('id', 'sku_id', 'wms_co_id', 'num', 'status', 'operator_name', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
+    $m->Columns('id', 'sku_id', 'go_co_id', 'link_co_id', 'num', 'ratio', 'ratio_sale', 'ratio_market', 'status', 'operator_name', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
     $m->Where(implode(' AND ', $where));
     $m->Order('id DESC');
     $list = $m->Find();
@@ -568,13 +562,11 @@ class Erp_order_inout extends Controller {
       $v['name'] = $info['name'];
       $v['short_name'] = $info['short_name'];
       $v['properties_value'] = $info['properties_value'];
+      $v['cost_price'] = $info['cost_price'];
       $v['sale_price'] = $info['sale_price'];
       $v['market_price'] = $info['market_price'];
       $v['unit'] = $info['unit'];
       $v['weight'] = $info['weight'];
-      $v['ratio'] = $info['ratio'];
-      $v['ratio_sale'] = $info['ratio_sale'];
-      $v['ratio_market'] = $info['ratio_market'];
       $v['labels'] = $info['labels'];
       $v['brand'] = $info['brand'];
       $v['owner'] = $info['owner'];
@@ -593,17 +585,17 @@ class Erp_order_inout extends Controller {
   }
 
   /* 商品-检测 */
-  static function Goods_safety(): string {
+  static function GoodsSafety(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
-    $type = self::JsonName($json, 'type');
-    $wms_co_id = self::JsonName($json, 'wms_co_id');
+    $go_co_id = self::JsonName($json, 'go_co_id');
+    $link_co_id = self::JsonName($json, 'link_co_id');
     $data = self::JsonName($json, 'data');
     // 验证
     $msg = TokenAdmin::Verify($token, '');
     if($msg!='') return self::GetJSON(['code'=>4001]);
-    if(empty($wms_co_id) || empty($data)) {
+    if(empty($go_co_id) || empty($link_co_id) || empty($data)) {
       return self::GetJSON(['code'=>4000]);
     }
     // 数据
@@ -625,18 +617,16 @@ class Erp_order_inout extends Controller {
       $list[$k]['status_name'] = '进行中';
     }
     // 是否库存
-    if($type!='1') {
-      $stock = Goods::IsStockAll($sku, $wms_co_id);
-      foreach($list as $k=>$v) {
-        if(!isset($stock[$k]) || $stock[$k]==0) {
-          $is_safety = false;
-          $list[$k]['status'] = false;
-          $list[$k]['status_name'] = '无库存';
-        } elseif($stock[$k]<$v['num']) {
-          $is_safety = false;
-          $list[$k]['status'] = false;
-          $list[$k]['status_name'] = '可用库存“'.$stock[$k].'”';
-        }
+    $stock = Goods::IsStockAll($sku, $go_co_id);
+    foreach($list as $k=>$v) {
+      if(!isset($stock[$k]) || $stock[$k]==0) {
+        $is_safety = false;
+        $list[$k]['status'] = false;
+        $list[$k]['status_name'] = '无库存';
+      } elseif($stock[$k]<$v['num']) {
+        $is_safety = false;
+        $list[$k]['status'] = false;
+        $list[$k]['status_name'] = '可用库存“'.$stock[$k].'”';
       }
     }
     // 返回
@@ -644,26 +634,24 @@ class Erp_order_inout extends Controller {
   }
 
   /* 商品-添加 */
-  static function Goods_add(): string {
+  static function GoodsAdd(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
     $id = self::JsonName($json, 'id');
     $ctime = self::JsonName($json, 'ctime');
-    $type = self::JsonName($json, 'type');
-    $wms_co_id = self::JsonName($json, 'wms_co_id');
-    $shop_id = self::JsonName($json, 'shop_id');
-    $shop_to = self::JsonName($json, 'shop_to');
+    $go_co_id = self::JsonName($json, 'go_co_id');
+    $link_co_id = self::JsonName($json, 'link_co_id');
     $data = self::JsonName($json, 'data');
     // 验证
     $msg = TokenAdmin::Verify($token, '');
     if($msg!='') return self::GetJSON(['code'=>4001]);
-    if(empty($id) || empty($ctime) || empty($wms_co_id) || empty($data)) {
+    if(empty($id) || empty($ctime) || empty($go_co_id) || empty($link_co_id) || empty($data)) {
       return self::GetJSON(['code'=>4000]);
     }
     // 状态
-    $m = new ErpOrderInout();
-    $m->Columns('id', 'type', 'shop_id', 'shop_to');
+    $m = new ErpPurchaseAllocate();
+    $m->Columns('id', 'type');
     $m->Where('status="0" AND id=?', $id);
     $one = $m->FindFirst();
     if(!$one) return self::GetJSON(['code'=>4000, 'msg'=>'该状态不可用!']);
@@ -681,10 +669,8 @@ class Erp_order_inout extends Controller {
     }
     if(!$list) return self::GetJSON(['code'=>5000, 'msg'=>$msg, 'data'=>$list]);
     // 检测: 进行中、库存
-    $res_list = [];
     $sku = array_keys($list);
-    if($type=='1') list($res_list, $res_msg) = Goods::IsSafety($sku, ['afoot'=>'all']);
-    else Goods::IsSafety($sku, ['afoot'=>'all', 'stock'=>$wms_co_id]);
+    list($res_list, $res_msg) = Goods::IsSafety($sku, ['afoot'=>'all', 'stock'=>$go_co_id]);
     if($res_list) {
       $msg = $res_msg;
       $err = array_merge($err, $res_list);
@@ -703,56 +689,40 @@ class Erp_order_inout extends Controller {
       $values[] = [
         'pid'=> $id,
         'sku_id'=> $k,
-        'wms_co_id'=> $wms_co_id,
-        'shop_id'=> $shop_id?$shop_id:0,
-        'shop_to'=> $shop_to?$shop_to:0,
+        'go_co_id'=> $go_co_id,
+        'link_co_id'=> $link_co_id,
         'num'=> $v['num'],
+        'ratio'=> isset($v['ratio'])?$v['ratio']:$info[$k]['ratio'],
+        'ratio_cost'=> $info[$k]['ratio_cost'],
+        'ratio_purchase'=> $info[$k]['ratio_purchase'],
+        'ratio_supply'=> $info[$k]['ratio_supply'],
+        'ratio_supplier'=> $info[$k]['ratio_supplier'],
+        'ratio_sale'=> $info[$k]['ratio_sale'],
+        'ratio_market'=> $info[$k]['ratio_market'],
         'status'=> '0',
         'ctime'=> time(),
         'utime'=> time(),
         'pdate'=> date('Y-m-d'),
         'operator_id'=> $admin->uid,
         'operator_name'=> $admin->name,
-        // 信息
-        'type'=> $one['type']=='0'?'5':'6',
-        'shop_id'=> $one['shop_id'],
-        'shop_to'=> $one['shop_to'],
-        // 资料
-        'img'=> $info[$k]['img'],
-        'name'=> $info[$k]['name'],
-        'short_name'=> $info[$k]['short_name'],
-        'properties_value'=> $info[$k]['properties_value'],
-        'cost_price'=> $info[$k]['cost_price'],
-        'supply_price'=> $info[$k]['supply_price'],
-        'supplier_price'=> $info[$k]['supplier_price'],
-        'sale_price'=> $info[$k]['sale_price'],
-        'purchase_price'=> $info[$k]['purchase_price'],
-        'supplier_price'=> $info[$k]['supplier_price'],
-        'market_price'=> $info[$k]['market_price'],
-        'unit'=> $info[$k]['unit'],
-        'weight'=> $info[$k]['weight'],
-        'labels'=> $info[$k]['labels'],
-        'category'=> $info[$k]['category'],
-        'brand'=> $info[$k]['brand'],
         'owner'=> $info[$k]['owner'],
         'supplier_name'=> $info[$k]['supplier_name'],
-        'i_id'=> $info[$k]['i_id'],
       ];
     }
     if(!$values) return self::GetJSON(['code'=>5000, 'msg'=>$msg, 'data'=>$list, 'err'=>$err]);
     // 是否存在
     $pname = Data::PartitionName(strtotime($ctime), time());
-    $m = new ErpOrderShow();
+    $m = new ErpPurchaseAllocateShow();
     if($pname) $m->Partition($pname);
     $m->Columns('id', 'sku_id');
-    $m->Where('type in("5","6") AND pid=? AND wms_co_id=? AND sku_id in("'.implode('","', $sku).'")', $id, $wms_co_id);
+    $m->Where('pid=? AND go_co_id=? AND link_co_id=? AND sku_id in("'.implode('","', $sku).'")', $id, $go_co_id, $link_co_id);
     $all = $m->Find();
     $in_sku = [];
     foreach($all as $v) $in_sku[$v['sku_id']]=$v['id'];
     // 更新存在
     foreach($values as $k=>$v) {
       if(!isset($in_sku[$v['sku_id']])) continue;
-      $m = new ErpOrderShow();
+      $m = new ErpPurchaseAllocateShow();
       if($pname) $m->Partition($pname);
       $m->Set(['num'=>$v['num'], 'utime'=>time(), 'operator_id'=>$v['operator_id'], 'operator_name'=>$v['operator_name']]);
       $m->Where('id=?', $in_sku[$v['sku_id']]);
@@ -763,28 +733,20 @@ class Erp_order_inout extends Controller {
     $values = array_values($values);
     // 新增
     if($values) {
-      $m = new ErpOrderShow();
+      $m = new ErpPurchaseAllocateShow();
       $m->ValuesAll($values);
       if(!$m->Insert()) return self::GetJSON(['code'=>5000]);
     }
     // 获取ID
-    $m = new ErpOrderShow();
+    $m = new ErpPurchaseAllocateShow();
     if($pname) $m->Partition($pname);
-    $m->Columns('id', 'sku_id');
-    $m->Where('type in("5","6") AND pid=? AND wms_co_id=? AND sku_id in("'.implode('","', $sku).'")', $id, $wms_co_id);
+    $m->Columns('id', 'sku_id', 'ratio', 'ratio_sale', 'ratio_market');
+    $m->Where('pid=? AND go_co_id=? AND link_co_id=? AND sku_id in("'.implode('","', $sku).'")', $id, $go_co_id, $link_co_id);
     $all = $m->Find();
     $ids = [];
-    foreach($all as $v) $ids[$v['sku_id']]=$v['id'];
+    foreach($all as $v) $ids[$v['sku_id']]=['id'=>$v['id'], 'ratio'=>$v['ratio'], 'ratio_sale'=>$v['ratio_sale'], 'ratio_market'=>$v['ratio_market']];
     // 处理
     foreach($list as $k=>$v) {
-      // 日志
-      Logs::Goods([
-        'ctime'=>time(),
-        'operator_id'=> $admin->uid,
-        'operator_name'=> $admin->name,
-        'sku_id'=> $k,
-        'content'=> '其它出入库: '.$k.' 数量: '.$v['num'],
-      ]);
       // 结果
       $info[$k]['cost_price'] = '0.00';
       $info[$k]['purchase_price'] = '0.00';
@@ -794,7 +756,10 @@ class Erp_order_inout extends Controller {
       $info[$k]['owner'] = '';
       $info[$k]['supplier_name'] = '';
       $tmp = array_merge($info[$k], $v);
-      $tmp['id'] = $ids[$k];
+      $tmp['id'] = $ids[$k]['id'];
+      $tmp['ratio'] = $ids[$k]['ratio'];
+      $tmp['ratio_sale'] = $ids[$k]['ratio_sale'];
+      $tmp['ratio_market'] = $ids[$k]['ratio_market'];
       $tmp['img'] = $tmp['img']?Data::ImgGoods($k, false):'';
       $list[$k] = $tmp;
     }
@@ -804,23 +769,24 @@ class Erp_order_inout extends Controller {
   }
 
   /* 商品-移除 */
-  static function Goods_remove(): string {
+  static function GoodsRemove(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
     $id = self::JsonName($json, 'id');
     $ctime = self::JsonName($json, 'ctime');
-    $wms_co_id = self::JsonName($json, 'wms_co_id');
+    $go_co_id = self::JsonName($json, 'go_co_id');
+    $link_co_id = self::JsonName($json, 'link_co_id');
     $data = self::JsonName($json, 'data');
     // 验证
     $msg = TokenAdmin::Verify($token, '');
     if($msg!='') return self::GetJSON(['code'=>4001]);
-    if(empty($id) || empty($ctime) || empty($wms_co_id) || empty($data)) {
+    if(empty($id) || empty($ctime) || empty($go_co_id) || empty($link_co_id) || empty($data)) {
       return self::GetJSON(['code'=>4000]);
     }
     // 状态
-    $m = new ErpOrderInout();
-    $m->Columns('id', 'type', 'shop_id', 'shop_to');
+    $m = new ErpPurchaseAllocate();
+    $m->Columns('id', 'type');
     $m->Where('status="0" AND id=?', $id);
     $one = $m->FindFirst();
     if(!$one) return self::GetJSON(['code'=>4000, 'msg'=>'该状态不可用!']);
@@ -831,68 +797,58 @@ class Erp_order_inout extends Controller {
       $sku[$v['sku_id']] = $v['num'];
     }
     // 删除
-    $m = new ErpOrderShow();
-    $m->Where('type in("5","6") AND status="0" AND id in('.implode(',', $ids).')');
+    $m = new ErpPurchaseAllocateShow();
+    $m->Where('status="0" AND id in('.implode(',', $ids).')');
     if(!$m->Delete()) return self::GetJSON(['code'=>5000]);
-    // 处理
-    $admin = TokenAdmin::Token($token);
-    foreach($sku as $sku_id=>$num) {
-      // 日志
-      Logs::Goods([
-        'ctime'=>time(),
-        'operator_id'=> $admin->uid,
-        'operator_name'=> $admin->name,
-        'sku_id'=> $sku_id,
-        'content'=> '移除其它出入库: '.$sku_id.' 数量: '.$num,
-      ]);
-    }
     // 返回
     return self::GetJSON(['code'=>0]);
   }
 
   /* 商品-数量 */
-  static function Goods_num(): string {
+  static function GoodsNum(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
+    $type = self::JsonName($json, 'type');
     $id = self::JsonName($json, 'id');
     $pid = self::JsonName($json, 'pid');
     $ctime = self::JsonName($json, 'ctime');
-    $wms_co_id = self::JsonName($json, 'wms_co_id');
+    $go_co_id = self::JsonName($json, 'go_co_id');
+    $link_co_id = self::JsonName($json, 'link_co_id');
     $sku_id = self::JsonName($json, 'sku_id');
     $num = self::JsonName($json, 'num');
     // 验证
     $msg = TokenAdmin::Verify($token, '');
     if($msg!='') return self::GetJSON(['code'=>4001]);
-    if(empty($id) || empty($pid) || empty($ctime) || empty($wms_co_id) || empty($sku_id) || empty($num)) {
+    if(empty($id) || empty($type) || empty($pid) || empty($ctime) || empty($go_co_id) || empty($link_co_id) || empty($sku_id) || empty($num)) {
       return self::GetJSON(['code'=>4000]);
     }
     // 分区
     $admin = TokenAdmin::Token($token);
     $pname = Data::PartitionName(strtotime($ctime), time());
+    $data = ['utime'=>time(), 'operator_id'=>$admin->uid, 'operator_name'=>$admin->name];
     // 是否库存
-    $stock = Goods::IsStock($sku_id, $wms_co_id);
-    if($stock==0) return self::GetJSON(['code'=>4000, 'msg'=>'[ '.$sku_id.' ]库存为“0”']);
-    if($stock<$num) return self::GetJSON(['code'=>4000, 'msg'=>'[ '.$sku_id.' ]可用库存“'.$stock.'”']);
+    if($type=='num') {
+      $stock = Goods::IsStock($sku_id, $go_co_id);
+      if($stock==0) return self::GetJSON(['code'=>4000, 'msg'=>'[ '.$sku_id.' ]库存为“0”']);
+      if($stock<$num) return self::GetJSON(['code'=>4000, 'msg'=>'[ '.$sku_id.' ]可用库存“'.$stock.'”']);
+      $data['num'] = (int)$num;
+    } elseif($type=='ratio') {
+      $ratio = (float)$num;
+      if($ratio<0 || $ratio>1) return self::GetJSON(['code'=>4000, 'msg'=>'折扣 0.00～1.00']);
+      $data['ratio'] = $ratio;
+    }
     // 更新
-    $m = new ErpOrderShow();
+    $m = new ErpPurchaseAllocateShow();
     if($pname) $m->Partition($pname);
-    $m->Set(['num'=>$num, 'utime'=>time(), 'operator_id'=>$admin->uid, 'operator_name'=>$admin->name]);
+    $m->Set($data);
     $m->Where('id=?', $id);
     if(!$m->Update()) return self::GetJSON(['code'=>5000]);
-    // 日志
-    Logs::Goods([
-      'ctime'=>time(),
-      'operator_id'=> $admin->uid,
-      'operator_name'=> $admin->name,
-      'sku_id'=> $sku_id,
-      'content'=> '更新其它出入库: '.$sku_id.' 数量: '.$num,
-    ]);
     return self::GetJSON(['code'=>0]);
   }
 
   /* 商品-更新价格 */
-  static function Goods_price(): string {
+  static function GoodsPrice(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -911,28 +867,28 @@ class Erp_order_inout extends Controller {
     return self::GetJSON(['code'=>0]);
   }
   /* 商品-更新价格 */
-  private static function goodsUpdatePrice($admin, $pname, $id): void {
+  private static function goodsUpdatePrice($admin, $pname, $id): array {
     // 查询
-    $m = new ErpOrderShow();
+    $m = new ErpPurchaseAllocateShow();
     if($pname) $m->Partition($pname);
-    $m->Columns('sku_id', 'num');
-    $m->Where('type in("5","6") AND pid=?', $id);
+    $m->Columns('sku_id', 'num', 'ratio', 'ratio_sale', 'ratio_market');
+    $m->Where('pid=?', $id);
     $all = $m->Find();
     $list = [];
-    foreach($all as $v) $list[$v['sku_id']]=$v['num'];
+    foreach($all as $v) $list[$v['sku_id']]=['num'=>$v['num'], 'ratio'=>$v['ratio'], 'ratio_sale'=>$v['ratio_sale'], 'ratio_market'=>$v['ratio_market']];
     // 商品资料
     $info = Goods::GoodsInfoAll(array_keys($list));
     // 数据
     $num = $total = 0;
     $sale_price = $market_price = 0;
     foreach($info as $k=>$v) {
-      $sale_price += $v['sale_price']*$list[$k]*($v['ratio']<1?$v['ratio']:$v['ratio_sale']);
-      $market_price += $v['market_price']*$list[$k]*($v['ratio']<1?$v['ratio']:$v['ratio_market']);
-      $num += $list[$k];
+      $sale_price += $v['sale_price']*$list[$k]['num']*($list[$k]['ratio']<1?$list[$k]['ratio']:$list[$k]['ratio_sale']);
+      $market_price += $v['market_price']*$list[$k]['num']*($list[$k]['ratio']<1?$list[$k]['ratio']:$list[$k]['ratio_market']);
+      $num += $list[$k]['num'];
       $total++;
     }
     // 更新
-    $m = new ErpOrderInout();
+    $m = new ErpPurchaseAllocate();
     $m->Set([
       'sale_price'=> $sale_price,
       'market_price'=> $market_price,
@@ -944,6 +900,7 @@ class Erp_order_inout extends Controller {
     ]);
     $m->Where('id=?', $id);
     $m->Update();
+    return ['sale_price'=>$sale_price, 'market_price'=>$market_price, 'num'=>$num];
   }
 
 }

@@ -10,7 +10,7 @@ use App\Util\Util;
 use App\Model\ErpGoodsLogs;
 
 /* 商品日志 */
-class Erp_goods_log extends Controller {
+class ErpGoodsLog extends Controller {
 
   // 导出
   static private $export_path = 'upload/tmp/';         // 目录

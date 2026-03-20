@@ -18,7 +18,7 @@ use App\Model\ErpBaseBrand;
 use App\Model\ErpBaseShop;
 use App\Model\ErpBasePartner;
 
-class Sys_user extends Controller {
+class SysUser extends Controller {
 
   private static $menus = [];   // 全部菜单
   private static $perms = [];   // 用户权限
@@ -396,7 +396,7 @@ class Sys_user extends Controller {
   }
 
   /* 选项 */
-  static function Get_select(): string {
+  static function GetSelect(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -425,7 +425,7 @@ class Sys_user extends Controller {
   }
 
   /* 权限菜单 */
-  static function Get_perm(): string {
+  static function GetPerm(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -489,7 +489,7 @@ class Sys_user extends Controller {
   }
 
   /* 品牌 */
-  static function Get_brand(): string {
+  static function GetBrand(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -513,7 +513,7 @@ class Sys_user extends Controller {
   }
 
   /* 店铺 */
-  static function Get_shop(): string {
+  static function GetShop(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -537,7 +537,7 @@ class Sys_user extends Controller {
   }
 
   /* 分仓 */
-  static function Get_partner(): string {
+  static function GetPartner(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');

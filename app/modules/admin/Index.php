@@ -94,7 +94,7 @@ class Index extends Controller {
   }
 
   /* 报表-库存 */
-  static function stock(): string {
+  static function Stock(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -328,7 +328,7 @@ class Index extends Controller {
   }
 
   /* 选项 */
-  static function get_select(): string {
+  static function GetSelect(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -336,7 +336,7 @@ class Index extends Controller {
     $msg = TokenAdmin::Verify($token, '');
     if($msg!='') return self::GetJSON(['code'=>4001]);
     // 仓库
-    self::$partner = ErpBasePartner::GetList(['type=0', 'state=1']);
+    self::$partner = ErpBasePartner::GetList(['type=0', 'status=1']);
     $partner_name = [];
     foreach(self::$partner as $k=>$v){
       $partner_name[] = ['label'=>$v['name'], 'value'=>$k];

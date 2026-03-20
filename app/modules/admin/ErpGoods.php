@@ -239,7 +239,7 @@ class ErpGoods extends Controller {
   }
 
   /* 商品-图片 */
-  static function Img_list(): string {
+  static function ImgList(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');

@@ -8,10 +8,10 @@ use App\Service\Status;
 use App\Librarys\Export;
 use App\Util\Util;
 
-use App\Model\ErpBaseSupplier;
+use App\Model\ErpBaseSupplier as ErpBaseSupplierM;
 
 /* 供应商 */
-class Erp_base_supplier extends Controller {
+class ErpBaseSupplier extends Controller {
 
   // 导出
   static private $export_path = 'upload/tmp/';  // 目录
@@ -33,7 +33,7 @@ class Erp_base_supplier extends Controller {
     $param = $data?$data:[];
     $where = self::getWhere($param);
     // 统计
-    $m = new ErpBaseSupplier();
+    $m = new ErpBaseSupplierM();
     $m->Columns('count(*) AS total');
     $m->Where($where);
     $one = $m->FindFirst();
@@ -60,7 +60,7 @@ class Erp_base_supplier extends Controller {
     $param = $data?$data:[];
     $where = self::getWhere($param, $token);
     // 统计
-    $m = new ErpBaseSupplier();
+    $m = new ErpBaseSupplierM();
     $m->Columns('id', 'supplier_id', 'name', 'status', 'tel', 'city', 'depositbank', 'bankacount', 'acountnumber', 'alipay_id', 'alipay_name', 'remark', 'operator_name', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
     $m->Where($where);
     $m->Order($order?''.$order:'status DESC, utime DESC, id DESC');
@@ -179,7 +179,7 @@ class Erp_base_supplier extends Controller {
     $param['operator_name'] = $admin->name;
     $param['utime'] = time();
     // 模型
-    $m = new ErpBaseSupplier();
+    $m = new ErpBaseSupplierM();
     if(!$id) {
       // 是否存在
       $m->Columns('id');
@@ -229,7 +229,7 @@ class Erp_base_supplier extends Controller {
     if(empty($data)) return self::GetJSON(['code'=> 4000]);
     $ids = implode(',', $data);
     // 模型
-    $m = new ErpBaseSupplier();
+    $m = new ErpBaseSupplierM();
     $m->Where('id in('.$ids.')');
     if ($m->Delete()) return self::GetJSON(['code' => 0]);
     else return self::GetJSON(['code' => 5000]);
@@ -250,7 +250,7 @@ class Erp_base_supplier extends Controller {
     $data = $data?$data:[];
     $where = self::getWhere($data);
     // 查询
-    $m = new ErpBaseSupplier();
+    $m = new ErpBaseSupplierM();
     $m->Columns('id', 'supplier_id', 'name', 'status', 'tel', 'city', 'depositbank', 'bankacount', 'acountnumber', 'alipay_name', 'alipay_id', 'operator_name', 'remark', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
     $m->Where($where);
     $m->Order($order?:'utime DESC');
@@ -291,7 +291,7 @@ class Erp_base_supplier extends Controller {
   }
 
   /* 选项 */
-  static function Get_select(): string {
+  static function GetSelect(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -319,7 +319,7 @@ class Erp_base_supplier extends Controller {
     if($msg!='') return self::GetJSON(['code'=> 4001]);
     if(empty($name)) return self::GetJSON(['code'=> 4000]);
     $data = [];
-    $m = new ErpBaseSupplier();
+    $m = new ErpBaseSupplierM();
     $m->Columns('id', 'supplier_id', 'name', 'status', 'tel', 'depositbank', 'bankacount', 'acountnumber', 'alipay_id', 'alipay_name', 'remark', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime', 'FROM_UNIXTIME(btime) as btime');
     $m->Where('status=1 AND name=?', trim($name));
     $data = $m->FindFirst();

@@ -18,7 +18,7 @@ use App\Model\ErpPurchaseAllocateShow;
 use App\Model\ErpBasePartner;
 
 /* 调拨入 */
-class Erp_allocate_in extends Controller {
+class ErpPurchaseAllocateIn extends Controller {
 
   static private $partner_name = [];              // 分仓
   static private $type_name = [];                 // 类型
@@ -103,15 +103,11 @@ class Erp_allocate_in extends Controller {
     }
     // 时间
     $stime = isset($d['stime'])?trim($d['stime']):date('Y-m-d', strtotime('-1 year'));
-    if($stime){
-      $start = strtotime($stime.' 00:00:00');
-      $where[] = 'ctime>='.$start;
-    }
+    $start = strtotime($stime.' 00:00:00');
+    $where[] = 'ctime>='.$start;
     $etime = isset($d['etime'])?trim($d['etime']):date('Y-m-d');
-    if($etime){
-      $end = strtotime($etime.' 23:59:59');
-      $where[] = 'ctime<='.$end;
-    }
+    $end = strtotime($etime.' 23:59:59');
+    $where[] = 'ctime<='.$end;
     // 关键字
     $key = isset($d['key'])?Util::Trim($d['key']):'';
     if($key){
@@ -443,7 +439,7 @@ class Erp_allocate_in extends Controller {
   }
 
   /* 选项 */
-  static function Get_select(): string {
+  static function GetSelect(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -486,7 +482,7 @@ class Erp_allocate_in extends Controller {
   }
 
   /* 商品-列表 */
-  static function Goods_list(): string {
+  static function GoodsList(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');

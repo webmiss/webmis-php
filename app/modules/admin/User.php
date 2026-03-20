@@ -28,7 +28,7 @@ class User extends Controller {
   }
 
   /* 验证码-数字 */
-  static function Get_vcode(): string {
+  static function GetVcode(): string {
     // 参数
     $json = self::Json();
     $type = self::JsonName($json, 'type');
@@ -210,7 +210,7 @@ class User extends Controller {
   }
 
   /* 修改密码 */
-  static function Change_passwd(): string {
+  static function ChangePasswd(): string {
     // 参数
     $json = self::Json();
     $uname = self::JsonName($json, 'uname');
@@ -240,7 +240,7 @@ class User extends Controller {
   }
 
   /* 修改用户信息 */
-  static function Change_uinfo(): string {
+  static function ChangeUinfo(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');

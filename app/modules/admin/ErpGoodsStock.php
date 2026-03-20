@@ -19,7 +19,7 @@ use App\Model\ErpBasePartner;
 use App\Model\ErpBaseCategory;
 
 /* 商品库存 */
-class Erp_goods_stock extends Controller {
+class ErpGoodsStock extends Controller {
 
   static $category = [];                            // 分类
   static private $partner_name = [];                // 主仓
@@ -411,7 +411,7 @@ class Erp_goods_stock extends Controller {
   }
 
   /* 选项 */
-  static function Get_select(): string {
+  static function GetSelect(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');

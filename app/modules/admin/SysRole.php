@@ -3,15 +3,15 @@ namespace App\Admin;
 
 use Core\Controller;
 use App\Service\TokenAdmin;
-use App\Service\Status;
 use App\Librarys\Export;
-use App\Util\Util;
-use App\Model\ErpBaseCategory;
+use App\Model\SysRole as SysRoleM;
+use App\Model\SysMenu;
 
-/* 分类管理 */
-class Erp_base_category extends Controller {
+/* 系统角色 */
+class SysRole extends Controller {
 
-  static private $status_name = [];             // 状态
+  private static $menus = [];   // 全部菜单
+  private static $perms = [];   // 用户权限
   // 导出
   static private $export_path = 'upload/tmp/';  // 目录
   static private $export_filename = '';         // 文件名
@@ -31,7 +31,7 @@ class Erp_base_category extends Controller {
     // 条件
     $where = self::getWhere($data);
     // 统计
-    $m = new ErpBaseCategory();
+    $m = new SysRoleM();
     $m->Columns('count(*) AS total');
     $m->Where($where);
     $one = $m->FindFirst();
@@ -43,7 +43,7 @@ class Erp_base_category extends Controller {
   }
 
   /* 列表 */
-	static function List() {
+	static function List(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -60,13 +60,10 @@ class Erp_base_category extends Controller {
     // 条件
     $where = self::getWhere($data);
     // 查询
-    $m = new ErpBaseCategory();
-    $m->Columns(
-      'id', 'name', 'sort', 'status', 'creator_name', 'operator_name', 'remark',
-      'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime',
-    );
+    $m = new SysRoleM();
+    $m->Columns('id', 'name', 'status', 'perm', 'remark', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
     $m->Where($where);
-    $m->Order($order?:'sort DESC, status DESC, name');
+    $m->Order($order?:'id DESC');
     $m->Page($page, $limit);
     $list = $m->Find();
     foreach($list as $k=>$v) {
@@ -79,7 +76,7 @@ class Erp_base_category extends Controller {
   static private function getWhere(array $d): string {
     $where = [];
     // 关键字
-    $key = isset($d['key'])?Util::Trim($d['key']):'';
+    $key = isset($d['key'])?trim($d['key']):'';
     if($key){
       $arr = [
         'name like "%'.$key.'%"',
@@ -87,18 +84,9 @@ class Erp_base_category extends Controller {
       ];
       $where[] = '('.implode(' OR ', $arr).')';
     }
-    // 状态
-    $status = isset($d['status'])&&is_array($d['status'])?$d['status']:[];
-    if($status) $where[] = 'status in('.implode(',', $status).')';
     // 名称
     $name = isset($d['name'])?trim($d['name']):'';
     if($name) $where[] = 'name LIKE "%'.$name.'%"';
-    // 制单员
-    $creator_name = isset($d['creator_name'])?trim($d['creator_name']):'';
-    if($creator_name) $where[] = 'creator_name LIKE "'.$creator_name.'"';
-    // 操作员
-    $operator_name = isset($d['operator_name'])?trim($d['operator_name']):'';
-    if($operator_name) $where[] = 'operator_name LIKE "'.$operator_name.'"';
     // 备注
     $remark = isset($d['remark'])?trim($d['remark']):'';
     if($remark!='') $where[] = 'remark like "%'.$remark.'%"';
@@ -107,13 +95,13 @@ class Erp_base_category extends Controller {
   }
 
   /* 添加、更新 */
-  static function Save(): string {
+  static function Save() {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
     $data = self::JsonName($json, 'data');
     // 验证
-    $msg = TokenAdmin::Verify($token, '');
+    $msg = TokenAdmin::Verify($token, $_SERVER['REQUEST_URI']);
     if($msg != '') return self::GetJSON(['code'=>4001]);
     if(empty($data) || !is_array($data)){
       return self::GetJSON(['code'=>4000]);
@@ -121,54 +109,32 @@ class Erp_base_category extends Controller {
     // 数据
     $param = [];
     $id = isset($data['id'])&&$data['id']?trim($data['id']):'';
-    $param['sort'] = isset($data['sort'])?$data['sort']:'';
-    $param['name'] = isset($data['name'])?Util::Trim($data['name']):'';
+    $param['name'] = isset($data['name'])?trim($data['name']):'';
+    if(mb_strlen($param['name'])<2 || mb_strlen($param['name'])>16) return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('sys_role_name', 2, 16)]);
     $param['status'] = isset($data['status'])&&$data['status']?1:0;
-    $param['remark'] = isset($data['remark'])?trim($data['remark']):'';
-    // 验证
-    if(!is_numeric($param['sort'])) return self::GetJSON(['code'=>4000, 'msg'=>'请输入排序数字']);
-    if(mb_strlen($param['name'])<2 || mb_strlen($param['name'])>16) return self::GetJSON(['code'=>4000, 'msg'=>'请输入名称']);
-    // 查询
-    
+    $param['remark'] = isset($data['remark'])&&$data['remark']?trim($data['remark']):'';
+    $param['perm'] = isset($data['perm'])&&$data['perm']?trim($data['perm']):'';
     // 添加
-    $admin = TokenAdmin::Token($token);
-    $param['operator_id'] = $admin->uid;
-    $param['operator_name'] = $admin->name;
-    $param['utime'] = time();
     if(!$id) {
-      // 是否存在
-      $m = new ErpBaseCategory();
-      $m->Columns('id');
-      $m->Where('name=?', $param['name']);
-      $info = $m->FindFirst();
-      if($info) return self::GetJSON(['code'=>4000, 'msg'=>'['.$param['name'].']已存在!']);
-      // 数据
       $param['ctime'] = time();
-      $param['creator_id'] = $admin->uid;
-      $param['creator_name'] = $admin->name;
-      $m = new ErpBaseCategory();
+      $param['utime'] = time();
+      $m = new SysRoleM();
       $m->Values($param);
       if($m->Insert()) {
         return self::GetJSON(['code'=>0]);
       } else {
         return self::GetJSON(['code'=>5000]);
       }
+    }
+    // 更新
+    $param['utime'] = time();
+    $m = new SysRoleM();
+    $m->Set($param);
+    $m->Where('id=?', $id);
+    if($m->Update()) {
+      return self::GetJSON(['code'=>0]);
     } else {
-      // 是否存在
-      $m = new ErpBaseCategory();
-      $m->Columns('id', 'name');
-      $m->Where('id!=? AND name=?', $id, $param['name']);
-      $info = $m->FindFirst();
-      if($info) return self::GetJSON(['code'=>4000, 'msg'=>'['.$param['name'].']已存在!']);
-      // 更新
-      $m = new ErpBaseCategory();
-      $m->Set($param);
-      $m->Where('id=?', $id);
-      if($m->Update()) {
-        return self::GetJSON(['code'=>0]);
-      } else {
-        return self::GetJSON(['code'=>5000]);
-      }
+      return self::GetJSON(['code'=>5000]);
     }
   }
 
@@ -185,7 +151,7 @@ class Erp_base_category extends Controller {
       return self::GetJSON(['code'=>4000]);
     }
     // 模型
-    $m = new ErpBaseCategory();
+    $m = new SysRoleM();
     $m->Where('id in('.implode(',', $data).')');
     if($m->Delete()) {
       return self::GetJSON(['code'=>0]);
@@ -210,21 +176,18 @@ class Erp_base_category extends Controller {
     // 条件
     $where = self::getWhere($data);
     // 查询
-    $m = new ErpBaseCategory();
-    $m->Columns(
-      'id', 'name', 'sort', 'status', 'creator_name', 'operator_name', 'remark',
-      'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime',
-    );
+    $m = new SysRoleM();
+    $m->Columns('id', 'name', 'status', 'remark', 'perm', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
     $m->Where($where);
     $m->Order($order?:'id DESC');
     $list = $m->Find();
     if(!$list) return self::GetJSON(['code'=>4010]);
     // 导出文件
     $admin = TokenAdmin::Token($token);
-    self::$export_filename = 'ErpBrand_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
+    self::$export_filename = 'SysRole_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
     $html = Export::ExcelTop();
     $html .= Export::ExcelTitle([
-      'ID', '名称', '排序', '状态', '创建时间', '更新时间', '制单员', '操作员', '备注'
+      'ID', '名称', '状态', '权限值', '备注'
     ]);
     // 数据
     foreach($list as $k=>$v){
@@ -232,12 +195,8 @@ class Erp_base_category extends Controller {
       $html .= Export::ExcelData([
         $v['id'],
         $v['name'],
-        $v['sort'],
         $v['status']?self::GetLang('enable'):self::GetLang('disable'),
-        '&nbsp;'.$v['ctime'],
-        '&nbsp;'.$v['utime'],
-        $v['creator_name'],
-        $v['operator_name'],
+        $v['perm'],
         $v['remark'],
       ]);
     }
@@ -247,22 +206,68 @@ class Erp_base_category extends Controller {
     return self::GetJSON(['code'=>0, 'data'=>['path'=>self::BaseUrl(self::$export_path), 'filename'=>self::$export_filename]]);
   }
 
-  /* 选项 */
-  static function Get_select(): string {
+  /* 权限菜单 */
+  static function GetPerm(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
+    $perm = self::JsonName($json, 'perm');
     // 验证
     $msg = TokenAdmin::Verify($token, '');
     if($msg!='') return self::GetJSON(['code'=>4001]);
-    // 状态
-    $status_name = [];
-    self::$status_name = Status::Category('status_name');
-    foreach(self::$status_name as $k=>$v) $status_name[]=['label'=>$v, 'value'=>$k];
+    // 用户权限
+    self::$perms = self::permArr($perm);
+    // 语言
+    $lang = isset($_GET['lang'])&&$_GET['lang']?trim($_GET['lang']):'';
+    // 全部菜单
+    $m = new SysMenu();
+    $m->Columns('id', 'fid', 'title', 'action', $lang);
+    $m->Order('sort, id');
+    $data = $m->Find();
+    foreach($data as $val){
+      $fid = (string)$val['fid'];
+      self::$menus[$fid][] = $val;
+    }
+    // 数据
+    $list = self::_getMenu('0', $lang);
     // 返回
-    return self::GetJSON(['code'=>0, 'data'=>[
-      'status_name'=> $status_name,
-    ]]);
+    return self::GetJSON(['code'=>0, 'data'=>$list]);
+  }
+  // 权限拆分
+  private static function permArr(string $perm): array {
+    $list = [];
+    $arr = !empty($perm)?explode(' ',$perm):[];
+    foreach($arr as $val){
+      $s = explode(':',$val);
+      $list[$s[0]] = (int)$s[1];
+    }
+    return $list;
+  }
+  // 递归菜单
+  private static function _getMenu(string $fid, string $lang=''): array {
+    $data = [];
+    $m = isset(self::$menus[$fid])?self::$menus[$fid]:[];
+    foreach($m as $v) {
+      // 菜单信息
+      $id = (string)$v['id'];
+      $tmp = ['label'=>$lang?$v[$lang]:$v['title'], 'value'=>$id.':0', 'checked'=>isset(self::$perms[$id])];
+      $menu = self::_getMenu($id, $lang);
+      // 动作菜单
+      $action = $v['action']?json_decode($v['action'], true):[];
+      // 下级
+      if($menu){
+        $tmp['children'] = $menu;
+      }elseif($action){
+        $list = [];
+        foreach($action as $a) {
+          $perm = isset(self::$perms[$id])?self::$perms[$id]:0;
+          $list[] = ['label'=>$a['name'].'( '.$a['action'].' )', 'value'=>$id.':'.$a['perm'], 'checked'=>($perm&$a['perm'])>0?true:false];
+        }
+        $tmp['children'] = $list;
+      }
+      $data[] = $tmp;
+    }
+    return $data;
   }
 
 }

@@ -11,14 +11,14 @@ use App\Librarys\Export;
 use App\Util\Util;
 use App\Task\Stock;
 
-use App\Model\ErpPurchaseOut;
-use App\Model\ErpPurchaseOutShow;
+use App\Model\ErpPurchaseIn;
+use App\Model\ErpPurchaseInShow;
 
 use App\Model\ErpBaseBrand;
 use App\Model\ErpBasePartner;
 
-/* 退货等待 */
-class Erp_purchases_out_push extends Controller {
+/* 入库等待 */
+class ErpPurchasesInPush extends Controller {
 
   static private $partner_name = [];                // 主仓
   static private $brand_name = [];                  // 品牌
@@ -41,7 +41,7 @@ class Erp_purchases_out_push extends Controller {
     // 条件
     $where = self::getWhere($data, $token);
     // 统计
-    $m = new ErpPurchaseOut();
+    $m = new ErpPurchaseIn();
     $m->Columns('count(*) AS total', 'sum(num) AS num', 'sum(sale_price) AS sale_price', 'sum(market_price) AS market_price');
     $m->Where($where);
     $one = $m->FindFirst();
@@ -70,7 +70,7 @@ class Erp_purchases_out_push extends Controller {
     if(empty($data) || !is_array($data) || empty($page) || empty($limit)) return self::GetJSON(['code'=> 4000]);
     $where = self::getWhere($data, $token);
     // 查询
-    $m = new ErpPurchaseOut();
+    $m = new ErpPurchaseIn();
     $m->Columns('id', 'type', 'wms_co_id', 'brand', 'sale_price', 'market_price', 'num', 'total', 'status', 'creator_id', 'creator_name', 'operator_id', 'operator_name', 'remark', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
     $m->Where($where);
     $m->Page($page, $limit);
@@ -78,8 +78,8 @@ class Erp_purchases_out_push extends Controller {
     $list = $m->Find();
     // 数据
     self::$partner_name = ErpBasePartner::GetList();
-    self::$type_name = Status::PurchaseOut('type_name');
-    self::$status_name = Status::PurchaseOut('status_name');
+    self::$type_name = Status::PurchaseIn('type_name');
+    self::$status_name = Status::PurchaseIn('status_name');
     foreach($list as $k=>$v) {
       $list[$k]['wms_co_name'] = self::$partner_name[$v['wms_co_id']]['name'];
       $list[$k]['type_name'] = self::$type_name[$v['type']];
@@ -92,22 +92,17 @@ class Erp_purchases_out_push extends Controller {
   static private function getWhere(array $d, string $token): string {
     $where = ['status in(1, 2)'];
     $admin = TokenAdmin::Token($token);
-    // 限制-品牌
-    if($admin->brand){
-      $brand = explode(',', $admin->brand);
-      $where[] = '(creator_id='.$admin->uid.' OR brand in("'.implode('","', $brand).'"))';
+    // 限制-分仓
+    if($admin->partner){
+      $where[] = 'wms_co_id in('.$admin->partner.')';
     }
     // 时间
     $stime = isset($d['stime'])?trim($d['stime']):date('Y-m-d', strtotime('-1 year'));
-    if($stime){
-      $start = strtotime($stime.' 00:00:00');
-      $where[] = 'ctime>='.$start;
-    }
+    $start = strtotime($stime.' 00:00:00');
+    $where[] = 'ctime>='.$start;
     $etime = isset($d['etime'])?trim($d['etime']):date('Y-m-d');
-    if($etime){
-      $end = strtotime($etime.' 23:59:59');
-      $where[] = 'ctime<='.$end;
-    }
+    $end = strtotime($etime.' 23:59:59');
+    $where[] = 'ctime<='.$end;
     // 关键字
     $key = isset($d['key'])?Util::Trim($d['key']):'';
     if($key){
@@ -151,7 +146,6 @@ class Erp_purchases_out_push extends Controller {
     $creator_name = isset($d['creator_name'])?trim($d['creator_name']):'';
     if($creator_name) $where[] = 'creator_name like "%'.$creator_name.'%"';
     // 操作员
-    $operator = [];
     $operator_name = isset($d['operator_name'])?trim($d['operator_name']):'';
     if($operator_name) $where[] = 'operator_name like "%'.$operator_name.'%"';
     // 备注
@@ -175,7 +169,7 @@ class Erp_purchases_out_push extends Controller {
       $pname = Data::PartitionName($start, $end);
     }
     // 查询
-    $m = new ErpPurchaseOutShow();
+    $m = new ErpPurchaseInShow();
     if($pname) $m->Partition($pname);
     $m->Columns('pid');
     $m->Where($w);
@@ -204,7 +198,7 @@ class Erp_purchases_out_push extends Controller {
     $admin = TokenAdmin::Token($token);
     self::$partner_name = ErpBasePartner::GetList();
     // 单据
-    $m = new ErpPurchaseOut();
+    $m = new ErpPurchaseIn();
     $m->Columns('id', 'ctime', 'utime', 'wms_co_id', 'remark');
     $m->Where('status=1 AND id in('.$id.')');
     $info = $m->Find();
@@ -220,7 +214,7 @@ class Erp_purchases_out_push extends Controller {
     rsort($utime);
     $pname = Data::PartitionName($ctime[0], $utime[0]);
     // 货品
-    $m = new ErpPurchaseOutShow();
+    $m = new ErpPurchaseInShow();
     if($pname) $m->Partition($pname);
     $m->Columns('id', 'pid', 'wms_co_id', 'sku_id', 'num');
     $m->Where('status=0 AND pid in('.implode(',', $pids).')');
@@ -230,23 +224,23 @@ class Erp_purchases_out_push extends Controller {
     foreach($all as $v) {
       $ids[] = $v['id'];
       $bizs[$v['wms_co_id']][] = [
-        'wms_co_id'=> $v['wms_co_id'],
+        'wms_co_id'=>$v['wms_co_id'],
         'sku_id'=> $v['sku_id'],
-        'num'=> -$v['num'],
+        'num'=>$v['num'],
         // 其它
-        'pid'=> $v['pid'],
+        'pid'=>$v['pid'],
       ];
     }
     // 明细
     if($ids) {
-      $m = new ErpPurchaseOutShow();
+      $m = new ErpPurchaseInShow();
       if($pname) $m->Partition($pname);
       $m->Set(['status'=>1]);
       $m->Where('id in('.implode(',', $ids).')');
       $m->Update();
     }
-    // 退货单
-    $m = new ErpPurchaseOut();
+    // 入库单
+    $m = new ErpPurchaseIn();
     $m->Set(['status'=>2, 'utime'=>time(), 'operator_id'=>$admin->uid, 'operator_name'=>$admin->name]);
     $m->Where('status=1 AND id in('.implode(',', $pids).')');
     if($m->Update()) {
@@ -263,7 +257,7 @@ class Erp_purchases_out_push extends Controller {
               'operator_id'=> $admin->uid,
               'operator_name'=> $admin->name,
               'sku_id'=> $sku['sku_id'],
-              'content'=> '退货成功: '.$sku['sku_id'].' 单号: '.$sku['pid'].' 数量: '.$sku['num'].' 仓库: '.self::$partner_name[$sku['wms_co_id']]['name'],
+              'content'=> '入库成功: '.$sku['sku_id'].' 单号: '.$sku['pid'].' 数量: '.$sku['num'].' 仓库: '.self::$partner_name[$sku['wms_co_id']]['name'],
             ]);
           }
         }
@@ -289,7 +283,7 @@ class Erp_purchases_out_push extends Controller {
     // 数据
     $id = implode(',', $data);
     // 更新
-    $m = new ErpPurchaseOut();
+    $m = new ErpPurchaseIn();
     $m->Set(['status'=>0, 'utime'=>time()]);
     $m->Where('status=1 AND id in('.$id.')');
     if($m->Update()) {
@@ -310,7 +304,7 @@ class Erp_purchases_out_push extends Controller {
     if($msg!='') return self::GetJSON(['code'=> 4001]);
     if(empty($data) || !is_array($data)) return self::GetJSON(['code'=> 4000]);
     // 查询
-    $m = new ErpPurchaseOut();
+    $m = new ErpPurchaseIn();
     $m->Columns('id', 'type', 'status', 'creator_name', 'operator_name', 'remark');
     $m->Where('id in('.implode(',', $data).')');
     $all = $m->Find();
@@ -321,10 +315,10 @@ class Erp_purchases_out_push extends Controller {
     }
     if(!$pid) return self::GetJSON(['code'=>4000, 'msg'=>'暂无数据!']);
     // 明细
-    $m = new ErpPurchaseOutShow();
+    $m = new ErpPurchaseInShow();
     $m->Columns('pid', 'wms_co_id', 'type', 'sku_id', 'num', 'status', 'operator_name', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
     $m->Where('pid in('.implode(',', array_keys($pid)).')');
-    $m->Order('pid DESC', 'utime DESC');
+    $m->Order('pid DESC', 'id DESC');
     $list = $m->Find();
     // 商品资料
     $sku = [];
@@ -333,12 +327,12 @@ class Erp_purchases_out_push extends Controller {
     // 表头
     $html = Export::ExcelTop();
     $html .= Export::ExcelTitle([
-      '单号', '类型', '退货仓库', '图片', '商品编码', '暗码', '商品名称', '颜色及规格', '供应链价(元)', '供应链折扣', '标签价(元)', '标签折扣', '吊牌价(W)', '吊牌折扣', '数量', '折扣', '单位', '重量', '标签', '商品分类', '品牌', '款式编码', '采购员', '状态', '制单员', '操作员', '创建时间', '修改时间', '备注'
+      '单号', '类型', '入库仓库', '图片', '商品编码', '暗码', '商品名称', '颜色及规格', '供应链价(元)', '供应链折扣', '标签价(元)', '标签折扣', '吊牌价(W)', '吊牌折扣', '数量', '折扣', '单位', '重量', '标签', '商品分类', '品牌', '款式编码', '采购员', '状态', '制单员', '操作员', '创建时间', '修改时间', '备注'
     ]);
     // 内容
     self::$partner_name = ErpBasePartner::GetList();
-    self::$type_name = Status::PurchaseOut('type_name');
-    self::$status_name = Status::PurchaseOut('status_name');
+    self::$type_name = Status::PurchaseIn('type_name');
+    self::$status_name = Status::PurchaseIn('status_name');
     foreach($list as $v){
       $tmp = isset($goods[$v['sku_id']])?$goods[$v['sku_id']]:[];
       $html .= Export::ExcelData([
@@ -376,14 +370,14 @@ class Erp_purchases_out_push extends Controller {
     $html .= Export::ExcelBottom();
     // 文件名
     $admin = TokenAdmin::Token($token);
-    $file_name = 'PurchaseOutPush_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
+    $file_name = 'PurchaseInPush_'.date('YmdHis').'_'.$admin->uid.'.xlsx';
     Export::ExcelFileEnd(self::$export_path, $file_name, $html);
     // 返回
     return self::GetJSON(['code'=>0, 'data'=>['path'=>self::BaseUrl(self::$export_path), 'filename'=>$file_name]]);
   }
 
   /* 选项 */
-  static function Get_select(): string {
+  static function GetSelect(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -414,11 +408,11 @@ class Erp_purchases_out_push extends Controller {
     }
     // 类型
     $type_name = [];
-    self::$type_name = Status::PurchaseOut('type_name');
+    self::$type_name = Status::PurchaseIn('type_name');
     foreach(self::$type_name as $k=>$v) $type_name[]=['label'=>$v, 'value'=>$k];
     // 状态
     $status_name = [];
-    self::$status_name = Status::PurchaseOut('status_name');
+    self::$status_name = Status::PurchaseIn('status_name');
     foreach(self::$status_name as $k=>$v) $status_name[]=['label'=>$v, 'value'=>$k];
     // 返回
     return self::GetJSON(['code'=>0, 'data'=>[
@@ -430,7 +424,7 @@ class Erp_purchases_out_push extends Controller {
   }
 
   /* 商品-列表 */
-  static function Goods_list(): string {
+  static function GoodsList(): string {
     // 参数
     $json = self::Json();
     $token = self::JsonName($json, 'token');
@@ -444,11 +438,11 @@ class Erp_purchases_out_push extends Controller {
       return self::GetJSON(['code'=>4000]);
     }
     // 查询
-    $m = new ErpPurchaseOut();
+    $m = new ErpPurchaseIn();
     $m->Columns('id', 'ctime', 'utime', 'wms_co_id');
     $m->Where('id=?', $id);
     $one = $m->FindFirst();
-    if(!$one) return self::GetJSON(['code'=>0]);
+    if(!$one) return self::GetJSON(['code'=>4000]);
     // 分区
     $pname = Data::PartitionName($one['ctime'], $one['utime']);
     $where = ['pid='.$id, 'wms_co_id='.$one['wms_co_id']];
@@ -458,7 +452,7 @@ class Erp_purchases_out_push extends Controller {
       $where[] = 'sku_id in("'.implode('","', $arr).'")';
     }
     // 查询
-    $m = new ErpPurchaseOutShow();
+    $m = new ErpPurchaseInShow();
     if($pname) $m->Partition($pname);
     $m->Columns('id', 'sku_id', 'wms_co_id', 'num', 'status', 'operator_name', 'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime');
     $m->Where(implode(' AND ', $where));
