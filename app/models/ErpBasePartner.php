@@ -14,11 +14,13 @@ class ErpBasePartner extends Model {
 
   /* 列表 */
   static function GetList(array $where = [], array $columns = ['name', 'status'], string $order_by = 'status DESC, sort DESC, name ASC'): array {
+    // 查询
     $m = new ErpBasePartner();
     $m->Columns('wms_co_id', ...$columns);
     $m->Where(implode(' AND ', $where));
     $m->Order($order_by);
     $all = $m->Find();
+    // 数据
     $data = [];
     foreach($all as $v){
       $data[$v['wms_co_id']] = $v;
