@@ -11,8 +11,8 @@ use App\Model\SysMenu;
 /* 系统菜单 */
 class SysMenus extends Controller {
 
-  private static $menus = [];   //全部菜单
-  private static $permAll = []; //用户权限
+  private static $menus = [];                   // 全部菜单
+  private static $permAll = [];                 // 用户权限
   /* 导出 */
   static private $export_path = 'upload/tmp/';  // 目录
   static private $export_filename = '';         // 文件名
@@ -292,13 +292,13 @@ class SysMenus extends Controller {
     // 验证
     $msg = TokenAdmin::Verify($token, '');
     if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    // 全部菜单
-    self::_getMenus();
     // 用户权限
     self::$permAll = TokenAdmin::getPerm($token);
+    // 全部菜单
+    self::_getMenus();
     // 返回
-    $menus = self::_getMenusPerm('0');
-    return self::GetJSON(['code'=>0, 'data'=>$menus]);
+    $data = self::_getMenusPerm('0');
+    return self::GetJSON(['code'=>0, 'data'=>$data]);
   }
   // 递归菜单
   private static function _getMenusPerm(string $fid) {
@@ -330,15 +330,16 @@ class SysMenus extends Controller {
   }
   /* 全部菜单 */
   private static function _getMenus() {
-    $model = new SysMenu();
-    $model->Columns(
+    $m = new SysMenu();
+    $m->Columns(
       'id', 'fid', 'title', 'en', 'url', 'ico', 'controller', 'sort', 'status',
       'en_US', 'zh_CN',
       'FROM_UNIXTIME(ctime) as ctime', 'FROM_UNIXTIME(utime) as utime',
       'action', 'remark'
     );
-    $model->Order('sort, id');
-    $data = $model->Find();
+    $m->Order('sort, id');
+    $data = $m->Find();
+    // 数据
     foreach($data as $val){
       $fid = (string)$val['fid'];
       self::$menus[$fid][] = $val;
