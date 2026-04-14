@@ -9,7 +9,7 @@
   <layout left="5" top="23" width="28" style="overflow:hidden;">
     <text font="simhei" style="fontSize:8;align:center;valign:middle;"><![CDATA[<%=_data.properties_value%>]]></text>
   </layout>
-  <layout left="5" top="27" width="28" style="overflow:hidden;">
-    <text font="simhei" style="fontSize:10;fontWeight:bold;align:center;valign:middle;"><![CDATA[￥<%=_data.sale_price%>]]></text>
+  <layout left="5" top="26" width="28" style="overflow:hidden;">
+    <text font="simhei" style="fontSize:11;fontWeight:bold;align:center;valign:middle;"><![CDATA[￥<%=_data.sale_price%>]]></text>
   </layout>
 </page>

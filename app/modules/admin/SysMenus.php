@@ -292,13 +292,13 @@ class SysMenus extends Controller {
     // 验证
     $msg = TokenAdmin::Verify($token, '');
     if($msg != '') return self::GetJSON(['code'=>4001, 'msg'=>$msg]);
-    // 用户权限
-    self::$permAll = TokenAdmin::getPerm($token);
     // 全部菜单
     self::_getMenus();
+    // 用户权限
+    self::$permAll = TokenAdmin::getPerm($token);
     // 返回
-    $data = self::_getMenusPerm('0');
-    return self::GetJSON(['code'=>0, 'data'=>$data]);
+    $menus = self::_getMenusPerm('0');
+    return self::GetJSON(['code'=>0, 'data'=>$menus]);
   }
   // 递归菜单
   private static function _getMenusPerm(string $fid) {
