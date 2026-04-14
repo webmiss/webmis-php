@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<page xmlns="http://cloudprint.cainiao.com/print" width="80" height="60" splitable="false">
+  <layout left="10" top="8" width="60" style="overflow:hidden;">
+    <text font="simhei" style="fontSize:12;align:center;valign:middle;backgroundColor:#F2F2F2;"><![CDATA[商品编码: <%=_data.sku_id%>]]></text>
+  </layout>
+  <layout left="10" top="14" width="60" style="overflow:hidden;">
+    <text font="simhei" style="fontSize:10;align:center;valign:middle;"><![CDATA[<%=_data.order_id%>]]></text>
+  </layout>
+  <layout left="10" top="20" width="60" height="24" style="overflow:hidden;">
+    <barcode type="code128" style="hideText:false;"><![CDATA[<%=_data.trackNo%>]]></barcode>
+  </layout>
+</page>

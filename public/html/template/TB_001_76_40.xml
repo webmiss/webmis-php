@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<layout id="CUSTOM_AREA"		
+  xmlns="http://cloudprint.cainiao.com/print"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://cloudprint.cainiao.com/print http://cloudprint-docs-resource.oss-cn-shanghai.aliyuncs.com/lpml_schema.xsd"
+  xmlns:editor="http://cloudprint.cainiao.com/schema/editor"
+  width="76" height="40" splitable="false" style="overflow:hidden;">
+  <layout left="3" top="3" width="70" height="24" style="overflow:hidden">
+    <text style="fontFamily:宋体;fontSize:8pt;letterSpacing:0.2mm;fontWeight:normal;fontColor:#000000;lineHeight:140%;fontUnderline:false;fontItalic:false;alpha:255;align:left;valign:top">
+    <![CDATA[ <%=_data.sellerMemo%> ]]>
+    </text>
+  </layout>
+</layout>

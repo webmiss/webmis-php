@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<page xmlns="http://cloudprint.cainiao.com/print" width="36" height="36" splitable="false">
+  <layout left="5" top="9" width="28" height="13" style="overflow:hidden;">
+    <barcode type="code128a" style="hideText:true;"><![CDATA[<%=_data.sku_id%>]]></barcode>
+  </layout>
+  <layout left="5" top="19" width="28" style="overflow:hidden;">
+    <text font="simhei" style="fontSize:9;align:center;valign:middle;backgroundColor:#FFF;"><![CDATA[<%=_data.sku_id%>]]></text>
+  </layout>
+  <layout left="5" top="23" width="28" style="overflow:hidden;">
+    <text font="simhei" style="fontSize:8;align:center;valign:middle;"><![CDATA[<%=_data.properties_value%>]]></text>
+  </layout>
+  <layout left="5" top="27" width="28" style="overflow:hidden;">
+    <text font="simhei" style="fontSize:10;fontWeight:bold;align:center;valign:middle;"><![CDATA[￥<%=_data.sale_price%>]]></text>
+  </layout>
+</page>
