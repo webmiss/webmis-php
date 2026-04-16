@@ -113,7 +113,7 @@ class User extends Controller {
     $m->Columns(
       'a.id', 'a.status', 'a.password', 'a.tel', 'a.email',
       'b.type', 'b.nickname', 'b.department', 'b.position', 'b.name', 'b.gender', 'FROM_UNIXTIME(b.birthday, "%Y-%m-%d") as birthday', 'b.img', 'b.signature',
-      'c.role', 'c.perm', 'c.brand', 'c.shop', 'c.partner', 'c.partner_in', 
+      'c.role', 'c.perm',
       'd.perm as role_perm'
     );
     $m->Where($where);
@@ -153,10 +153,6 @@ class User extends Controller {
       'name'=> $data['name'],
       'type'=> $data['type'],
       'isPasswd'=> $isPasswd,
-      'brand'=> $data['brand'],
-      'shop'=> $data['shop'],
-      'partner'=> $data['partner'],
-      'partner_in'=> $data['partner_in']
     ]);
     // 用户信息
     $uinfo = [

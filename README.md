@@ -16,7 +16,7 @@ cd webmis-php
 # Linux、MacOS
 ./bash install
 
-# Windows 11
+# Windows 11 (自动环境安装和配置)
 .\cmd install
 ```
 
@@ -89,7 +89,7 @@ webmis-php/
 │    └── modules                // 模块
 │    │    ├── admin            // 后台
 │    │    ├── api              // 应用
-│    │    └── web              s// 网站
+│    │    └── web              // 网站
 │    ├── service                // 项目服务类
 │    ├── task                   // 任务类
 │    ├── util                   // 工具类
@@ -105,8 +105,8 @@ webmis-php/
 ├── public                       // 静态资源
 │    ├── upload                 // 上传目录
 │    └── index.php              // 人口文件
-├── bash                         // Linux/MacOS 启动脚本
-├── cmd.bat                      // Windows 启动脚本
+├── bash                         // Linux/MacOS 脚本
+├── cmd.bat                      // Windows 脚本
 ├── cli.php                      // 命令行: php cli.php 控制器 函数 参数...
 └── composer.json                // Composer 配置文件
 ```

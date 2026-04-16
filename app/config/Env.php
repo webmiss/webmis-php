@@ -20,8 +20,4 @@ class Env {
   static $api_token_time = 7*24*3600;                    // 有效时长(7天)
   static $api_token_auto = true;                         // 自动续期
   static $api_token_sso = true;                         // 单点登录
-  static $supplier_token_prefix = 'webmisSupplier';      // 前缀-Supplier
-  static $supplier_token_time = 7*24*3600;               // 有效时长(7天)
-  static $supplier_token_auto = true;                    // 自动续期
-  static $supplier_token_sso = true;                     // 单点登录
 }
