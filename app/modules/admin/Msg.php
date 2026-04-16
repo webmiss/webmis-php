@@ -43,6 +43,7 @@ class Msg extends Controller {
     // 数据
     $admin = TokenAdmin::Token($token);
     list($num, $list) = MsgD::GetList($admin->uid);
+    // 返回
     return self::GetJSON(['code'=>0, 'data'=>['num'=>$num, 'list'=>$list]]);
   }
 
