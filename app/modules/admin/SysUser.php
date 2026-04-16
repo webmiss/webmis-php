@@ -6,6 +6,7 @@ use Core\Redis;
 use App\Config\Env;
 use App\Service\Data;
 use App\Service\TokenAdmin;
+use App\Service\Status;
 use App\Librarys\Safety;
 use App\Librarys\Export;
 
@@ -14,26 +15,13 @@ use App\Model\UserInfo;
 use App\Model\SysMenu;
 use App\Model\SysPerm;
 use App\Model\SysRole;
-use App\Model\ErpBaseBrand;
-use App\Model\ErpBaseShop;
-use App\Model\ErpBasePartner;
 
 class SysUser extends Controller {
 
-  private static $menus = [];   // 全部菜单
-  private static $perms = [];   // 用户权限
-  // 类型
-  private static $type_name = [
-    '0'=> '用户',
-    '1'=> '供应商',
-    '2'=> '采购员',
-    '3'=> '主管',
-    '4'=> '库管',
-    '5'=> '客服',
-    '9'=> '开发',
-  ];
-  // 状态
-  private static $status_name = ['0'=>'禁用', '1'=>'正常'];
+  private static $menus = [];         // 全部菜单
+  private static $perms = [];         // 用户权限
+  private static $type_name = [];     // 类型
+  private static $status_name = [];   // 状态
   // 导出
   static private $export_path = 'upload/tmp/';  // 目录
   static private $export_filename = '';         // 文件名
@@ -94,7 +82,7 @@ class SysUser extends Controller {
     $m->Columns(
       'a.id', 'a.uname', 'a.email', 'a.tel', 'a.status', 'FROM_UNIXTIME(a.rtime) as rtime', 'FROM_UNIXTIME(a.ltime) as ltime', 'FROM_UNIXTIME(a.utime) as utime',
       'b.type', 'b.nickname', 'b.department', 'b.position', 'b.name', 'b.gender', 'b.img', 'b.remark', 'FROM_UNIXTIME(b.birthday, "%Y-%m-%d") as birthday',
-      'c.role', 'c.perm', 'c.brand', 'c.shop', 'c.partner', 'c.partner_in',
+      'c.role', 'c.perm',
       'd.name as role_name',
     );
     $m->Where($where);
@@ -102,6 +90,7 @@ class SysUser extends Controller {
     $m->Page($page, $limit);
     $list = $m->Find();
     // 数据
+    self::$type_name = Status::Public('role_name');
     foreach ($list as $k => $v) {
       $list[$k]['status'] = $v['status']?true:false;
       $list[$k]['type_name'] = isset(self::$type_name[$v['type']])?self::$type_name[$v['type']]:'-';
@@ -198,10 +187,6 @@ class SysUser extends Controller {
     $param['remark'] = isset($data['remark'])&&$data['remark']?trim($data['remark']):'';
     $param['role'] = isset($data['role'])&&$data['role']?trim($data['role']):'';
     $param['perm'] = isset($data['perm'])&&$data['perm']?trim($data['perm']):'';
-    $param['brand'] = isset($data['brand'])&&$data['brand']?trim($data['brand']):'';
-    $param['shop'] = isset($data['shop'])?trim($data['shop']):'';
-    $param['partner'] = isset($data['partner'])?trim($data['partner']):'';
-    $param['partner_in'] = isset($data['partner_in'])?trim($data['partner_in']):'';
     // 用户名
     $uname = '';
     if(Safety::IsRight('tel', $param['uname'])) $uname='tel';
@@ -242,7 +227,7 @@ class SysUser extends Controller {
       ]);
       // 用户权限
       $m3 = new SysPerm();
-      $m3->Values(['uid'=>$id, 'utime'=>time(), 'role'=>$param['role'], 'perm'=>$param['perm'], 'brand'=>$param['brand'], 'shop'=>$param['shop'], 'partner'=>$param['partner'], 'partner_in'=>$param['partner_in']]);
+      $m3->Values(['uid'=>$id, 'utime'=>time(), 'role'=>$param['role'], 'perm'=>$param['perm']]);
       // 执行
       if($m2->Insert()===0 && $m3->Insert()===0) {
         return self::GetJSON(['code'=>0]);
@@ -280,7 +265,7 @@ class SysUser extends Controller {
       $m3->Columns('uid');
       $m3->Where('uid=?', $id);
       $one = $m3->FindFirst();
-      $data = ['uid'=>$id, 'utime'=>time(), 'role'=>$param['role'], 'perm'=>$param['perm'], 'brand'=>$param['brand'], 'shop'=>$param['shop'], 'partner'=>$param['partner'], 'partner_in'=>$param['partner_in']];
+      $data = ['uid'=>$id, 'utime'=>time(), 'role'=>$param['role'], 'perm'=>$param['perm']];
       if(!$one) {
         $m3 = new SysPerm();
         $m3->Values($data);
@@ -295,7 +280,6 @@ class SysUser extends Controller {
         $redis = new Redis();
         $redis->Expire(Env::$admin_token_prefix.'_token_'.$id, 0);
         $redis->Expire(Env::$api_token_prefix.'_token_'.$id, 0);
-        $redis->Expire(Env::$supplier_token_prefix.'_token_'.$id, 0);
         // 返回
         return self::GetJSON(['code'=>0]);
       } else {
@@ -370,6 +354,7 @@ class SysUser extends Controller {
       'UID', '账号', '状态', '角色', '类型', '昵称', '姓名', '性别', '生日', '部门', '职务', '注册时间', '登录时间', '备注'
     ]);
     // 数据
+    self::$type_name = Status::Public('role_name');
     foreach($list as $k=>$v){
       // 内容
       $html .= Export::ExcelData([
@@ -405,6 +390,7 @@ class SysUser extends Controller {
     if($msg!='') return self::GetJSON(['code'=>4001]);
     // 类型
     $type_name = [];
+    self::$type_name = Status::Public('role_name');
     foreach(self::$type_name as $k=>$v) $type_name[]=['label'=> $v, 'value'=> $k];
     // 角色
     $m = new SysRole();
@@ -415,6 +401,7 @@ class SysUser extends Controller {
     foreach($all as $k=>$v) $role_name[]=['label'=> $v['name'], 'value'=> $v['id']];
     // 状态
     $status_name = [];
+    self::$type_name = Status::Public('status_name');
     foreach(self::$status_name as $k=>$v) $status_name[]=['label'=> $v, 'value'=> $k];
     // 返回
     return self::GetJSON(['code'=>0, 'data'=>[
@@ -486,78 +473,6 @@ class SysUser extends Controller {
       $data[] = $tmp;
     }
     return $data;
-  }
-
-  /* 品牌 */
-  static function GetBrand(): string {
-    // 参数
-    $json = self::Json();
-    $token = self::JsonName($json, 'token');
-    $brand = self::JsonName($json, 'brand');
-    // 验证
-    $msg = TokenAdmin::Verify($token, '');
-    if($msg!='') return self::GetJSON(['code'=>4001]);
-    $brand = explode(',', $brand);
-    // 数据
-    $m = new ErpBaseBrand();
-    $m->Columns('name', 'value');
-    $m->Where('status=1');
-    $m->Order('name');
-    $all = $m->Find();
-    $list = [];
-    foreach($all as $v) {
-      $list[] = ['label'=>$v['name'], 'value'=>$v['value'], 'checked'=>in_array($v['value'], $brand)];
-    }
-    // 返回
-    return self::GetJSON(['code'=>0, 'data'=>$list]);
-  }
-
-  /* 店铺 */
-  static function GetShop(): string {
-    // 参数
-    $json = self::Json();
-    $token = self::JsonName($json, 'token');
-    $shop = self::JsonName($json, 'shop');
-    // 验证
-    $msg = TokenAdmin::Verify($token, '');
-    if($msg!='') return self::GetJSON(['code'=>4001]);
-    $shop = explode(',', $shop);
-    // 数据
-    $m = new ErpBaseShop();
-    $m->Columns('name', 'shop_id');
-    $m->Where('status=1');
-    $m->Order('name');
-    $all = $m->Find();
-    $list = [];
-    foreach($all as $v) {
-      $list[] = ['label'=>$v['name'], 'value'=>$v['shop_id'], 'checked'=>in_array($v['shop_id'], $shop)];
-    }
-    // 返回
-    return self::GetJSON(['code'=>0, 'data'=>$list]);
-  }
-
-  /* 分仓 */
-  static function GetPartner(): string {
-    // 参数
-    $json = self::Json();
-    $token = self::JsonName($json, 'token');
-    $partner = self::JsonName($json, 'partner');
-    // 验证
-    $msg = TokenAdmin::Verify($token, '');
-    if($msg!='') return self::GetJSON(['code'=>4001]);
-    $partner = explode(',', $partner);
-    // 数据
-    $m = new ErpBasePartner();
-    $m->Columns('name', 'wms_co_id');
-    $m->Where('status=1');
-    $m->Order('sort DESC', 'name');
-    $all = $m->Find();
-    $list = [];
-    foreach($all as $v) {
-      $list[] = ['label'=>$v['name'], 'value'=>$v['wms_co_id'], 'checked'=>in_array($v['wms_co_id'], $partner)];
-    }
-    // 返回
-    return self::GetJSON(['code'=>0, 'data'=>$list]);
   }
 
 }
