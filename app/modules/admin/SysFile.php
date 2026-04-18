@@ -6,6 +6,7 @@ use App\Librarys\FileEo;
 use App\Librarys\Upload;
 use App\Service\TokenAdmin;
 
+/* 文件管理 */
 class SysFile extends Controller {
 
   private static $dirRoot = 'upload/';
@@ -24,7 +25,11 @@ class SysFile extends Controller {
     FileEo::$Root = self::$dirRoot;
     $list = FileEo::List($path);
     // 返回
-    return self::GetJSON(['code'=>0, 'time'=>date('Y/m/d H:i:s'), 'data'=>['url'=>self::BaseUrl(self::$dirRoot), 'list'=>$list]]);
+    return self::GetJSON([
+      'code'=> 0,
+      'time'=> date('Y/m/d H:i:s'),
+      'data'=> ['url'=>self::BaseUrl(self::$dirRoot), 'list'=>$list],
+    ]);
   }
 
   /* 新建文件夹 */
@@ -51,8 +56,8 @@ class SysFile extends Controller {
     $json = self::Json();
     $token = self::JsonName($json, 'token');
     $path = self::JsonName($json, 'path');
-    $rename = self::JsonName($json, 'rename');
     $name = self::JsonName($json, 'name');
+    $rename = self::JsonName($json, 'rename');
     // 验证
     $msg = TokenAdmin::Verify($token, $_SERVER['REQUEST_URI']);
     if($msg != '') return self::GetJSON(['code'=>4001]);
@@ -62,6 +67,24 @@ class SysFile extends Controller {
     if(!FileEo::Rename($path.$rename, $path.$name)) return self::GetJSON(['code'=>5000]);
     // 返回
     return self::GetJSON(['code'=>0]);
+  }
+
+  /* 删除 */
+  static function Remove(){
+    // 参数
+    $json = self::Json();
+    $token = self::JsonName($json, 'token');
+    $path = self::JsonName($json, 'path');
+    $data = self::JsonName($json, 'data');
+    // 验证
+    $msg = TokenAdmin::Verify($token, $_SERVER['REQUEST_URI']);
+    if($msg != '') return self::GetJSON(['code'=>4001]);
+    if(empty($path) || empty($data) || !is_array($data)) return self::GetJSON(['code'=>4000]);
+    // 数据
+    FileEo::$Root = self::$dirRoot;
+    foreach($data as $v) FileEo::RemoveAll($path.$v);
+    // 返回
+    return self::GetJSON(['code'=>0, 'msg'=>'成功']);
   }
 
   /* 上传 */
@@ -93,28 +116,12 @@ class SysFile extends Controller {
     $msg = TokenAdmin::Verify($token, '');
     if($msg != '') return self::GetJSON(['code'=>4001]);
     if(empty($path) || empty($filename)) return self::GetJSON(['code'=>4000]);
-    // 返回
-    self::GetJSON();
-    FileEo::$Root = self::$dirRoot;
-    return FileEo::Bytes($path.$filename);
-  }
-
-  /* 删除 */
-  static function Remove(){
-    // 参数
-    $json = self::Json();
-    $token = self::JsonName($json, 'token');
-    $path = self::JsonName($json, 'path');
-    $data = self::JsonName($json, 'data');
-    // 验证
-    $msg = TokenAdmin::Verify($token, $_SERVER['REQUEST_URI']);
-    if($msg != '') return self::GetJSON(['code'=>4001]);
-    if(empty($path) || empty($data) || !is_array($data)) return self::GetJSON(['code'=>4000]);
     // 数据
     FileEo::$Root = self::$dirRoot;
-    foreach($data as $val) FileEo::RemoveAll($path.$val);
+    $data = FileEo::Bytes($path.$filename);
     // 返回
-    return self::GetJSON(['code'=>0, 'msg'=>'成功']);
+    self::GetJSON();
+    return $data;
   }
 
 }

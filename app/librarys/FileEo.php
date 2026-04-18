@@ -134,9 +134,9 @@ class FileEo {
   }
 
   /* 上传 */
-  static function Upload(string $tmp, string $to): bool {
+  static function Upload(string $file, string $to): bool {
     $to = self::$Root.$to;
-    return move_uploaded_file($tmp, $to);
+    return move_uploaded_file($file, $to);
   }
 
   /* 写入 */
