@@ -16,6 +16,7 @@ use App\Model\SysMenu;
 use App\Model\SysPerm;
 use App\Model\SysRole;
 
+/* 系统用户 */
 class SysUser extends Controller {
 
   private static $menus = [];         // 全部菜单
@@ -105,15 +106,11 @@ class SysUser extends Controller {
     $where = [];
     // 时间
     $stime = isset($d['stime'])?trim($d['stime']):date('Y-m-d');
-    if($stime){
-      $start = strtotime($stime.' 00:00:00');
-      $where[] = 'a.ltime>='.$start;
-    }
+    $start = strtotime($stime.' 00:00:00');
+    $where[] = 'a.ltime>='.$start;
     $etime = isset($d['etime'])?trim($d['etime']):date('Y-m-d');
-    if($etime){
-      $end = strtotime($etime.' 23:59:59');
-      $where[] = 'a.ltime<='.$end;
-    }
+    $end = strtotime($etime.' 23:59:59');
+    $where[] = 'a.ltime<='.$end;
     // 关键字
     $key = isset($d['key'])?trim($d['key']):'';
     if($key){
