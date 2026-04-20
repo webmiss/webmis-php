@@ -43,16 +43,16 @@ class SysUser extends Controller {
     $where = self::getWhere($data);
     // 统计
     $m = new User();
-    $m->Columns('count(*) AS total');
     $m->Table('user as a');
     $m->LeftJoin('user_info as b', 'a.id=b.uid');
     $m->LeftJoin('sys_perm as c', 'a.id=c.uid');
     $m->LeftJoin('sys_role as d', 'c.role=d.id');
+    $m->Columns('count(*) AS total');
     $m->Where($where);
     $one = $m->FindFirst();
-    $total = [
-      'total'=> $one?(int)$one['total']:0,
-    ];
+    // 数据
+    $total = ['total'=>0];
+    if($one) $total['total'] = (int)$one['total'];
     // 返回
     return self::GetJSON(['code'=>0, 'time'=>date('Y/m/d H:i:s'), 'data'=>$total]);
   }
