@@ -398,7 +398,7 @@ class SysUser extends Controller {
     foreach($all as $k=>$v) $role_name[]=['label'=> $v['name'], 'value'=> $v['id']];
     // 状态
     $status_name = [];
-    self::$type_name = Status::Public('status_name');
+    self::$status_name = Status::Public('status_name');
     foreach(self::$status_name as $k=>$v) $status_name[]=['label'=> $v, 'value'=> $k];
     // 返回
     return self::GetJSON(['code'=>0, 'data'=>[
