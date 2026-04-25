@@ -26,8 +26,10 @@ class Model extends Base {
 
   /* 获取连接 */
   protected function DBConn(string $name=''): ?object {
+    // 数据库
+    $this->db = $name===''?$this->db:$name;
     // 配置
-    $cfg = Db::Config($name);
+    $cfg = Db::Config($this->db);
     // 连接
     $conn = null;
     try {
@@ -195,7 +197,7 @@ class Model extends Base {
       if($sql=='') return [];
     }
     // 连接
-    $conn = $this->DBConn($this->db);
+    $conn = $this->DBConn();
     if(!$conn) return [];
     // 执行
     $stmt = $this->Exec($conn, $sql, ...$args);
@@ -210,7 +212,7 @@ class Model extends Base {
       if($sql=='') return false;
     }
     // 连接
-    $conn = $this->DBConn($this->db);
+    $conn = $this->DBConn();
     if(!$conn) return false;
     // 执行
     $stmt = $this->Exec($conn, $sql, ...$args);
@@ -274,7 +276,7 @@ class Model extends Base {
       list($sql, $args) = $this->InsertSQL();
     }
     // 连接
-    $conn = $this->DBConn($this->db);
+    $conn = $this->DBConn();
     if(!$conn) return -1;
     // 执行
     $stmt = $this->Exec($conn, $sql, ...$args);
@@ -323,7 +325,7 @@ class Model extends Base {
       list($sql, $args) = $this->UpdateSQL();
     }
     // 连接
-    $conn = $this->DBConn($this->db);
+    $conn = $this->DBConn();
     if(!$conn) return false;
     // 执行
     $stmt = $this->Exec($conn, $sql, ...$args);
@@ -356,7 +358,7 @@ class Model extends Base {
       list($sql, $args) = $this->DeleteSQL();
     }
     // 连接
-    $conn = $this->DBConn($this->db);
+    $conn = $this->DBConn();
     if(!$conn) return false;
     // 执行
     $stmt = $this->Exec($conn, $sql, ...$args);
