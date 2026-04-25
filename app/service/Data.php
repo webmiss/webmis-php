@@ -250,15 +250,5 @@ class Data extends Base {
     $eDay = date('Y-m-d', strtotime('-1 days', strtotime($stime)));
     return [$sDay, $eDay];
   }
-
-  /* 获取供应商名称 */
-  static function getSupplierName(string $token) {
-    $user = TokenSupplier::Token($token);
-    if($user->is_verify!=4) return [];
-    $str = mb_substr($user->name, -4);
-    if(is_numeric($str)) return [$user->name];
-    $str = mb_substr($user->uname, -4);
-    return [$user->name, $user->name.$str];
-  }
   
 }

@@ -7,7 +7,6 @@ use App\Util\Type;
 /* 模型 */
 class Model extends Base {
 
-  public $conn = null;          // 连接
   private $name = 'Model';      // 名称
   private $db = 'default';      // 数据库
   private $table = '';          // 数据表
@@ -26,33 +25,30 @@ class Model extends Base {
   private $nums = 0;            // 影响行数
 
   /* 获取连接 */
-  protected function DBConn(string $name=''): object {
-    // 默认值
-    $this->db = $name??'default';
+  protected function DBConn(string $name=''): ?object {
     // 配置
     $cfg = Db::Config($name);
     // 连接
-    if(!$this->conn) {
-      try {
-        $this->conn = new \PDO(
-          $cfg['driver'].':host='.$cfg['host'].';dbname='.$cfg['database'].';port='.$cfg['port'],
-          $cfg['user'],
-          $cfg['password'],
-          [
-            // 长链接
-            \PDO::ATTR_PERSISTENT => $cfg['persistent'],
-            // 异常设置
-            \PDO::ATTR_ERRMODE => 2
-          ]
-        );
-        // 设置编码
-        if($this->conn) $this->conn->exec('SET NAMES "'.$cfg['charset'].'";');
-      } catch (\Exception $e) {
-        self::Print('[ '.$this->name.' ] Conn:', $e->getMessage());
-      }
+    $conn = null;
+    try {
+      $conn = new \PDO(
+        $cfg['driver'].':host='.$cfg['host'].';dbname='.$cfg['database'].';port='.$cfg['port'],
+        $cfg['user'],
+        $cfg['password'],
+        [
+          // 长链接
+          \PDO::ATTR_PERSISTENT => $cfg['persistent'],
+          // 异常设置
+          \PDO::ATTR_ERRMODE => 2
+        ]
+      );
+      // 设置编码
+      if($conn) $conn->exec('SET NAMES "'.$cfg['charset'].'";');
+    } catch (\Exception $e) {
+      self::Print('[ '.$this->name.' ] Conn:', $e->getMessage());
     }
     // 返回
-    return $this->conn;
+    return $conn;
   }
 
   /* 执行 */
@@ -88,6 +84,11 @@ class Model extends Base {
   /* 获取-影响行数 */
   function GetNums() : int {
     return $this->nums;
+  }
+
+  /* 数据库 */
+  function DBConfig(string $name): void {
+    $this->db = $name;
   }
 
   /* 表 */
@@ -187,17 +188,18 @@ class Model extends Base {
     return [$this->sql, $args];
   }
   /* 查询-多条 */
-  function Find(string $sql='', ...$args): array|bool {
+  function Find(string $sql='', ...$args): array {
     // SQL
     if($sql=='') {
       list($sql, $args) = $this->SelectSQL();
-      if($sql=='') return false;
+      if($sql=='') return [];
     }
     // 连接
-    if(!$this->conn) $this->DBConn($this->db);
+    $conn = $this->DBConn($this->db);
+    if(!$conn) return [];
     // 执行
-    $stmt = $this->Exec($this->conn, $sql, ...$args);
-    return $stmt?$stmt->fetchAll(\PDO::FETCH_ASSOC):false;
+    $stmt = $this->Exec($conn, $sql, ...$args);
+    return $stmt?$stmt->fetchAll(\PDO::FETCH_ASSOC):[];
   }
   /* 查询-单条 */
   function FindFirst(string $sql='', ...$args): array|bool {
@@ -208,9 +210,10 @@ class Model extends Base {
       if($sql=='') return false;
     }
     // 连接
-    if(!$this->conn) $this->DBConn($this->db);
+    $conn = $this->DBConn($this->db);
+    if(!$conn) return false;
     // 执行
-    $stmt = $this->Exec($this->conn, $sql, ...$args);
+    $stmt = $this->Exec($conn, $sql, ...$args);
     return $stmt?$stmt->fetch(\PDO::FETCH_ASSOC):false;
   }
 
@@ -271,9 +274,10 @@ class Model extends Base {
       list($sql, $args) = $this->InsertSQL();
     }
     // 连接
-    if(!$this->conn) $this->DBConn($this->db);
+    $conn = $this->DBConn($this->db);
+    if(!$conn) return -1;
     // 执行
-    $stmt = $this->Exec($this->conn, $sql, ...$args);
+    $stmt = $this->Exec($conn, $sql, ...$args);
     return $stmt?$this->id:-1;
   }
 
@@ -319,9 +323,10 @@ class Model extends Base {
       list($sql, $args) = $this->UpdateSQL();
     }
     // 连接
-    if(!$this->conn) $this->DBConn($this->db);
+    $conn = $this->DBConn($this->db);
+    if(!$conn) return false;
     // 执行
-    $stmt = $this->Exec($this->conn, $sql, ...$args);
+    $stmt = $this->Exec($conn, $sql, ...$args);
     return $stmt?true:false;
   }
 
@@ -351,9 +356,10 @@ class Model extends Base {
       list($sql, $args) = $this->DeleteSQL();
     }
     // 连接
-    if(!$this->conn) $this->DBConn($this->db);
+    $conn = $this->DBConn($this->db);
+    if(!$conn) return false;
     // 执行
-    $stmt = $this->Exec($this->conn, $sql, ...$args);
+    $stmt = $this->Exec($conn, $sql, ...$args);
     return $stmt?true:false;
   }
 

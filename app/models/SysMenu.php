@@ -8,7 +8,7 @@ class SysMenu extends Model {
 
   /* 构造函数 */
   function __construct() {
-    $this->DBConn('default');
+    $this->DBConfig('default');
     $this->Table('sys_menus');
   }
 
