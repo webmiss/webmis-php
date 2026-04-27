@@ -27,7 +27,7 @@ class Model extends Base {
   /* 获取连接 */
   protected function DBConn(string $name=''): ?object {
     // 数据库
-    $this->db = $name===''?$this->db:$name;
+    if($name!='') $this->db = $name;
     // 配置
     $cfg = Db::Config($this->db);
     // 连接

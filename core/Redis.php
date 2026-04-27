@@ -15,9 +15,9 @@ class Redis extends Base {
   }
 
   /* 获取连接 */
-  public function ReidsConn($name): object|null {
+  public function ReidsConn(): object|null {
     // 配置
-    $config = RedisCfg::config($name);
+    $config = RedisCfg::config($this->db);
     // 连接
     $conn = null;
     try{
@@ -34,131 +34,175 @@ class Redis extends Base {
 
   /* 添加 */
   function Set(string $key, string $val): bool {
-    $conn = self::ReidsConn($this->db);
+    $conn = self::ReidsConn();
     if($conn===null) return false;
     return $conn->set($key, $val)?true:false;
   }
 
   /* 自增 */
-  function Incr(string $key): string|bool|null {
-    $conn = self::ReidsConn($this->db);
-    return $conn->incr($key);
+  function Incr(string $key): int {
+    $conn = self::ReidsConn();
+    if($conn===null) return 0;
+    $res = $conn->incr($key);
+    return $res?:0;
   }
 
   /* 自减 */
-  function Decr(string $key): string|bool|null {
-    $conn = self::ReidsConn($this->db);
-    return $conn->decr($key);
+  function Decr(string $key): int {
+    $conn = self::ReidsConn();
+    if($conn===null) return 0;
+    $res = $conn->decr($key);
+    return $res?:0;
   }
 
   /* 获取 */
-  function Get(string $key): string|bool|null {
-    $conn = self::ReidsConn($this->db);
-    return $conn->get($key);
+  function Get(string $key): string|bool {
+    $conn = self::ReidsConn();
+    if($conn===null) return false;
+    $res = $conn->get($key);
+    return $res===false?false:$res;
   }
 
   /* 删除 */
-  function Del(string ...$key): int|null {
-    $conn = self::ReidsConn($this->db);
-    return $conn->del($key);
+  function Del(string ...$key): bool {
+    $conn = self::ReidsConn();
+    if($conn===null) return false;
+    $res = $conn->del($key);
+    return $res!==false;
   }
 
   /* 是否存在 */
-  function Exist(string $key): int|null {
-    $conn = self::ReidsConn($this->db);
-    return $conn->exists($key);
+  function Exist(string $key): bool {
+    $conn = self::ReidsConn();
+    if($conn===null) return false;
+    $res = $conn->exists($key);
+    return $res?true:false;
   }
 
   /* 设置过期时间(秒) */
-  function Expire(string $key, int $ttl): bool|null {
-    $conn = self::ReidsConn($this->db);
-    return $conn->expire($key, $ttl);
+  function Expire(string $key, int $ttl): bool {
+    $conn = self::ReidsConn();
+    if($conn===null) return false;
+    $res = $conn->expire($key, $ttl);
+    return $res?true:false;
   }
 
   /* 获取过期时间(秒) */
-  function Ttl(string $key): int|null {
-    $conn = self::ReidsConn($this->db);
-    return @$conn->ttl($key);
+  function Ttl(string $key): int {
+    $conn = self::ReidsConn();
+    if($conn===null) return 0;
+    $res = $conn->ttl($key);
+    return $res>=0?$res:0;
   }
 
   /* 获取长度 */
-  function StrLen(string $key): int|null {
-    $conn = self::ReidsConn($this->db);
-    return $conn->strlen($key);
+  function StrLen(string $key): int {
+    $conn = self::ReidsConn();
+    if($conn===null) return 0;
+    $res = $conn->strlen($key);
+    return $res>=0?$res:0;
   }
 
   /* 哈希(Hash)-添加 */
-  function HSet(string $name, string $key, $val): int|null {
-    $conn = self::ReidsConn($this->db);
-    return $conn->hset($name, $key, $val);
+  function HSet(string $name, string $key, $val): bool {
+    $conn = self::ReidsConn();
+    if($conn===null) return false;
+    $res = $conn->hset($name, $key, $val);
+    return $res?true:false;
   }
 
   /* 哈希(Hash)-删除 */
-  function HDel(string $name, string ...$key): int|null {
-    $conn = self::ReidsConn($this->db);
-    return $conn->hdel($name, $key);
+  function HDel(string $name, string ...$key): bool {
+    $conn = self::ReidsConn();
+    if($conn===null) return false;
+    $res = $conn->hdel($name, $key);
+    return $res>=0?true:false;
   }
 
   /* 哈希(Hash)-获取 */
-  function HGet(string $name, string $key): string|bool|null {
-    $conn = self::ReidsConn($this->db);
-    return $conn->hget($name, $key);
+  function HGet(string $name, string $key): string {
+    $conn = self::ReidsConn();
+    if($conn===null) return '';
+    $res = $conn->hget($name, $key);
+    return $res===false?'':$res;
   }
 
   /* 哈希(Hash)-获取全部 */
-  function HGetAll(string $name): array|null {
-    $conn = self::ReidsConn($this->db);
-    return $conn->hgetall($name);
+  function HGetAll(string $name): array {
+    $conn = self::ReidsConn();
+    if($conn===null) return [];
+    $res = $conn->hgetall($name);
+    return $res?:[];
   }
 
   /* 哈希(Hash)-获取全部值 */
-  function HVals(string $name): array|null {
-    $conn = self::ReidsConn($this->db);
-    return $conn->hvals($name);
+  function HVals(string $name): array {
+    $conn = self::ReidsConn();
+    if($conn===null) return [];
+    $res = $conn->hvals($name);
+    return $res?:[];
   }
 
   /* 哈希(Hash)-是否存在 */
-  function HExist(string $name, string $key): int|null {
-    $conn = self::ReidsConn($this->db);
-    return $conn->hexists($name, $key);
+  function HExist(string $name, string $key): bool {
+    $conn = self::ReidsConn();
+    if($conn===null) return false;
+    $res = $conn->hexists($name, $key);
+    return $res?true:false;
   }
 
   /* 哈希(Hash)-获取长度 */
-  function HLen(string $name): int|null {
-    $conn = self::ReidsConn($this->db);
-    return $conn->hlen($name);
+  function HLen(string $name): int {
+    $conn = self::ReidsConn();
+    if($conn===null) return 0;
+    $res = $conn->hlen($name);
+    return $res>=0?$res:0;
   }
 
   /* 列表(List)-写入 */
-  function LPush(string $key, $val): int|null {
-    $conn = self::ReidsConn($this->db);
-    return $conn->lpush($key, $val);
+  function LPush(string $key, mixed $val): bool {
+    $conn = self::ReidsConn();
+    if($conn===null) return false;
+    $res = $conn->lpush($key, $val);
+    return $res?true:false;
   }
-  function RPush(string $key, $val): int|null {
-    $conn = self::ReidsConn($this->db);
-    return $conn->rpush($key, $val);
+  function RPush(string $key, mixed $val): bool {
+    $conn = self::ReidsConn();
+    if($conn===null) return false;
+    $res = $conn->rpush($key, $val);
+    return $res?true:false;
   }
 
   /* 列表(List)-读取 */
-  function LRange($key, $start, $end): array|null {
-    $conn = self::ReidsConn($this->db);
-    return $conn->lRange($key, $start, $end);
+  function LRange(string $key, int $start, int $end): array {
+    $conn = self::ReidsConn();
+    if($conn===null) return [];
+    $res = $conn->lRange($key, $start, $end);
+    return $res?:[];
   }
-  function LPop($key): string|bool|null {
-    $conn = self::ReidsConn($this->db);
-    return $conn->lPop($key);
+  function LPop(string $key): string {
+    $conn = self::ReidsConn();
+    if($conn===null) return '';
+    $res = $conn->lPop($key);
+    return $res===false?'':$res;
   }
-  function RPop($key): string|bool|null {
-    $conn = self::ReidsConn($this->db);
-    return $conn->rPop($key);
+  function RPop(string $key): string {
+    $conn = self::ReidsConn();
+    if($conn===null) return '';
+    $res = $conn->rPop($key);
+    return $res===false?'':$res;
   }
-  function BRPop($key, $timeout): array|bool|null {
-    $conn = self::ReidsConn($this->db);
-    return $conn->brPop($key, $timeout);
+  function BRPop($key, $timeout): array {
+    $conn = self::ReidsConn();
+    if($conn===null) return [];
+    $res = $conn->brPop($key, $timeout);
+    return $res?:[];
   }
-  function BLPop($key, $timeout): array|bool|null {
-    $conn = self::ReidsConn($this->db);
-    return $conn->blPop($key, $timeout);
+  function BLPop($key, $timeout): array {
+    $conn = self::ReidsConn();
+    if($conn===null) return [];
+    $res = $conn->blPop($key, $timeout);
+    return $res?:[];
   }
 
 }

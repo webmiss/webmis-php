@@ -14,10 +14,11 @@ class Index extends Controller {
     $m = new User();
     $m->Columns('id', 'uname');
     $data = $m->Find();
+    self::Print('Model:', $data);
     // Redis
     $r = new Redis();
     $r->Set('test', 'PHP Redis');
-    self::Print($data, $r->Get('test'));
+    self::Print('Redis:', $r->Get('test'));
     // 返回
     return self::GetJSON(['code'=>0, 'msg'=>'PHP Api']);
   }
