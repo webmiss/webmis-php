@@ -17,57 +17,6 @@ use App\Model\UserInfo;
 /* 用户 */
 class User extends Controller {
 
-  /* 验证码-图形 */
-  static function Vcode(string $uname): void {
-    // 编码
-    $code = Captcha::Vcode(4);
-    // 缓存
-    $redis = new Redis();
-    $redis->Set(Env::$admin_token_prefix.'_vcode_'.$uname, strtolower($code));
-    $redis->Expire(Env::$admin_token_prefix.'_vcode_'.$uname, 24*3600);
-  }
-
-  /* 验证码-数字 */
-  static function GetVcode(): string {
-    // 参数
-    $json = self::Json();
-    $type = self::JsonName($json, 'type');
-    $uname = self::JsonName($json, 'uname');
-    // 验证
-    if(!Safety::IsRight($type, $uname)) return self::GetJSON(['code'=>4000]);
-    // 限制: 60秒/次、10次/天、10分钟内有效
-    $max_time=60; $max_num=10; $limt=10;
-    $redis = new Redis();
-    $time = $redis->Ttl(Env::$admin_token_prefix.'_vcode_time_'.$uname);
-    $num = $redis->Get(Env::$admin_token_prefix.'_vcode_num_'.$uname)?:0;
-    if($time>0) return self::GetJSON(['code'=>4001, 'msg'=>self::GetLang('login_verify_vcode_time', $time), 'data'=>$time]);
-    if($num>=$max_num) return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('login_verify_vcode_max', $max_num)]);
-    // 验证码
-    $code = (string)mt_rand(1000, 9999);
-    if($type=='tel') {
-      // $res = Sms::Send($uname, '签名名称', '模板CODE', ['code'=>$code]);
-      // if(!$res) return self::GetJSON(['code'=>5000, 'msg'=>'发送失败']);
-    }elseif($type=='email') {
-      // $res = Mail::SmtpSend([
-      //   'to'=> $uname,
-      //   'subject'=> '【WebMIS】验证码',
-      //   'content'=> '<div style="font-size: 24px">【WebMIS】您的验证码为: <b>'.$code.'</b>, 该验证码10分钟内有效, 请勿泄露于他人!</div>',
-      //   'isHtml'=> true,
-      // ]);
-      // if($res) return self::GetJSON(['code'=>5000, 'msg'=>$res]);
-    }
-    // 缓存
-    $redis = new Redis();
-    $redis->Set(Env::$admin_token_prefix.'_vcode_'.$uname, $code);
-    $redis->Expire(Env::$admin_token_prefix.'_vcode_'.$uname, $limt*60);
-    $redis->Set(Env::$admin_token_prefix.'_vcode_time_'.$uname, $code);
-    $redis->Expire(Env::$admin_token_prefix.'_vcode_time_'.$uname, $max_time);
-    $redis->Set(Env::$admin_token_prefix.'_vcode_num_'.$uname, $num+1);
-    $redis->Expire(Env::$admin_token_prefix.'_vcode_num_'.$uname, strtotime(date('Y-m-d').' 23:59:59')-time());
-    // 返回
-    return self::GetJSON(['code'=>0, 'data'=>$code]);
-  }
-
   /* 登录 */
 	static function Login(): string {
     // 参数
@@ -203,6 +152,60 @@ class User extends Controller {
     }
     // 返回
     return self::GetJSON(['code'=>0, 'data'=>['token_time'=>$tData->time, 'uinfo'=>$uinfo, 'isPasswd'=>$tData->isPasswd]]);
+  }
+
+  /* 验证码-图形 */
+  static function Vcode(string $uname): void {
+    // 生成
+    list($code, $img) = Captcha::Vcode(4);
+    // 缓存
+    $redis = new Redis();
+    $redis->Set(Env::$admin_token_prefix.'_vcode_'.$uname, strtolower($code));
+    $redis->Expire(Env::$admin_token_prefix.'_vcode_'.$uname, 24*3600);
+    // 输出
+    header('Content-type: image/jpeg');
+    echo $img;
+  }
+
+  /* 验证码-数字 */
+  static function VcodeNum(): string {
+    // 参数
+    $json = self::Json();
+    $type = self::JsonName($json, 'type');
+    $uname = self::JsonName($json, 'uname');
+    // 验证
+    if(!Safety::IsRight($type, $uname)) return self::GetJSON(['code'=>4000]);
+    // 限制: 60秒/次、10次/天、10分钟内有效
+    $max_time=60; $max_num=10; $limt=10;
+    $redis = new Redis();
+    $time = $redis->Ttl(Env::$admin_token_prefix.'_vcode_time_'.$uname);
+    $num = $redis->Get(Env::$admin_token_prefix.'_vcode_num_'.$uname)?:0;
+    if($time>0) return self::GetJSON(['code'=>4001, 'msg'=>self::GetLang('login_verify_vcode_time', $time), 'data'=>$time]);
+    if($num>=$max_num) return self::GetJSON(['code'=>4000, 'msg'=>self::GetLang('login_verify_vcode_max', $max_num)]);
+    // 验证码
+    $code = (string)mt_rand(1000, 9999);
+    if($type=='tel') {
+      // $res = Sms::Send($uname, '签名名称', '模板CODE', ['code'=>$code]);
+      // if(!$res) return self::GetJSON(['code'=>5000, 'msg'=>'发送失败']);
+    }elseif($type=='email') {
+      // $res = Mail::SmtpSend([
+      //   'to'=> $uname,
+      //   'subject'=> '【WebMIS】验证码',
+      //   'content'=> '<div style="font-size: 24px">【WebMIS】您的验证码为: <b>'.$code.'</b>, 该验证码10分钟内有效, 请勿泄露于他人!</div>',
+      //   'isHtml'=> true,
+      // ]);
+      // if($res) return self::GetJSON(['code'=>5000, 'msg'=>$res]);
+    }
+    // 缓存
+    $redis = new Redis();
+    $redis->Set(Env::$admin_token_prefix.'_vcode_'.$uname, $code);
+    $redis->Expire(Env::$admin_token_prefix.'_vcode_'.$uname, $limt*60);
+    $redis->Set(Env::$admin_token_prefix.'_vcode_time_'.$uname, $code);
+    $redis->Expire(Env::$admin_token_prefix.'_vcode_time_'.$uname, $max_time);
+    $redis->Set(Env::$admin_token_prefix.'_vcode_num_'.$uname, $num+1);
+    $redis->Expire(Env::$admin_token_prefix.'_vcode_num_'.$uname, strtotime(date('Y-m-d').' 23:59:59')-time());
+    // 返回
+    return self::GetJSON(['code'=>0, 'data'=>$code]);
   }
 
   /* 修改密码 */
