@@ -155,16 +155,15 @@ class User extends Controller {
   }
 
   /* 验证码-图形 */
-  static function Vcode(string $uname): void {
+  static function Vcode(string $uname) {
     // 生成
     list($code, $img) = Captcha::Vcode(4);
-    // 缓存
+    // 缓存(24小时)
     $redis = new Redis();
     $redis->Set(Env::$admin_token_prefix.'_vcode_'.$uname, strtolower($code));
     $redis->Expire(Env::$admin_token_prefix.'_vcode_'.$uname, 24*3600);
-    // 输出
-    header('Content-type: image/jpeg');
-    echo $img;
+    // 返回
+    self::GetFile($img, ['Content-type'=>'image/jpeg']);
   }
 
   /* 验证码-数字 */

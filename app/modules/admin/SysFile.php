@@ -120,8 +120,7 @@ class SysFile extends Controller {
     FileEo::$Root = self::$dirRoot;
     $data = FileEo::Bytes($path.$filename);
     // 返回
-    self::GetJSON();
-    return $data;
+    self::GetFile($data, ['Content-type'=>'application/octet-stream']);
   }
 
 }

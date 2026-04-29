@@ -39,6 +39,14 @@ class Controller extends Base {
     return json_encode($data);
   }
 
+  /* 返回文件 */
+  static protected function GetFile($data, array $header=[]): void {
+    // Header
+    foreach($header as $k=>$v) header($k.': '.$v);
+    // 返回
+    echo $data;
+  }
+
   /* Get参数 */
   static protected function Get(string $name) {
     return isset($_GET[$name])?$_GET[$name]:null;
