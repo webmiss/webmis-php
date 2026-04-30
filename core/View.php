@@ -13,13 +13,13 @@ class View extends Base {
   }
 
   /* 渲染 */
-  static function render(string $viewName, string $layout='layout'): string {
+  static function render(string $viewName, string $layout='layout'): void {
     extract(self::$data);
     // 视图文件
     $viewPath = '../app/views/'.$viewName.'.php';
     if(!file_exists($viewPath)) {
       self::Print('[ '.self::$name.' ]', '视图不存在 '.$viewPath);
-      return '';
+      return;
     }
     // 内容
     ob_start();
@@ -32,7 +32,7 @@ class View extends Base {
     else echo $content;
     // 返回
     $html = ob_get_clean();
-    return $html;
+    echo $html;
   }
 
 }
