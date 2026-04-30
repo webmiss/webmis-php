@@ -26,9 +26,13 @@ class View extends Base {
     require $viewPath;
     $content = ob_get_clean();
     // 模板文件
+    ob_start();
     $layoutPath = '../app/views/layouts/'.$layout.'.php';
     if(file_exists($layoutPath)) require $layoutPath;
-    return $content;
+    else echo $content;
+    // 返回
+    $html = ob_get_clean();
+    return $html;
   }
 
 }

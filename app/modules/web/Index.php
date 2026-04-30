@@ -9,12 +9,12 @@ use App\Config\Env;
 class Index extends Controller {
 
   /* 首页 */
-  public function index(): void {
+  public function index(): string {
     // 传参
     View::assign('title', Env::$title);
     View::assign('copy', Env::$copy);
     // 视图
-    View::render('web/index');
+    return View::render('web/index');
   }
 
 }

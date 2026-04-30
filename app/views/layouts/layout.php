@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title><?= $title ?></title>
+  <title><?php echo $title ?></title>
   <style>
     *{margin: 0; padding: 0;}
     body{padding: 40px 16px; text-align: center;}
@@ -11,7 +11,7 @@
   </style>
 </head>
 <body>
-  <?= $content ?>
-  <footer><?= $copy ?></footer>
+  <?php echo $content ?>
+  <footer><?php echo $copy ?></footer>
 </body>
 </html>
