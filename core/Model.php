@@ -25,7 +25,7 @@ class Model extends Base {
   private $nums = 0;            // 影响行数
 
   /* 获取连接 */
-  protected function DBConn(string $name=''): ?object {
+  function DBConn(string $name=''): ?object {
     // 数据库
     if($name!='') $this->db = $name;
     // 配置
